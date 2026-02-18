@@ -20,21 +20,9 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 @router.post("/login", response_model=Token)
-async def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    # Simple mock auth for now since we don't have registration UI yet
-    # In production, look up user in DB.
-    # For demo: Accept any email, password "password" or actual user if exists
-    
+def login(user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_data.email).first()
     
-    # Auto-create admin if not exists (Hack for first run)
-    if not user and user_data.email == "teacher@school.edu":
-        hashed = pwd_context.hash("password")
-        user = User(email="teacher@school.edu", hashed_password=hashed)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        
     if not user or not pwd_context.verify(user_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -43,4 +31,8 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
         )
         
     access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user": user
+    }

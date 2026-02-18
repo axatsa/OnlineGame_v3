@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import api from "@/lib/api";
 import {
   LayoutDashboard, Users, Building2, BrainCircuit, Settings,
   Menu, X, LogOut, Shield, TrendingUp,
@@ -36,19 +37,19 @@ type Payment = {
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 const INITIAL_TEACHERS: Teacher[] = [
-  { id: 1, name: "Азиз Каримов",    login: "aziz.karimov", school: "Школа №5, Ташкент",   status: "active",   lastLogin: "2 мин назад",   plan: "pro",   tokenUsage: 5420,  ip: "195.168.1.10" },
-  { id: 2, name: "Нилуфар Хасанова",login: "nilufar.h",    school: "Школа №12, Самарканд", status: "active",   lastLogin: "1 час назад",   plan: "basic", tokenUsage: 1200,  ip: "178.213.45.22" },
-  { id: 3, name: "Жамшид Турсунов", login: "jamshid.t",    school: "Лицей №2, Бухара",    status: "expiring", lastLogin: "3 дня назад",   plan: "pro",   tokenUsage: 890,   ip: "91.185.22.44" },
-  { id: 4, name: "Малика Юсупова",  login: "malika.y",     school: "Гимназия №7",          status: "expired",  lastLogin: "14 дней назад", plan: "basic", tokenUsage: 0,     ip: "—" },
-  { id: 5, name: "Сардор Рашидов",  login: "sardor.r",     school: "Школа №5, Ташкент",   status: "blocked",  lastLogin: "Заблокирован",  plan: "pro",   tokenUsage: 12800, ip: "195.168.1.10" },
-  { id: 6, name: "Гулнора Мирзаева",login: "gulnora.m",    school: "Школа №19, Фергана",  status: "active",   lastLogin: "30 мин назад",  plan: "pro",   tokenUsage: 3100,  ip: "82.215.10.5" },
+  { id: 1, name: "Азиз Каримов", login: "aziz.karimov", school: "Школа №5, Ташкент", status: "active", lastLogin: "2 мин назад", plan: "pro", tokenUsage: 5420, ip: "195.168.1.10" },
+  { id: 2, name: "Нилуфар Хасанова", login: "nilufar.h", school: "Школа №12, Самарканд", status: "active", lastLogin: "1 час назад", plan: "basic", tokenUsage: 1200, ip: "178.213.45.22" },
+  { id: 3, name: "Жамшид Турсунов", login: "jamshid.t", school: "Лицей №2, Бухара", status: "expiring", lastLogin: "3 дня назад", plan: "pro", tokenUsage: 890, ip: "91.185.22.44" },
+  { id: 4, name: "Малика Юсупова", login: "malika.y", school: "Гимназия №7", status: "expired", lastLogin: "14 дней назад", plan: "basic", tokenUsage: 0, ip: "—" },
+  { id: 5, name: "Сардор Рашидов", login: "sardor.r", school: "Школа №5, Ташкент", status: "blocked", lastLogin: "Заблокирован", plan: "pro", tokenUsage: 12800, ip: "195.168.1.10" },
+  { id: 6, name: "Гулнора Мирзаева", login: "gulnora.m", school: "Школа №19, Фергана", status: "active", lastLogin: "30 мин назад", plan: "pro", tokenUsage: 3100, ip: "82.215.10.5" },
 ];
 
 const ORGS: Org[] = [
-  { id: 1, name: "Школа №5, Ташкент",    contact: "Директор Рашидов А.", seats: 50, used: 38, expires: "2026-01-01", status: "active" },
-  { id: 2, name: "Лицей №2, Бухара",     contact: "Директор Турсунов М.",seats: 20, used: 15, expires: "2025-03-01", status: "expiring" },
-  { id: 3, name: "Гимназия №7, Ташкент", contact: "Директор Хасанова З.",seats: 30, used: 30, expires: "2024-12-01", status: "expired" },
-  { id: 4, name: "Школа №19, Фергана",   contact: "Директор Юсупов Б.", seats: 40, used: 12, expires: "2026-06-01", status: "active" },
+  { id: 1, name: "Школа №5, Ташкент", contact: "Директор Рашидов А.", seats: 50, used: 38, expires: "2026-01-01", status: "active" },
+  { id: 2, name: "Лицей №2, Бухара", contact: "Директор Турсунов М.", seats: 20, used: 15, expires: "2025-03-01", status: "expiring" },
+  { id: 3, name: "Гимназия №7, Ташкент", contact: "Директор Хасанова З.", seats: 30, used: 30, expires: "2024-12-01", status: "expired" },
+  { id: 4, name: "Школа №19, Фергана", contact: "Директор Юсупов Б.", seats: 40, used: 12, expires: "2026-06-01", status: "active" },
 ];
 
 const DAILY_TOKENS = [
@@ -62,12 +63,12 @@ const DAILY_TOKENS = [
 ];
 
 const PAYMENTS: Payment[] = [
-  { id: 1, org: "Школа №5, Ташкент",    amount: 250, currency: "USD", date: "2025-01-15", method: "Перевод",    status: "paid",    period: "2025–2026" },
-  { id: 2, org: "Школа №19, Фергана",   amount: 200, currency: "USD", date: "2025-01-10", method: "Наличные",   status: "paid",    period: "2025–2026" },
-  { id: 3, org: "Лицей №2, Бухара",     amount: 120, currency: "USD", date: "2025-02-01", method: "Перевод",    status: "pending", period: "2025" },
-  { id: 4, org: "Гимназия №7, Ташкент", amount: 150, currency: "USD", date: "2024-12-01", method: "Перевод",    status: "failed",  period: "2024" },
-  { id: 5, org: "Школа №5, Ташкент",    amount: 250, currency: "USD", date: "2024-01-20", method: "Наличные",   status: "paid",    period: "2024–2025" },
-  { id: 6, org: "Школа №19, Фергана",   amount: 200, currency: "USD", date: "2024-02-10", method: "Перевод",    status: "paid",    period: "2024–2025" },
+  { id: 1, org: "Школа №5, Ташкент", amount: 250, currency: "USD", date: "2025-01-15", method: "Перевод", status: "paid", period: "2025–2026" },
+  { id: 2, org: "Школа №19, Фергана", amount: 200, currency: "USD", date: "2025-01-10", method: "Наличные", status: "paid", period: "2025–2026" },
+  { id: 3, org: "Лицей №2, Бухара", amount: 120, currency: "USD", date: "2025-02-01", method: "Перевод", status: "pending", period: "2025" },
+  { id: 4, org: "Гимназия №7, Ташкент", amount: 150, currency: "USD", date: "2024-12-01", method: "Перевод", status: "failed", period: "2024" },
+  { id: 5, org: "Школа №5, Ташкент", amount: 250, currency: "USD", date: "2024-01-20", method: "Наличные", status: "paid", period: "2024–2025" },
+  { id: 6, org: "Школа №19, Фергана", amount: 200, currency: "USD", date: "2024-02-10", method: "Перевод", status: "paid", period: "2024–2025" },
 ];
 
 const MRR_DATA = [
@@ -80,11 +81,11 @@ const MRR_DATA = [
 ];
 
 const AUDIT_LOGS = [
-  { id: 1, action: "Сброс пароля",       target: "Азиз Каримов",       time: "5 мин назад",  type: "warning" },
-  { id: 2, action: "Создана школа",       target: "Школа №19, Фергана", time: "2 часа назад", type: "success" },
-  { id: 3, action: "Аккаунт заблокирован",target: "Сардор Рашидов",    time: "1 день назад", type: "danger" },
-  { id: 4, action: "Обновлён API ключ",   target: "Gemini API",         time: "2 дня назад",  type: "info" },
-  { id: 5, action: "Лицензия продлена",   target: "Школа №5, Ташкент", time: "3 дня назад",  type: "success" },
+  { id: 1, action: "Сброс пароля", target: "Азиз Каримов", time: "5 мин назад", type: "warning" },
+  { id: 2, action: "Создана школа", target: "Школа №19, Фергана", time: "2 часа назад", type: "success" },
+  { id: 3, action: "Аккаунт заблокирован", target: "Сардор Рашидов", time: "1 день назад", type: "danger" },
+  { id: 4, action: "Обновлён API ключ", target: "Gemini API", time: "2 дня назад", type: "info" },
+  { id: 5, action: "Лицензия продлена", target: "Школа №5, Ташкент", time: "3 дня назад", type: "success" },
 ];
 
 // ─── Export Utilities ─────────────────────────────────────────────────────────
@@ -257,10 +258,10 @@ const exportPaymentsPDF = (payments: Payment[]) => {
 // ─── Reusable Sub-components ──────────────────────────────────────────────────
 const StatusBadge = ({ status }: { status: string }) => {
   const map: Record<string, { label: string; cls: string }> = {
-    active:   { label: "🟢 Активен",      cls: "bg-success/15 text-success border-0" },
-    expiring: { label: "🟡 Истекает",      cls: "bg-yellow-500/15 text-yellow-600 border-0" },
-    expired:  { label: "🔴 Истёк",         cls: "bg-destructive/15 text-destructive border-0" },
-    blocked:  { label: "⛔ Заблокирован",  cls: "bg-foreground/10 text-muted-foreground border-0" },
+    active: { label: "🟢 Активен", cls: "bg-success/15 text-success border-0" },
+    expiring: { label: "🟡 Истекает", cls: "bg-yellow-500/15 text-yellow-600 border-0" },
+    expired: { label: "🔴 Истёк", cls: "bg-destructive/15 text-destructive border-0" },
+    blocked: { label: "⛔ Заблокирован", cls: "bg-foreground/10 text-muted-foreground border-0" },
   };
   const s = map[status] ?? { label: status, cls: "" };
   return <Badge className={`font-sans rounded-full px-3 ${s.cls}`}>{s.label}</Badge>;
@@ -284,8 +285,8 @@ const MetricCard = ({
           {trend === "up"
             ? <ArrowUpRight className="w-3 h-3 text-success" />
             : trend === "down"
-            ? <ArrowDownRight className="w-3 h-3 text-destructive" />
-            : null}
+              ? <ArrowDownRight className="w-3 h-3 text-destructive" />
+              : null}
           {sub}
         </p>
       )}
@@ -319,9 +320,8 @@ const MrrChart = ({ data }: { data: typeof MRR_DATA }) => {
         <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
           <span className="text-[10px] text-muted-foreground font-sans">${d.mrr}</span>
           <div
-            className={`w-full rounded-t-lg transition-all cursor-default ${
-              i === data.length - 1 ? "bg-success" : "bg-success/40 hover:bg-success/70"
-            }`}
+            className={`w-full rounded-t-lg transition-all cursor-default ${i === data.length - 1 ? "bg-success" : "bg-success/40 hover:bg-success/70"
+              }`}
             style={{ height: `${(d.mrr / max) * 100}%` }}
           />
           <span className="text-xs text-muted-foreground font-sans">{d.month}</span>
@@ -378,10 +378,10 @@ const ExportMenu = ({
 const DashboardView = ({ teachers }: { teachers: Teacher[] }) => (
   <div className="space-y-6">
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <MetricCard icon={Users}     label="Всего учителей" value="248"     sub="+12 за месяц"   trend="up"   color="bg-primary/10 text-primary" />
-      <MetricCard icon={Building2} label="Организации"    value="34"      sub="4 истекают"                  color="bg-yellow-500/10 text-yellow-600" />
-      <MetricCard icon={Zap}       label="Токенов сегодня"value="47.2K"   sub="+18% вчера"     trend="up"   color="bg-violet-500/10 text-violet-600" />
-      <MetricCard icon={DollarSign}label="MRR"            value="$770"    sub="+24% vs прошл."  trend="up"   color="bg-success/10 text-success" />
+      <MetricCard icon={Users} label="Всего учителей" value="248" sub="+12 за месяц" trend="up" color="bg-primary/10 text-primary" />
+      <MetricCard icon={Building2} label="Организации" value="34" sub="4 истекают" color="bg-yellow-500/10 text-yellow-600" />
+      <MetricCard icon={Zap} label="Токенов сегодня" value="47.2K" sub="+18% вчера" trend="up" color="bg-violet-500/10 text-violet-600" />
+      <MetricCard icon={DollarSign} label="MRR" value="$770" sub="+24% vs прошл." trend="up" color="bg-success/10 text-success" />
     </div>
 
     <div className="grid lg:grid-cols-3 gap-6">
@@ -633,9 +633,8 @@ const OrgsView = ({ orgs }: { orgs: Org[] }) => (
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground font-sans">Истекает</p>
-                <p className={`font-bold font-sans ${
-                  org.status === "expired" ? "text-destructive" : org.status === "expiring" ? "text-yellow-600" : "text-foreground"
-                }`}>
+                <p className={`font-bold font-sans ${org.status === "expired" ? "text-destructive" : org.status === "expiring" ? "text-yellow-600" : "text-foreground"
+                  }`}>
                   {new Date(org.expires).toLocaleDateString("ru-RU")}
                 </p>
               </div>
@@ -665,14 +664,14 @@ const AiMonitorView = ({
   toggleBlock: (id: number) => void;
 }) => {
   const totalTokens = DAILY_TOKENS.reduce((s, d) => s + d.tokens, 0);
-  const totalCost   = DAILY_TOKENS.reduce((s, d) => s + d.cost, 0);
+  const totalCost = DAILY_TOKENS.reduce((s, d) => s + d.cost, 0);
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={Zap}          label="Токенов за неделю" value={totalTokens.toLocaleString()} sub="все учителя"        color="bg-violet-500/10 text-violet-600" />
-        <MetricCard icon={DollarSign}   label="Расходы за неделю" value={`$${totalCost.toFixed(2)}`}   sub="≈ $1.07/день"      color="bg-success/10 text-success" />
-        <MetricCard icon={Users}        label="Активных сессий"   value="12"                            sub="прямо сейчас"      color="bg-primary/10 text-primary" />
-        <MetricCard icon={AlertTriangle}label="Аномалий"          value="1"                             sub="Сардор Р. — 12.8K" color="bg-destructive/10 text-destructive" />
+        <MetricCard icon={Zap} label="Токенов за неделю" value={totalTokens.toLocaleString()} sub="все учителя" color="bg-violet-500/10 text-violet-600" />
+        <MetricCard icon={DollarSign} label="Расходы за неделю" value={`$${totalCost.toFixed(2)}`} sub="≈ $1.07/день" color="bg-success/10 text-success" />
+        <MetricCard icon={Users} label="Активных сессий" value="12" sub="прямо сейчас" color="bg-primary/10 text-primary" />
+        <MetricCard icon={AlertTriangle} label="Аномалий" value="1" sub="Сардор Р. — 12.8K" color="bg-destructive/10 text-destructive" />
       </div>
 
       {/* Provider Switch */}
@@ -687,11 +686,10 @@ const AiMonitorView = ({
               <button
                 key={p}
                 onClick={() => setAiProvider(p)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 transition-all font-sans text-sm font-medium ${
-                  aiProvider === p
-                    ? p === "gemini" ? "border-violet-500 bg-violet-500/10 text-violet-700" : "border-success bg-success/10 text-success"
-                    : "border-border text-muted-foreground hover:border-primary/40"
-                }`}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 transition-all font-sans text-sm font-medium ${aiProvider === p
+                  ? p === "gemini" ? "border-violet-500 bg-violet-500/10 text-violet-700" : "border-success bg-success/10 text-success"
+                  : "border-border text-muted-foreground hover:border-primary/40"
+                  }`}
               >
                 {aiProvider === p ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
                 {p === "gemini" ? "🟣 Gemini" : "🟢 OpenAI"}
@@ -768,26 +766,26 @@ const AiMonitorView = ({
 // ─── Finances View ────────────────────────────────────────────────────────────
 const FinancesView = ({ payments }: { payments: Payment[] }) => {
   const totalMRR = MRR_DATA[MRR_DATA.length - 1].mrr;
-  const prevMRR  = MRR_DATA[MRR_DATA.length - 2].mrr;
+  const prevMRR = MRR_DATA[MRR_DATA.length - 2].mrr;
   const mrrGrowth = (((totalMRR - prevMRR) / prevMRR) * 100).toFixed(1);
   const totalPaid = payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0);
   const pendingCount = payments.filter(p => p.status === "pending").length;
   const arr = totalMRR * 12;
 
   const payStatusMap: Record<string, { label: string; cls: string }> = {
-    paid:    { label: "✅ Оплачено",   cls: "bg-success/15 text-success border-0" },
-    pending: { label: "⏳ Ожидание",   cls: "bg-yellow-500/15 text-yellow-600 border-0" },
-    failed:  { label: "❌ Ошибка",     cls: "bg-destructive/15 text-destructive border-0" },
+    paid: { label: "✅ Оплачено", cls: "bg-success/15 text-success border-0" },
+    pending: { label: "⏳ Ожидание", cls: "bg-yellow-500/15 text-yellow-600 border-0" },
+    failed: { label: "❌ Ошибка", cls: "bg-destructive/15 text-destructive border-0" },
   };
 
   return (
     <div className="space-y-6">
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={TrendingUp}  label="MRR (янв)"       value={`$${totalMRR}`}      sub={`+${mrrGrowth}% vs дек`}    trend="up"   color="bg-success/10 text-success" />
-        <MetricCard icon={BarChart3}   label="ARR (прогноз)"   value={`$${arr.toLocaleString()}`} sub="× 12 от MRR"          color="bg-primary/10 text-primary" />
-        <MetricCard icon={CreditCard}  label="Получено всего"  value={`$${totalPaid}`}      sub="за все время"                            color="bg-violet-500/10 text-violet-600" />
-        <MetricCard icon={Receipt}     label="Ожидают оплаты"  value={String(pendingCount)} sub="требуют звонка"  trend={pendingCount > 0 ? "down" : undefined} color="bg-yellow-500/10 text-yellow-600" />
+        <MetricCard icon={TrendingUp} label="MRR (янв)" value={`$${totalMRR}`} sub={`+${mrrGrowth}% vs дек`} trend="up" color="bg-success/10 text-success" />
+        <MetricCard icon={BarChart3} label="ARR (прогноз)" value={`$${arr.toLocaleString()}`} sub="× 12 от MRR" color="bg-primary/10 text-primary" />
+        <MetricCard icon={CreditCard} label="Получено всего" value={`$${totalPaid}`} sub="за все время" color="bg-violet-500/10 text-violet-600" />
+        <MetricCard icon={Receipt} label="Ожидают оплаты" value={String(pendingCount)} sub="требуют звонка" trend={pendingCount > 0 ? "down" : undefined} color="bg-yellow-500/10 text-yellow-600" />
       </div>
 
       {/* MRR Chart */}
@@ -952,8 +950,8 @@ const SystemView = ({
       </div>
       <div className="space-y-3">
         {[
-          { label: "Gemini API Key",  placeholder: "AIzaSy...xxxxx",   active: aiProvider === "gemini" },
-          { label: "OpenAI API Key",  placeholder: "sk-proj-...xxxxx", active: aiProvider === "openai" },
+          { label: "Gemini API Key", placeholder: "AIzaSy...xxxxx", active: aiProvider === "gemini" },
+          { label: "OpenAI API Key", placeholder: "sk-proj-...xxxxx", active: aiProvider === "openai" },
         ].map(k => (
           <div key={k.label} className={`rounded-xl border p-4 ${k.active ? "border-primary/40 bg-primary/5" : "border-border"}`}>
             <div className="flex items-center justify-between mb-2">
@@ -1006,7 +1004,30 @@ const AdminPanel = () => {
   const [systemAlert, setSystemAlert] = useState("В субботу плановое обновление системы с 02:00 до 04:00.");
   const [alertEnabled, setAlertEnabled] = useState(true);
   const [showResetModal, setShowResetModal] = useState<number | null>(null);
-  const [teachers, setTeachers] = useState<Teacher[]>(INITIAL_TEACHERS);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await api.get("/admin/analytics");
+        const mapped: Teacher[] = res.data.map((u: any) => ({
+          id: u.user_id,
+          name: u.full_name,
+          login: u.email,
+          school: "Online",
+          status: "active",
+          lastLogin: u.last_active ? new Date(u.last_active).toLocaleString("ru-RU") : "—",
+          plan: "Pro",
+          tokenUsage: u.total_tokens,
+          ip: "—"
+        }));
+        setTeachers(mapped);
+      } catch (e) {
+        console.error("Failed to fetch analytics", e);
+      }
+    };
+    fetchData();
+  }, []);
 
   const toggleBlock = (id: number) => {
     setTeachers(prev =>
@@ -1015,12 +1036,12 @@ const AdminPanel = () => {
   };
 
   const navItems: { icon: React.ElementType; label: string; section: Section; badge?: number }[] = [
-    { icon: LayoutDashboard, label: "Дашборд",       section: "dashboard" },
-    { icon: Users,           label: "Учителя",        section: "teachers",      badge: teachers.filter(t => t.status === "expiring").length },
-    { icon: Building2,       label: "Организации",    section: "organizations" },
-    { icon: BrainCircuit,    label: "AI Мониторинг",  section: "ai-monitor" },
-    { icon: DollarSign,      label: "Финансы",         section: "finances",      badge: PAYMENTS.filter(p => p.status === "pending").length },
-    { icon: Settings,        label: "Система",         section: "system" },
+    { icon: LayoutDashboard, label: "Дашборд", section: "dashboard" },
+    { icon: Users, label: "Учителя", section: "teachers", badge: teachers.filter(t => t.status === "expiring").length },
+    { icon: Building2, label: "Организации", section: "organizations" },
+    { icon: BrainCircuit, label: "AI Мониторинг", section: "ai-monitor" },
+    { icon: DollarSign, label: "Финансы", section: "finances", badge: PAYMENTS.filter(p => p.status === "pending").length },
+    { icon: Settings, label: "Система", section: "system" },
   ];
 
   const SidebarContent = () => (
@@ -1040,11 +1061,10 @@ const AdminPanel = () => {
           <button
             key={item.section}
             onClick={() => { setActiveSection(item.section); setSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-sans font-medium transition-colors ${
-              activeSection === item.section
-                ? "bg-sidebar-primary/20 text-sidebar-primary border border-sidebar-primary/30"
-                : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-            }`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-sans font-medium transition-colors ${activeSection === item.section
+              ? "bg-sidebar-primary/20 text-sidebar-primary border border-sidebar-primary/30"
+              : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              }`}
           >
             <item.icon className="w-4 h-4 flex-shrink-0" />
             <span className="flex-1 text-left">{item.label}</span>
@@ -1074,12 +1094,12 @@ const AdminPanel = () => {
   );
 
   const sectionTitles: Record<Section, { title: string; sub: string }> = {
-    dashboard:     { title: "Дашборд",       sub: "Общая финансовая и техническая сводка" },
-    teachers:      { title: "Учителя",        sub: "Управление аккаунтами и доступом" },
-    organizations: { title: "Организации",    sub: "Школы и пакетные лицензии" },
-    "ai-monitor":  { title: "AI Мониторинг",  sub: "Контроль токенов, расходов и провайдеров" },
-    finances:      { title: "Финансы",         sub: "MRR, история платежей и выставление счётов" },
-    system:        { title: "Система",         sub: "Настройки, API ключи, объявления" },
+    dashboard: { title: "Дашборд", sub: "Общая финансовая и техническая сводка" },
+    teachers: { title: "Учителя", sub: "Управление аккаунтами и доступом" },
+    organizations: { title: "Организации", sub: "Школы и пакетные лицензии" },
+    "ai-monitor": { title: "AI Мониторинг", sub: "Контроль токенов, расходов и провайдеров" },
+    finances: { title: "Финансы", sub: "MRR, история платежей и выставление счётов" },
+    system: { title: "Система", sub: "Настройки, API ключи, объявления" },
   };
   const current = sectionTitles[activeSection];
 
@@ -1155,8 +1175,8 @@ const AdminPanel = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              {activeSection === "dashboard"     && <DashboardView teachers={teachers} />}
-              {activeSection === "teachers"      && (
+              {activeSection === "dashboard" && <DashboardView teachers={teachers} />}
+              {activeSection === "teachers" && (
                 <TeachersView
                   teachers={teachers}
                   searchQuery={searchQuery}
@@ -1167,7 +1187,7 @@ const AdminPanel = () => {
                 />
               )}
               {activeSection === "organizations" && <OrgsView orgs={ORGS} />}
-              {activeSection === "ai-monitor"    && (
+              {activeSection === "ai-monitor" && (
                 <AiMonitorView
                   teachers={teachers}
                   aiProvider={aiProvider}
@@ -1175,8 +1195,8 @@ const AdminPanel = () => {
                   toggleBlock={toggleBlock}
                 />
               )}
-              {activeSection === "finances"      && <FinancesView payments={PAYMENTS} />}
-              {activeSection === "system"        && (
+              {activeSection === "finances" && <FinancesView payments={PAYMENTS} />}
+              {activeSection === "system" && (
                 <SystemView
                   aiProvider={aiProvider}
                   systemAlert={systemAlert}

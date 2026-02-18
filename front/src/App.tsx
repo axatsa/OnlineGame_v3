@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { ClassProvider } from "./context/ClassContext";
 import { LangProvider } from "./context/LangContext";
 import Login from "./pages/Login";
@@ -27,25 +29,58 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <LangProvider>
-          <ClassProvider>
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/admin" element={<AdminPanel />} />
-              <Route path="/teacher" element={<TeacherDashboard />} />
-              <Route path="/classes" element={<ClassManager />} />
-              <Route path="/generator" element={<Generator />} />
-              <Route path="/games" element={<GamesLibrary />} />
-              <Route path="/tools" element={<Tools />} />
-              <Route path="/games/tug-of-war" element={<TugOfWar />} />
-              <Route path="/games/jeopardy" element={<Jeopardy />} />
-              <Route path="/games/memory" element={<MemoryMatrix />} />
-              <Route path="/games/scales" element={<BalanceScales />} />
-              <Route path="/games/word-search" element={<WordSearch />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ClassProvider>
-        </LangProvider>
+        <AuthProvider>
+          <LangProvider>
+            <ClassProvider>
+              <Routes>
+                <Route path="/" element={<Login />} />
+
+                {/* Admin Routes */}
+                <Route path="/admin" element={
+                  <ProtectedRoute allowedRoles={["super_admin"]}>
+                    <AdminPanel />
+                  </ProtectedRoute>
+                } />
+
+                {/* Teacher Routes */}
+                <Route path="/teacher" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <TeacherDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/classes" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <ClassManager />
+                  </ProtectedRoute>
+                } />
+                <Route path="/generator" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <Generator />
+                  </ProtectedRoute>
+                } />
+                <Route path="/games" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <GamesLibrary />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tools" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <Tools />
+                  </ProtectedRoute>
+                } />
+
+                {/* Game Routes - Also Protected for Teacher */}
+                <Route path="/games/tug-of-war" element={<ProtectedRoute allowedRoles={["teacher"]}><TugOfWar /></ProtectedRoute>} />
+                <Route path="/games/jeopardy" element={<ProtectedRoute allowedRoles={["teacher"]}><Jeopardy /></ProtectedRoute>} />
+                <Route path="/games/memory" element={<ProtectedRoute allowedRoles={["teacher"]}><MemoryMatrix /></ProtectedRoute>} />
+                <Route path="/games/scales" element={<ProtectedRoute allowedRoles={["teacher"]}><BalanceScales /></ProtectedRoute>} />
+                <Route path="/games/word-search" element={<ProtectedRoute allowedRoles={["teacher"]}><WordSearch /></ProtectedRoute>} />
+
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ClassProvider>
+          </LangProvider>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -8,10 +8,12 @@ import {
 import thompsonLogo from "@/assets/thompson-logo.png";
 import { useClass } from "@/context/ClassContext";
 import { useLang } from "@/context/LangContext";
+import { useAuth } from "@/context/AuthContext";
 import type { Lang } from "@/context/LangContext";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { classes, activeClass, setActiveClassId } = useClass();
   const { lang, setLang, t } = useLang();
   const [showClassPicker, setShowClassPicker] = useState(false);
@@ -19,8 +21,8 @@ const TeacherDashboard = () => {
 
   const navPills = [
     { key: "Generators", label: t("navGenerators") },
-    { key: "Tools",      label: t("navTools") },
-    { key: "Games",      label: t("navGames") },
+    { key: "Tools", label: t("navTools") },
+    { key: "Games", label: t("navGames") },
   ] as const;
 
   const [activeNav, setActiveNav] = useState<typeof navPills[number]["key"]>("Generators");
@@ -71,9 +73,8 @@ const TeacherDashboard = () => {
               <button
                 key={pill.key}
                 onClick={() => setActiveNav(pill.key)}
-                className={`relative px-5 py-2 text-sm font-medium font-sans rounded-full transition-colors ${
-                  activeNav === pill.key ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`relative px-5 py-2 text-sm font-medium font-sans rounded-full transition-colors ${activeNav === pill.key ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 {activeNav === pill.key && (
                   <motion.div
@@ -111,9 +112,8 @@ const TeacherDashboard = () => {
                       <button
                         key={l}
                         onClick={() => { setLang(l); setShowLangMenu(false); }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-sans transition-colors flex items-center gap-2 ${
-                          lang === l ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted text-foreground"
-                        }`}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-sans transition-colors flex items-center gap-2 ${lang === l ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted text-foreground"
+                          }`}
                       >
                         {l === "ru" ? "🇷🇺 Русский" : "🇺🇿 O'zbekcha"}
                         {lang === l && <Check className="w-3.5 h-3.5 ml-auto" />}
@@ -136,7 +136,7 @@ const TeacherDashboard = () => {
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
           <h1 className="text-4xl font-bold text-foreground mb-2">
-            {t("welcomeBack")} Ms. Thompson
+            {t("welcomeBack")} {user?.full_name || "Teacher"}
           </h1>
           <p className="text-lg text-muted-foreground font-sans">{t("dashSub")}</p>
         </motion.div>

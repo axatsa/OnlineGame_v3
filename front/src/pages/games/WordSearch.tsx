@@ -3,17 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import GameShell from "./GameShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RotateCcw, LogOut } from "lucide-react";
-
-const WORD_BANKS: Record<string, string[]> = {
-  Животные: ["КОШКА","СОБАКА","ЛИСА","ВОЛК","МЕДВЕДЬ","ЗАЯЦ","ОЛЕНЬ","ЛОСЬ"],
-  География: ["СТЕПЬ","ГОРА","БУХАРА","ХИВА","ТОШКЕНТ","АРАЛ","САМАРКАНД","ФЕРГАНА"],
-  Фрукты: ["ЯБЛОКО","ГРУША","СЛИВА","МАНГО","ЛИМОН","ДЫНЯ","ПЕРСИК","ВИНОГРАД"],
-  Animals: ["CAT","DOG","FOX","OWL","BEE","RAT","COW","HEN","APE","ELK"],
-  Fruits: ["APPLE","GRAPE","MANGO","LEMON","PEACH","BERRY","MELON","PLUM"],
-  Space: ["STAR","MOON","MARS","VENUS","ORBIT","COMET","SOLAR","ALIEN"],
-  School: ["BOOK","DESK","PENCIL","RULER","CLASS","LEARN","WRITE","STUDY"],
-};
+import { RotateCcw, LogOut, Loader2 } from "lucide-react";
+import { useClass } from "@/context/ClassContext";
+import api from "@/lib/api";
+import { toast } from "sonner";
 
 type Direction = "h" | "v" | "d";
 
@@ -22,19 +15,23 @@ const GRID_ROWS = 12;
 
 const RU_LETTERS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
 
-const generateGrid = (words: string[], difficulty: string, isRu: boolean): { grid: string[][]; placed: { word: string; cells: [number,number][] }[] } => {
+const generateGrid = (words: string[], difficulty: string, isRu: boolean): { grid: string[][]; placed: { word: string; cells: [number, number][] }[] } => {
+  // Reset grid
   const grid: string[][] = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(""));
-  const placed: { word: string; cells: [number,number][] }[] = [];
-  const dirs: Direction[] = difficulty === "Легко" || difficulty === "Easy" ? ["h"] : difficulty === "Средне" || difficulty === "Medium" ? ["h","v"] : ["h","v","d"];
+  const placed: { word: string; cells: [number, number][] }[] = [];
+  const dirs: Direction[] = difficulty === "Легко" || difficulty === "Easy" ? ["h"] : difficulty === "Средне" || difficulty === "Medium" ? ["h", "v"] : ["h", "v", "d"];
 
-  for (const word of words) {
+  // Sort words by length descending to place long words first
+  const sortedWords = [...words].sort((a, b) => b.length - a.length);
+
+  for (const word of sortedWords) {
     let tries = 0;
     while (tries < 100) {
       tries++;
       const dir = dirs[Math.floor(Math.random() * dirs.length)];
       const row = Math.floor(Math.random() * GRID_ROWS);
       const col = Math.floor(Math.random() * GRID_COLS);
-      const cells: [number,number][] = [];
+      const cells: [number, number][] = [];
       let fits = true;
       for (let i = 0; i < word.length; i++) {
         const r = dir === "h" ? row : row + i;
@@ -62,34 +59,65 @@ const generateGrid = (words: string[], difficulty: string, isRu: boolean): { gri
 };
 
 const WordSearch = () => {
-  const [status, setStatus] = useState<"setup" | "playing" | "finished">("setup");
+  const { activeClassId } = useClass();
+  const [status, setStatus] = useState<"setup" | "loading" | "playing" | "finished">("setup");
   const [topicInput, setTopicInput] = useState("");
   const [difficulty, setDifficulty] = useState("Средне");
   const [language, setLanguage] = useState<"ru" | "uz">("ru");
   const [grid, setGrid] = useState<string[][]>([]);
-  const [placedWords, setPlacedWords] = useState<{ word: string; cells: [number,number][] }[]>([]);
+  const [placedWords, setPlacedWords] = useState<{ word: string; cells: [number, number][] }[]>([]);
   const [found, setFound] = useState<Set<string>>(new Set());
-  const [selecting, setSelecting] = useState<[number,number][]>([]);
+  const [selecting, setSelecting] = useState<[number, number][]>([]);
   const [highlighted, setHighlighted] = useState<Map<string, string>>(new Map());
   const dragging = useRef(false);
 
   const HIGHLIGHT_COLORS = ["bg-blue-400/60", "bg-green-400/60", "bg-yellow-400/60", "bg-pink-400/60", "bg-purple-400/60", "bg-orange-400/60"];
   const foundColorMap = useRef<Map<string, string>>(new Map());
 
-  const startGame = () => {
-    const topic = topicInput.trim();
-    const bank = WORD_BANKS[topic] || (language === "ru" ? WORD_BANKS["География"] : WORD_BANKS["Animals"]);
-    const count = difficulty === "Легко" || difficulty === "Easy" ? 5 : difficulty === "Средне" || difficulty === "Medium" ? 8 : 10;
-    const words = bank.slice(0, count);
-    const isRu = language === "ru";
-    const { grid: g, placed } = generateGrid(words, difficulty, isRu);
-    setGrid(g);
-    setPlacedWords(placed);
-    setFound(new Set());
-    setSelecting([]);
-    setHighlighted(new Map());
-    foundColorMap.current = new Map();
-    setStatus("playing");
+  const startGame = async () => {
+    if (!topicInput.trim()) {
+      toast.error("Please enter a topic");
+      return;
+    }
+
+    setStatus("loading");
+    try {
+      const isRu = language === "ru";
+      const topicPrompt = `${topicInput} (${isRu ? "Russian" : "Uzbek"})`;
+      const count = difficulty === "Легко" || difficulty === "Easy" ? 6 : difficulty === "Средне" || difficulty === "Medium" ? 10 : 12;
+
+      const res = await api.post("/generate/crossword", {
+        topic: topicPrompt,
+        count: count,
+        class_id: activeClassId
+      });
+
+      if (!res.data.words || res.data.words.length === 0) {
+        throw new Error("No words generated");
+      }
+
+      // Clean words: uppercase, remove spaces/hyphens
+      const words = res.data.words.map((w: any) =>
+        w.word.toUpperCase().replace(/[^A-ZА-ЯЁ]/g, "")
+      ).filter((w: string) => w.length > 2 && w.length <= 10); // Sanity check length
+
+      if (words.length < 3) throw new Error("Not enough valid words generated");
+
+      const { grid: g, placed } = generateGrid(words, difficulty, isRu);
+
+      setGrid(g);
+      setPlacedWords(placed);
+      setFound(new Set());
+      setSelecting([]);
+      setHighlighted(new Map());
+      foundColorMap.current = new Map();
+      setStatus("playing");
+      toast.success("Game generated!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to generate game. Try again.");
+      setStatus("setup");
+    }
   };
 
   const cellKey = (r: number, c: number) => `${r},${c}`;
@@ -169,7 +197,7 @@ const WordSearch = () => {
               <div className="space-y-1.5">
                 <p className="text-gray-700 font-sans text-sm font-medium">Сложность</p>
                 <div className="flex gap-2">
-                  {(language === "ru" ? ["Легко","Средне","Сложно"] : ["Easy","Medium","Hard"]).map((d) => (
+                  {(language === "ru" ? ["Легко", "Средне", "Сложно"] : ["Easy", "Medium", "Hard"]).map((d) => (
                     <button key={d} onClick={() => setDifficulty(d)}
                       className={`flex-1 py-2.5 rounded-xl font-sans font-medium text-sm transition-all ${difficulty === d ? "bg-blue-600 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"}`}>
                       {d}
@@ -216,11 +244,10 @@ const WordSearch = () => {
                             onMouseEnter={() => moveSelect(r, c)}
                             onMouseUp={endSelect}
                             whileHover={{ scale: 1.05 }}
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold font-mono cursor-pointer select-none transition-colors ${
-                              hiClass ? `${hiClass} text-white shadow-sm` :
-                              sel ? "bg-yellow-300 text-yellow-900 shadow-sm" :
-                              "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-200"
-                            }`}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold font-mono cursor-pointer select-none transition-colors ${hiClass ? `${hiClass} text-white shadow-sm` :
+                                sel ? "bg-yellow-300 text-yellow-900 shadow-sm" :
+                                  "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-200"
+                              }`}
                           >
                             {letter}
                           </motion.div>
@@ -255,11 +282,10 @@ const WordSearch = () => {
                   const color = foundColorMap.current.get(word);
                   return (
                     <div key={word}
-                      className={`px-3 py-2 rounded-xl text-sm font-mono font-bold border transition-all ${
-                        isFound
+                      className={`px-3 py-2 rounded-xl text-sm font-mono font-bold border transition-all ${isFound
                           ? `line-through text-gray-400 bg-gray-50 border-gray-100`
                           : "text-gray-700 bg-white border-gray-200"
-                      }`}
+                        }`}
                     >
                       {word}
                     </div>

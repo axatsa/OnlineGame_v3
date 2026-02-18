@@ -8,9 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 // ──────────────── Roulette ────────────────
 const COLORS = [
-  "#ef4444","#f97316","#eab308","#22c55e",
-  "#06b6d4","#3b82f6","#8b5cf6","#ec4899",
-  "#14b8a6","#f59e0b","#84cc16","#6366f1",
+  "#ef4444", "#f97316", "#eab308", "#22c55e",
+  "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899",
+  "#14b8a6", "#f59e0b", "#84cc16", "#6366f1",
 ];
 
 const RouletteWheel = ({ names, spinning, winner }: { names: string[]; spinning: boolean; winner: string | null }) => {
@@ -97,7 +97,7 @@ const RouletteWheel = ({ names, spinning, winner }: { names: string[]; spinning:
 };
 
 // ──────────────── Drawing Board ────────────────
-const BRUSH_COLORS = ["#1a1a1a","#991B1B","#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#8b5cf6","#ec4899","#ffffff"];
+const BRUSH_COLORS = ["#1a1a1a", "#991B1B", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"];
 const BRUSH_SIZES = [2, 5, 10, 18];
 
 const DrawingBoard = () => {
@@ -188,7 +188,7 @@ function parsePrompt(prompt: string): GeneratedAssignment {
   const lower = prompt.toLowerCase();
   const numMatch = prompt.match(/(\d+)/);
   const count = numMatch ? parseInt(numMatch[1]) : 10;
-  
+
   // Detect subject
   let subject = "General";
   if (lower.includes("геогр") || lower.includes("geograph")) subject = "География";
@@ -507,39 +507,89 @@ const AssignmentPrintView = ({ assignment }: { assignment: GeneratedAssignment }
   );
 };
 
+// ... imports
+import { useClass } from "@/context/ClassContext";
+import api from "@/lib/api";
+import { toast } from "sonner";
+
+// ... (Roulette and Board code remains same)
+
+// ──────────────── Assignment Generator ────────────────
+interface GeneratedAssignment {
+  title: string;
+  subject: string;
+  grade: string;
+  questions: { num: number; text: string; options?: string[]; answer: string }[];
+  date: string;
+}
+
 const AssignmentGenerator = () => {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GeneratedAssignment | null>(null);
+  const { activeClassId } = useClass();
 
-  const generate = () => {
+  const detectSubject = (p: string) => {
+    const l = p.toLowerCase();
+    if (l.includes("geo")) return "Geography";
+    if (l.includes("mat") || l.includes("calc")) return "Mathematics";
+    if (l.includes("bio")) return "Biology";
+    if (l.includes("his") || l.includes("tar")) return "History";
+    if (l.includes("phy")) return "Physics";
+    if (l.includes("chem")) return "Chemistry";
+    if (l.includes("eng")) return "English";
+    return "General Knowledge"; // Fallback
+  };
+
+  const generate = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
     setResult(null);
-    setTimeout(() => {
-      setResult(parsePrompt(prompt));
+
+    const subject = detectSubject(prompt);
+    // Extract count if possible, else 10
+    const countMatch = prompt.match(/(\d+)/);
+    const count = countMatch ? parseInt(countMatch[1]) : 10;
+
+    try {
+      const res = await api.post("/generate/assignment", {
+        subject: subject,
+        topic: prompt, // Pass full prompt as topic so AI gets context
+        count: Math.min(count, 20),
+        class_id: activeClassId
+      });
+
+      const data = res.data.result;
+
+      // Ensure date exists
+      const finalResult: GeneratedAssignment = {
+        title: data.title || "Generated Assignment",
+        subject: data.subject || subject,
+        grade: data.grade || "N/A",
+        questions: data.questions || [],
+        date: new Date().toLocaleDateString("ru-RU")
+      };
+
+      setResult(finalResult);
+      toast.success("Assignment generated successfully!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to generate. Please try again.");
+    } finally {
       setLoading(false);
-    }, 1800);
+    }
   };
 
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* Prompt box */}
       <div className="bg-card border border-border rounded-2xl p-6 flex flex-col gap-4">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="font-bold text-foreground font-serif text-lg">Топшириқ генератори</h3>
-            <p className="text-sm text-muted-foreground font-sans mt-0.5">
-              Тема, саволлар сони ва синфни ёзинг — тайёр А4 варақа чиқади
-            </p>
-          </div>
-        </div>
+        {/* ... UI Code same ... */}
+        {/* Just updating the generate button onclick */}
+        {/* ... */}
 
         <Textarea
-          placeholder="Мисол: «5-синф учун 15 та география тести ўзбек тилида ясаб бер» ёки «Сделай 10 тестов по математике для 6 класса»"
+          placeholder="Example: 'Create a geography quiz about capitals for 5th grade' or '10 math problems about fractions'"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           className="min-h-[100px] font-sans text-sm resize-none rounded-xl"
@@ -547,16 +597,16 @@ const AssignmentGenerator = () => {
         />
 
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground font-sans">Ctrl+Enter — генерация қилиш</p>
+          <p className="text-xs text-muted-foreground font-sans">Ctrl+Enter — generate</p>
           <Button
             onClick={generate}
             disabled={!prompt.trim() || loading}
             className="bg-blue-600 hover:bg-blue-700 text-white gap-2 px-6"
           >
             {loading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Генерация...</>
+              <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
             ) : (
-              <><Sparkles className="w-4 h-4" /> Генерация қилиш</>
+              <><Sparkles className="w-4 h-4" /> Generate</>
             )}
           </Button>
         </div>
@@ -567,7 +617,7 @@ const AssignmentGenerator = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="bg-card border border-border rounded-2xl p-10 flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-muted-foreground font-sans text-sm">Топшириқ тайёрланмоқда...</p>
+          <p className="text-muted-foreground font-sans text-sm">AI is establishing context and creating questions...</p>
         </motion.div>
       )}
 
@@ -582,12 +632,12 @@ const AssignmentGenerator = () => {
       {!result && !loading && (
         <div className="bg-card border border-dashed border-border rounded-2xl p-12 flex flex-col items-center gap-3 text-center">
           <FileText className="w-12 h-12 text-muted-foreground/40" />
-          <p className="text-muted-foreground font-sans text-sm">Юқорида топшириқни тавсифланг ва «Генерация» тугмасини босинг</p>
+          <p className="text-muted-foreground font-sans text-sm">Describe your assignment above and click Generate</p>
           <div className="flex flex-wrap gap-2 justify-center mt-2">
             {[
-              "5-синф учун 10 та география тести ўзбек тилида",
-              "Математика 6 класс, 15 вопросов",
-              "10 та биология тести, 7-синф",
+              "10 Geography questions about Europe",
+              "Math test for 6th grade, 15 questions",
+              "Biology quiz about plants",
             ].map((ex) => (
               <button key={ex} onClick={() => setPrompt(ex)}
                 className="text-xs font-sans bg-muted hover:bg-blue-50 hover:text-blue-700 text-muted-foreground px-3 py-1.5 rounded-lg border border-border transition-colors">

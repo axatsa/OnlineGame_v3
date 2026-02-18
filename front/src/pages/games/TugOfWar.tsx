@@ -5,43 +5,59 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import tugOfWarImg from "@/assets/tug-of-war-characters.png";
+import { useClass } from "@/context/ClassContext";
+import api from "@/lib/api";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
-const MOCK_QUESTIONS: { q: string; options: string[]; a: string }[] = [
-  { q: "Какое слово является глаголом?", options: ["Читать", "Красный", "Стол", "Друг"], a: "Читать" },
-  { q: "Слово «быстро» — это:", options: ["Глагол", "Прилагательное", "Наречие", "Существительное"], a: "Наречие" },
-  { q: "12 + 7 = ?", options: ["17", "18", "19", "20"], a: "19" },
-  { q: "9 × 6 = ?", options: ["54", "56", "52", "48"], a: "54" },
-  { q: "Столица Франции?", options: ["Берлин", "Мадрид", "Лондон", "Париж"], a: "Париж" },
-  { q: "√144 = ?", options: ["11", "12", "13", "14"], a: "12" },
-  { q: "3 × 8 = ?", options: ["21", "22", "24", "26"], a: "24" },
-  { q: "50 - 27 = ?", options: ["23", "22", "24", "21"], a: "23" },
-];
-
-type GameStatus = "setup" | "playing" | "finished";
+type GameStatus = "setup" | "loading" | "playing" | "finished";
 
 const LABELS = ["A", "B", "C", "D"];
 
 const TugOfWar = () => {
+  const { activeClassId } = useClass();
   const [status, setStatus] = useState<GameStatus>("setup");
   const [topic, setTopic] = useState("");
-  const [questions] = useState(MOCK_QUESTIONS);
+  const [questions, setQuestions] = useState<{ q: string; options: string[]; a: string }[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [position, setPosition] = useState(0); // -5 to +5, negative = blue (team1) wins
   const [blueScore, setBlueScore] = useState(0);
   const [redScore, setRedScore] = useState(0);
   const [feedback, setFeedback] = useState<{ team: "blue" | "red"; correct: boolean } | null>(null);
   const [activeTeam, setActiveTeam] = useState<"blue" | "red">("blue");
-  const [team1Name, setTeam1Name] = useState("1-Jamoa");
-  const [team2Name, setTeam2Name] = useState("2-Jamoa");
+  const [team1Name, setTeam1Name] = useState("Team 1");
+  const [team2Name, setTeam2Name] = useState("Team 2");
 
-  const startGame = () => {
-    setCurrentQ(0);
-    setPosition(0);
-    setBlueScore(0);
-    setRedScore(0);
-    setActiveTeam("blue");
-    setFeedback(null);
-    setStatus("playing");
+  const startGame = async () => {
+    const searchTopic = topic.trim() || "General Knowledge";
+
+    setStatus("loading");
+    try {
+      const res = await api.post("/generate/quiz", {
+        topic: searchTopic,
+        count: 20, // Enough for a long game
+        class_id: activeClassId
+      });
+
+      if (!res.data.questions || res.data.questions.length === 0) {
+        throw new Error("No questions generated");
+      }
+
+      setQuestions(res.data.questions);
+
+      setCurrentQ(0);
+      setPosition(0);
+      setBlueScore(0);
+      setRedScore(0);
+      setActiveTeam("blue");
+      setFeedback(null);
+      setStatus("playing");
+      toast.success("Battle prepared!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to prepare battle. Try again.");
+      setStatus("setup");
+    }
   };
 
   const selectAnswer = (option: string) => {
@@ -112,6 +128,15 @@ const TugOfWar = () => {
           </motion.div>
         )}
 
+        {status === "loading" && (
+          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center h-full gap-4 bg-white"
+          >
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+            <p className="text-gray-500 font-sans text-lg">Preparing the battle...</p>
+          </motion.div>
+        )}
+
         {status === "playing" && q && (
           <motion.div key="playing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="flex h-full bg-gray-50"
@@ -137,17 +162,15 @@ const TugOfWar = () => {
                           disabled={!!feedback}
                           whileHover={!feedback ? { scale: 1.02 } : {}}
                           whileTap={!feedback ? { scale: 0.98 } : {}}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${
-                            isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
                             isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
-                            "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 text-gray-700"
-                          }`}
+                              "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 text-gray-700"
+                            }`}
                         >
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                            isFeedback && isCorrect ? "bg-green-400 text-white" :
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
                             isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
-                            "bg-blue-100 text-blue-600"
-                          }`}>{LABELS[i]}</span>
+                              "bg-blue-100 text-blue-600"
+                            }`}>{LABELS[i]}</span>
                           {opt}
                         </motion.button>
                       );
@@ -218,9 +241,8 @@ const TugOfWar = () => {
               </AnimatePresence>
 
               {/* Turn indicator */}
-              <div className={`px-5 py-2 rounded-full text-sm font-semibold font-sans shadow-sm ${
-                activeTeam === "blue" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
-              }`}>
+              <div className={`px-5 py-2 rounded-full text-sm font-semibold font-sans shadow-sm ${activeTeam === "blue" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
+                }`}>
                 {activeTeam === "blue" ? `🔵 Ход команды ${team1Name}` : `🔴 Ход команды ${team2Name}`}
               </div>
             </div>
@@ -244,17 +266,15 @@ const TugOfWar = () => {
                           disabled={!!feedback}
                           whileHover={!feedback ? { scale: 1.02 } : {}}
                           whileTap={!feedback ? { scale: 0.98 } : {}}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${
-                            isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
                             isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
-                            "border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 text-gray-700"
-                          }`}
+                              "border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 text-gray-700"
+                            }`}
                         >
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                            isFeedback && isCorrect ? "bg-green-400 text-white" :
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
                             isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
-                            "bg-red-100 text-red-600"
-                          }`}>{LABELS[i]}</span>
+                              "bg-red-100 text-red-600"
+                            }`}>{LABELS[i]}</span>
                           {opt}
                         </motion.button>
                       );

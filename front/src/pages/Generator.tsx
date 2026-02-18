@@ -89,7 +89,8 @@ const Generator = () => {
         const payload = {
           topic: crosswordTopic,
           word_count: parseInt(wordCount) || 10,
-          language: language
+          language: language,
+          class_id: activeClassId
         };
         const res = await api.post("/generate/crossword", payload);
         setGeneratedWords(res.data.words);

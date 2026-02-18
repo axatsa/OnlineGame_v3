@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GraduationCap } from "lucide-react";
 import { useLang } from "@/context/LangContext";
+import { useAuth } from "@/context/AuthContext";
 import type { Lang } from "@/context/LangContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 const Login = () => {
   const navigate = useNavigate();
   const { lang, setLang, t } = useLang();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,9 +23,9 @@ const Login = () => {
     setIsLoading(true);
     try {
       const res = await api.post("/auth/login", { email, password });
-      localStorage.setItem("token", res.data.access_token);
       toast.success("Login successful!");
-      navigate("/teacher");
+      // Use context login to set state and redirect
+      login(res.data.access_token, res.data.user);
     } catch (error) {
       toast.error("Invalid credentials. Try generic 'teacher@school.edu' / 'password'");
       console.error(error);
@@ -92,8 +94,8 @@ const Login = () => {
                   key={l}
                   onClick={() => setLang(l)}
                   className={`px-4 py-1.5 rounded-full text-sm font-semibold font-sans transition-colors ${lang === l
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                     }`}
                 >
                   {l === "ru" ? "🇷🇺 RU" : "🇺🇿 UZ"}

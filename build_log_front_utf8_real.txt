@@ -1,0 +1,132 @@
+﻿docker : time="2026-02-18T09:36:54+05:00" level=warning 
+msg="C:\\Users\\Asus\\Desktop\\online games v3\\docker-compose.prod.yml: 
+the attribute `version` is obsolete, it will be ignored, please remove it 
+to avoid potential confusion"
+At line:1 char:1
++ docker compose -f docker-compose.prod.yml build frontend > build_log_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (time="2026-02-1...tial confus 
+   ion":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.03kB done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 658B done
+#2 WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
+#2 DONE 0.1s
+
+#3 [internal] load metadata for docker.io/library/node:18-alpine
+#3 DONE 1.3s
+
+#4 [internal] load metadata for docker.io/library/nginx:alpine
+#4 DONE 1.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 84B done
+#5 DONE 0.1s
+
+#6 [internal] load build context
+#6 transferring context: 5.15kB 0.0s done
+#6 DONE 0.2s
+
+#7 [stage-1 1/3] FROM docker.io/library/nginx:alpine@sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba
+#7 resolve docker.io/library/nginx:alpine@sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba
+#7 resolve docker.io/library/nginx:alpine@sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba 0.3s done
+#7 CACHED
+
+#8 [build 1/6] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+#8 resolve docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e 0.3s done
+#8 DONE 0.4s
+
+#9 [build 2/6] WORKDIR /app
+#9 CACHED
+
+#10 [build 3/6] COPY package.json package-lock.json ./
+#10 CACHED
+
+#11 [build 4/6] RUN npm ci
+#11 3.332 npm error code EUSAGE
+#11 3.333 npm error
+#11 3.333 npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+#11 3.333 npm error
+#11 3.333 npm error Missing: @testing-library/dom@10.4.1 from lock file
+#11 3.333 npm error Missing: @babel/code-frame@7.29.0 from lock file
+#11 3.333 npm error Missing: @types/aria-query@5.0.4 from lock file
+#11 3.333 npm error Missing: aria-query@5.3.0 from lock file
+#11 3.333 npm error Missing: dom-accessibility-api@0.5.16 from lock file
+#11 3.333 npm error Missing: lz-string@1.5.0 from lock file
+#11 3.333 npm error Missing: pretty-format@27.5.1 from lock file
+#11 3.333 npm error Missing: @babel/helper-validator-identifier@7.28.5 from lock file
+#11 3.333 npm error Invalid: lock file's picomatch@2.3.1 does not satisfy picomatch@4.0.3
+#11 3.333 npm error Missing: picomatch@2.3.1 from lock file
+#11 3.333 npm error Missing: picomatch@2.3.1 from lock file
+#11 3.333 npm error Missing: ansi-regex@5.0.1 from lock file
+#11 3.333 npm error Missing: ansi-styles@5.2.0 from lock file
+#11 3.333 npm error Missing: react-is@17.0.2 from lock file
+#11 3.333 npm error Missing: picomatch@2.3.1 from lock file
+#11 3.333 npm error Missing: dequal@2.0.3 from lock file
+#11 3.333 npm error
+#11 3.333 npm error Clean install a project
+#11 3.333 npm error
+#11 3.333 npm error Usage:
+#11 3.333 npm error npm ci
+#11 3.333 npm error
+#11 3.333 npm error Options:
+#11 3.333 npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+#11 3.333 npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+#11 3.333 npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+#11 3.333 npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+#11 3.333 npm error [--no-bin-links] [--no-fund] [--dry-run]
+#11 3.333 npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+#11 3.333 npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
+#11 3.333 npm error
+#11 3.333 npm error aliases: clean-install, ic, install-clean, isntall-clean
+#11 3.333 npm error
+#11 3.333 npm error Run "npm help ci" for more info
+#11 3.339 npm notice
+#11 3.339 npm notice New major version of npm available! 10.8.2 -> 11.10.0
+#11 3.339 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.10.0
+#11 3.339 npm notice To update run: npm install -g npm@11.10.0
+#11 3.339 npm notice
+#11 3.340 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-02-18T04_36_58_091Z-debug-0.log
+#11 ERROR: process "/bin/sh -c npm ci" did not complete successfully: exit code: 1
+------
+ > [build 4/6] RUN npm ci:
+3.333 npm error
+3.333 npm error aliases: clean-install, ic, install-clean, isntall-clean
+3.333 npm error
+3.333 npm error Run "npm help ci" for more info
+3.339 npm notice
+3.339 npm notice New major version of npm available! 10.8.2 -> 11.10.0
+3.339 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.10.0
+3.339 npm notice To update run: npm install -g npm@11.10.0
+3.339 npm notice
+3.340 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-02-18T04_36_58_091Z-debug-0.log
+------
+Dockerfile:8
+
+--------------------
+
+   6 |     # Copy package files and install dependencies
+
+   7 |     COPY package.json package-lock.json ./
+
+   8 | >>> RUN npm ci
+
+   9 |     
+
+  10 |     # Copy the rest of the application code
+
+--------------------
+
+failed to solve: process "/bin/sh -c npm ci" did not complete 
+successfully: exit code: 1
+
+
+
+View build details: 
+docker-desktop://dashboard/build/default/default/uobm98of8lgnupahnru9xzdws
+

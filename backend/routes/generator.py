@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..database import get_db
-from ..models import ClassGroup
-from ..schemas import MathRequest, CrosswordRequest
-from ..services.openai_service import generate_math_problems, generate_crossword_words
+from database import get_db
+from models import ClassGroup
+from schemas import MathRequest, CrosswordRequest
+from services.openai_service import generate_math_problems, generate_crossword_words
 
 router = APIRouter(prefix="/api/generate", tags=["generator"])
 

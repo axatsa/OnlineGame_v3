@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from ..database import get_db
-from ..models import User
-from ..schemas import UserLogin, Token
-from ..config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from database import get_db
+from models import User
+from schemas import UserLogin, Token
+from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta, datetime
 from jose import jwt
 from passlib.context import CryptContext

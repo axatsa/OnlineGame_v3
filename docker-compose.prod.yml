@@ -38,7 +38,7 @@ services:
     container_name: online_games_frontend_prod
     restart: always
     ports:
-      - "80:80"
+      - "8090:80"
     depends_on:
       - backend
     networks:

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,15 @@ import { toast } from "sonner";
 const Login = () => {
   const navigate = useNavigate();
   const { lang, setLang, t } = useLang();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === "super_admin") navigate("/admin");
+      else navigate("/teacher");
+    }
+  }, [user, navigate]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);

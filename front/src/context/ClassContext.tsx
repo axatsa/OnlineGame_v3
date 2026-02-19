@@ -36,7 +36,7 @@ export function ClassProvider({ children }: { children: ReactNode }) {
   const { data: classes = [], isLoading } = useQuery({
     queryKey: ["classes"],
     queryFn: async () => {
-      const res = await api.get("/classes");
+      const res = await api.get("/classes/");
       return res.data.map((c: any) => ({
         ...c,
         studentCount: c.student_count, // Map snake_case to camelCase
@@ -64,7 +64,7 @@ export function ClassProvider({ children }: { children: ReactNode }) {
         student_count: cls.studentCount,
         description: cls.description
       };
-      return await api.post("/classes", payload);
+      return await api.post("/classes/", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["classes"] });

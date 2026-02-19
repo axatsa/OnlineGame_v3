@@ -1159,9 +1159,9 @@ const AdminPanel = () => {
               <Cpu className="w-3.5 h-3.5" />
               {aiProvider === "gemini" ? "Gemini" : "OpenAI"} • Онлайн
             </div>
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors">
               <Shield className="w-4 h-4 text-primary-foreground" />
-            </div>
+            </button>
           </div>
         </header>
 

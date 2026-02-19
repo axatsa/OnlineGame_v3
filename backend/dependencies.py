@@ -18,12 +18,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
+            print("Auth Error: Email missing in token")
             raise credentials_exception
-    except JWTError:
+    except JWTError as e:
+        print(f"Auth Error: JWT Decode validation failed: {str(e)}")
         raise credentials_exception
     
     user = db.query(User).filter(User.email == email).first()
     if user is None:
+        print(f"Auth Error: User not found for email {email}")
         raise credentials_exception
     return user
 

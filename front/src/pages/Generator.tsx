@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, Settings2 } from "lucide-react";
+import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, Settings2, ChevronDown, Check, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import thompsonLogo from "@/assets/thompson-logo.png";
 import { useClass } from "@/context/ClassContext";
-import api from "@/lib/api"; // Import API
+import api from "@/lib/api";
 import { toast } from "sonner";
+import { generateCrosswordLayout, CrosswordGrid } from "@/lib/crossword";
 
 type GeneratorType = "math" | "crossword";
 const difficulties = ["Easy", "Medium", "Hard"];
@@ -53,7 +54,8 @@ const SegmentedControl = ({
 
 const Generator = () => {
   const navigate = useNavigate();
-  const { activeClass, activeClassId } = useClass();
+  const { activeClass, activeClassId, classes, setActiveClassId } = useClass();
+  const [showClassPicker, setShowClassPicker] = useState(false);
   const [genType, setGenType] = useState<GeneratorType>("math");
 
   // Math fields
@@ -69,11 +71,14 @@ const Generator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [generatedProblems, setGeneratedProblems] = useState<string[]>([]);
-  const [generatedWords, setGeneratedWords] = useState<string[]>([]);
+
+  // Crossword state
+  const [crosswordData, setCrosswordData] = useState<CrosswordGrid | null>(null);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     setGenerated(false);
+    setCrosswordData(null);
 
     try {
       if (genType === "math") {
@@ -93,13 +98,20 @@ const Generator = () => {
           class_id: activeClassId
         };
         const res = await api.post("/generate/crossword", payload);
-        setGeneratedWords(res.data.words);
+        // Backend returns { words: [{word, clue}, ...] }
+        // We need to generate the layout
+        const layout = generateCrosswordLayout(res.data.words);
+        if (!layout) {
+          toast.error("Could not arrange words into a crossword. Try again or fewer words.");
+          return; // Don't set generated true
+        }
+        setCrosswordData(layout);
       }
       setGenerated(true);
       toast.success("Content generated successfully!");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to generate content. Check API connection or Token.");
+      toast.error("Failed to generate content. Check API connection.");
     } finally {
       setIsGenerating(false);
     }
@@ -135,27 +147,85 @@ const Generator = () => {
             </div>
           </div>
 
-          {/* Active class context banner */}
-          {activeClass ? (
-            <div className="mb-4 rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 flex items-start gap-2.5">
-              <GraduationCap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-primary font-sans">{activeClass.name} · Grade {activeClass.grade}</p>
-                {activeClass.description && (
-                  <p className="text-xs text-muted-foreground font-sans mt-0.5 line-clamp-2">{activeClass.description}</p>
-                )}
-              </div>
-              <button onClick={() => navigate("/classes")} className="text-muted-foreground hover:text-primary transition-colors shrink-0">
-                <Settings2 className="w-3.5 h-3.5" />
+          {/* Active Class Selector */}
+          <div className="mb-6 relative">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">Target Class</Label>
+            {classes.length > 0 ? (
+              <>
+                <button
+                  onClick={() => setShowClassPicker(!showClassPicker)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <GraduationCap className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {activeClass ? (
+                        <>
+                          <p className="text-sm font-semibold text-foreground font-sans truncate">{activeClass.name}</p>
+                          <p className="text-xs text-muted-foreground font-sans truncate">Grade {activeClass.grade} • {activeClass.studentCount} Students</p>
+                        </>
+                      ) : (
+                        <p className="text-sm font-medium text-muted-foreground font-sans">Select a class...</p>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showClassPicker ? "rotate-180" : ""}`} />
+                </button>
+
+                <AnimatePresence>
+                  {showClassPicker && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 5 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-xl shadow-xl z-50 overflow-hidden max-h-[300px] overflow-y-auto"
+                    >
+                      {classes.map((cls) => (
+                        <button
+                          key={cls.id}
+                          onClick={() => { setActiveClassId(cls.id); setShowClassPicker(false); }}
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted transition-colors text-left border-b border-border/50 last:border-0"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-foreground font-sans">{cls.name}</p>
+                            <p className="text-xs text-muted-foreground font-sans">Grade {cls.grade}</p>
+                          </div>
+                          {cls.id === activeClassId && <Check className="w-4 h-4 text-primary" />}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => { setShowClassPicker(false); navigate("/classes"); }}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-xs text-primary font-semibold font-sans hover:bg-muted transition-colors border-t border-border bg-muted/30"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Create New Class
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              <button
+                onClick={() => navigate("/classes")}
+                className="w-full rounded-xl border border-dashed border-border px-4 py-4 text-sm text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors font-sans flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add your first class
               </button>
+            )}
+          </div>
+
+          {/* Context Info */}
+          {activeClass?.description && (
+            <div className="mb-6 px-4 py-3 bg-primary/5 rounded-xl border border-primary/10">
+              <div className="flex items-start gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5" />
+                <p className="text-xs text-primary/80 font-sans leading-relaxed">
+                  <span className="font-semibold text-primary">Context:</span> {activeClass.description}
+                </p>
+              </div>
             </div>
-          ) : (
-            <button
-              onClick={() => navigate("/classes")}
-              className="mb-4 w-full rounded-xl border border-dashed border-border px-4 py-3 text-xs text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors font-sans text-left"
-            >
-              + Set up a class for personalised AI generation
-            </button>
           )}
 
           {/* Type Switcher */}
@@ -211,7 +281,6 @@ const Generator = () => {
                     onChange={(e) => setMathTopic(e.target.value)}
                     className="h-11 rounded-xl font-sans"
                   />
-                  <p className="text-xs text-muted-foreground font-sans">AI will use your class personalization + topic to generate tasks</p>
                 </div>
 
                 <div className="space-y-2">
@@ -251,7 +320,6 @@ const Generator = () => {
                     onChange={(e) => setCrosswordTopic(e.target.value)}
                     className="h-11 rounded-xl font-sans"
                   />
-                  <p className="text-xs text-muted-foreground font-sans">AI will generate words related to this topic</p>
                 </div>
 
                 <div className="space-y-2">
@@ -259,12 +327,13 @@ const Generator = () => {
                   <Input
                     type="number"
                     min="3"
-                    max="20"
+                    max="15"
                     placeholder="10"
                     value={wordCount}
                     onChange={(e) => setWordCount(e.target.value)}
                     className="h-11 rounded-xl font-sans"
                   />
+                  <p className="text-xs text-muted-foreground font-sans">Wait ~10-20s for generation.</p>
                 </div>
 
                 <SegmentedControl
@@ -314,7 +383,7 @@ const Generator = () => {
               className="flex flex-col items-center gap-4"
             >
               <Loader2 className="w-12 h-12 text-primary animate-spin" />
-              <p className="text-muted-foreground font-sans">AI is generating your {genType === "math" ? "worksheet" : "crossword"}...</p>
+              <p className="text-muted-foreground font-sans">AI is generating your content...</p>
             </motion.div>
           )}
 
@@ -323,8 +392,6 @@ const Generator = () => {
               key="math-paper"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.4 }}
               className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto"
               style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
             >
@@ -337,32 +404,20 @@ const Generator = () => {
                   <span className="text-xs text-gray-500 font-sans">{difficulty} • {mathTopic}</span>
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 text-center mb-1 font-serif">Mathematics Worksheet</h3>
-                <p className="text-xs text-gray-500 text-center mb-1 font-sans">Topic: {mathTopic}</p>
-                <p className="text-xs text-gray-400 text-center mb-6 font-sans">Name: _________________ Date: _____________</p>
-                <div className="space-y-3 flex-1">
+                <div className="space-y-3 flex-1 mt-6">
                   {generatedProblems.map((problem, i) => (
-                    <motion.p
-                      key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.04 * i }}
-                      className="text-sm text-gray-800 font-mono py-1 border-b border-gray-100"
-                    >
-                      {problem}
-                    </motion.p>
+                    <div key={i} className="text-sm text-gray-800 font-mono py-1 border-b border-gray-100">{problem}</div>
                   ))}
                 </div>
               </div>
             </motion.div>
           )}
 
-          {generated && !isGenerating && genType === "crossword" && (
+          {generated && !isGenerating && genType === "crossword" && crosswordData && (
             <motion.div
               key="crossword-paper"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.4 }}
               className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto"
               style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
             >
@@ -374,31 +429,56 @@ const Generator = () => {
                   </div>
                   <span className="text-xs text-gray-500 font-sans">{language} • {crosswordTopic}</span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 text-center mb-1 font-serif">Crossword Puzzle</h3>
-                <p className="text-xs text-gray-500 text-center mb-1 font-sans">Topic: {crosswordTopic}</p>
-                <p className="text-xs text-gray-400 text-center mb-6 font-sans">Name: _________________ Date: _____________</p>
+                <h3 className="text-lg font-bold text-gray-900 text-center mb-6 font-serif">Crossword Puzzle</h3>
 
-                {/* Crossword Grid Placeholder */}
-                <div className="mb-6 flex justify-center">
-                  <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${Math.min(generatedWords.length + 3, 10)}, 1fr)` }}>
-                    {/* Just visual noise for preview */}
-                    {Array.from({ length: (Math.min(generatedWords.length + 3, 10)) * 8 }).map((_, i) => (
-                      <div key={i} className="w-6 h-6 border border-gray-300 flex items-center justify-center text-xs font-mono text-gray-700 bg-white">
-                        {Math.random() > 0.7 ? String.fromCharCode(65 + Math.floor(Math.random() * 26)) : ""}
-                      </div>
+                {/* Grid */}
+                <div className="flex justify-center mb-8">
+                  <div className="inline-grid gap-px bg-gray-900 border-2 border-gray-900 p-px"
+                    style={{
+                      gridTemplateColumns: `repeat(${crosswordData.width}, 1.5rem)`,
+                      gridTemplateRows: `repeat(${crosswordData.height}, 1.5rem)`
+                    }}>
+                    {crosswordData.grid.map((row, r) => (
+                      row.map((cell, c) => {
+                        // Find if this cell has a number
+                        const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
+                        return (
+                          <div key={`${r}-${c}`} className={`w-6 h-6 relative flex items-center justify-center text-xs font-bold ${cell ? "bg-white" : "bg-gray-300"}`}>
+                            {/* White square if cell has letter, else black/gray */}
+                            {cell ? (
+                              <>
+                                {/* Number */}
+                                {wordStart && (
+                                  <span className="absolute top-0.5 left-0.5 text-[6px] leading-none">{wordStart.number}</span>
+                                )}
+                                {/* Letter (hidden for print, but shown for preview?) - Let's show empty for worksheet! */}
+                                {/* <span className="opacity-20">{cell}</span> */}
+                              </>
+                            ) : ""}
+                          </div>
+                        );
+                      })
                     ))}
                   </div>
                 </div>
 
-                {/* Word list */}
-                <div>
-                  <p className="text-xs font-bold text-gray-700 mb-2 font-sans uppercase tracking-wider">Words to find:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {generatedWords.map((word, i) => (
-                      <span key={i} className="text-xs font-mono bg-gray-100 px-2 py-1 rounded border border-gray-200">
-                        {i + 1}. {word}
-                      </span>
-                    ))}
+                {/* Clues */}
+                <div className="grid grid-cols-2 gap-4 text-[10px] font-sans">
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-2 uppercase">Across</h4>
+                    <ul className="space-y-1 list-none">
+                      {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
+                        <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-2 uppercase">Down</h4>
+                    <ul className="space-y-1 list-none">
+                      {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
+                        <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
               </div>
@@ -422,26 +502,6 @@ const Generator = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Floating Toolbar */}
-        {generated && !isGenerating && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card border border-border rounded-full shadow-lg px-2 py-1.5"
-          >
-            <button className="p-3 rounded-full hover:bg-muted transition-colors" title="Print">
-              <Printer className="w-5 h-5 text-foreground" />
-            </button>
-            <button className="p-3 rounded-full hover:bg-muted transition-colors" title="Download">
-              <Download className="w-5 h-5 text-foreground" />
-            </button>
-            <button className="p-3 rounded-full hover:bg-muted transition-colors" title="Edit">
-              <Pencil className="w-5 h-5 text-foreground" />
-            </button>
-          </motion.div>
-        )}
       </div>
     </div>
   );

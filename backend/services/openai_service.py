@@ -45,38 +45,19 @@ def generate_math_problems(topic: str, count: int, difficulty: str, grade: str =
         {"role": "user", "content": user_prompt}
     ])
 
-def generate_crossword_words(topic: str, count: int, language: str, grade: str = "", context: str = "") -> Tuple[List[str], int]:
+def generate_crossword_words(topic: str, count: int, language: str, grade: str = "", context: str = "") -> Tuple[List[Dict[str, str]], int]:
     user_prompt = f"""
     Generate {count} words and simple clues related to the topic "{topic}" in {language}.
     Grade Level: {grade}
     Class Context: {context}
     
     Return ONLY a JSON array of objects with 'word' and 'clue' properties.
+    The 'word' should be in UPPERCASE.
     Example: [{{"word": "APPLE", "clue": "A red fruit"}}]
-    """
-    # For compatibility with frontend that expects just strings, we might need adjustments, 
-    # but let's return objects to make it better (Teacher Logic 5/5) and fix frontend later.
-    # Actually, current frontend expects strings for simple implementation, 
-    # let's stick to simple strings for this function to avoid breaking `Generator.tsx` immediately,
-    # OR upgrade `Generator.tsx`.
-    # Let's return JUST WORDS for now to be safe, or upgrade frontend. 
-    # The user wanted "Logic 5/5". A crossword needs clues. 
-    # I will stick to returning strings for THIS specific function to match `Generator.tsx` expectation 
-    # or I can update `Generator.tsx` to handle objects.
-    # Let's return strings for now to ensure backwards compatibility with the current `Generator.tsx`
-    # which just sets `generatedWords`.
-    
-    user_prompt_simple = f"""
-    Generate {count} words related to the topic "{topic}" in {language}.
-    Grade Level: {grade}
-    Class Context: {context}
-    
-    Return ONLY a JSON array of strings (uppercase).
-    Example: ["APPLE", "BANANA"]
     """
     return _get_completion([
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_prompt_simple}
+        {"role": "user", "content": user_prompt}
     ])
 
 def generate_quiz(topic: str, count: int, grade: str = "", context: str = "") -> Tuple[List[Dict], int]:

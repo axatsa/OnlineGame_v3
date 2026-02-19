@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
-from schemas import UserLogin, Token
+from schemas import UserLogin, Token, ChangePasswordRequest
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta, datetime
+from dependencies import get_current_user
 from jose import jwt
 from passlib.context import CryptContext
 
@@ -36,3 +37,19 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": user
     }
+
+@router.put("/change-password")
+def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    # Verify old password
+    if not pwd_context.verify(req.old_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect old password"
+        )
+    
+    # Hash new password
+    hashed_password = pwd_context.hash(req.new_password)
+    user.hashed_password = hashed_password
+    db.commit()
+    
+    return {"message": "Password updated successfully"}

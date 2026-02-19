@@ -31,8 +31,8 @@ export interface Game {
 export const mockGames: Game[] = [
   {
     id: "tug-of-war",
-    title: "Tug of War",
-    subtitle: "Battle of Knowledge",
+    title: "Перетягивание каната",
+    subtitle: "Битва знаний",
     category: "Team Battle",
     rating: 4.9,
     coverImage: "tug-of-war",
@@ -41,7 +41,7 @@ export const mockGames: Game[] = [
   },
   {
     id: "jeopardy",
-    title: "Svoya Igra",
+    title: "Своя игра",
     subtitle: "Jeopardy-style Quiz",
     category: "Quiz Game",
     rating: 4.8,
@@ -51,7 +51,7 @@ export const mockGames: Game[] = [
   },
   {
     id: "memory",
-    title: "Memory Matrix",
+    title: "Мемори",
     subtitle: "Card Matching Game",
     category: "Memory",
     rating: 4.7,
@@ -61,7 +61,7 @@ export const mockGames: Game[] = [
   },
   {
     id: "scales",
-    title: "Balance Scales",
+    title: "Весы",
     subtitle: "Math Logic Game",
     category: "Mathematics",
     rating: 4.6,
@@ -71,7 +71,7 @@ export const mockGames: Game[] = [
   },
   {
     id: "word-search",
-    title: "Philword",
+    title: "Филворд",
     subtitle: "Word Search Game",
     category: "Language",
     rating: 4.5,

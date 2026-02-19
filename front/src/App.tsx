@@ -19,6 +19,7 @@ import Jeopardy from "./pages/games/Jeopardy";
 import MemoryMatrix from "./pages/games/MemoryMatrix";
 import BalanceScales from "./pages/games/BalanceScales";
 import WordSearch from "./pages/games/WordSearch";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,11 @@ const App = () => (
                 <Route path="/tools" element={
                   <ProtectedRoute allowedRoles={["teacher"]}>
                     <Tools />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute allowedRoles={["teacher", "super_admin"]}>
+                    <Profile />
                   </ProtectedRoute>
                 } />
 

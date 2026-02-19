@@ -18,6 +18,11 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "/";
+        }
         return Promise.reject(error);
     }
 );

@@ -32,8 +32,15 @@ const Login = () => {
     try {
       const res = await api.post("/auth/login", { email, password });
       toast.success("Login successful!");
-      // Use context login to set state and redirect
+      // Use context login to set state
       login(res.data.access_token, res.data.user);
+
+      // Navigate based on role
+      if (res.data.user.role === "super_admin") {
+        navigate("/admin");
+      } else {
+        navigate("/teacher");
+      }
     } catch (error) {
       toast.error("Invalid credentials. Try generic 'teacher@school.edu' / 'password'");
       console.error(error);

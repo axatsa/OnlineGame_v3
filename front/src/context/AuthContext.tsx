@@ -56,13 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("user", JSON.stringify(newUser));
         setToken(newToken);
         setUser(newUser);
-
-        // Redirect based on role
-        if (newUser.role === "super_admin") {
-            navigate("/admin");
-        } else {
-            navigate("/teacher");
-        }
+        // Navigation should be handled by the component calling login, or by a useEffect in the router/app level
     };
 
     const logout = () => {

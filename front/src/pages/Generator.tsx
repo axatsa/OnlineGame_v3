@@ -325,6 +325,7 @@ const Generator = () => {
               </div>
             </div>
           )}
+        </AnimatePresence>
 
           {/* Type Switcher */}
           <div className="flex bg-muted rounded-xl p-1">
@@ -446,31 +447,31 @@ const Generator = () => {
           </AnimatePresence>
         </div>
 
-        {/* Generate Button */}
-        <div className="p-6 border-t border-border">
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating || !canGenerate}
-            className="w-full h-14 text-base font-semibold rounded-xl font-sans gap-2"
-            size="lg"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Generate {genType === "math" ? "Worksheet" : "Crossword"}
-              </>
-            )}
-          </Button>
-        </div>
-      </motion.div>
+        {/* Generate Button */ }
+  <div className="p-6 border-t border-border">
+    <Button
+      onClick={handleGenerate}
+      disabled={isGenerating || !canGenerate}
+      className="w-full h-14 text-base font-semibold rounded-xl font-sans gap-2"
+      size="lg"
+    >
+      {isGenerating ? (
+        <>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Generating...
+        </>
+      ) : (
+        <>
+          <Sparkles className="w-5 h-5" />
+          Generate {genType === "math" ? "Worksheet" : "Crossword"}
+        </>
+      )}
+    </Button>
+  </div>
+      </motion.div >
 
-      {/* Right Preview */}
-      <div className="hidden md:flex flex-1 bg-muted/50 items-center justify-center p-10 relative print:p-0 print:block print:bg-white inset-0 print:absolute print:z-[9999]">
+  {/* Right Preview */ }
+  < div className = "hidden md:flex flex-1 bg-muted/50 items-center justify-center p-10 relative print:p-0 print:block print:bg-white inset-0 print:absolute print:z-[9999]" >
         <style>{`
           @media print {
             body * { visibility: hidden; }
@@ -539,149 +540,139 @@ const Generator = () => {
 
               {genType === "crossword" && crosswordData && (
                 <>
-                  {/* Preview Area (Interactive/Visible) */}
-                  <motion.div
-                    key="crossword-paper"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-hidden relative"
-                    style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
-                  >
-                    <div className="p-8 h-full flex flex-col">
-                      <h2 className="text-2xl font-bold text-center font-serif mb-2">{crosswordTopic}</h2>
+                 {/* Preview Area (Interactive/Visible) */}
+                <motion.div
+                  key="crossword-paper"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-full max-w-2xl bg-white rounded-lg shadow-2xl border border-border overflow-hidden relative"
+                >
+                   <div className="p-8 flex flex-col items-center">
+                      <h2 className="text-2xl font-bold text-center font-serif mb-2 text-foreground">{crosswordTopic}</h2>
                       <p className="text-center text-sm text-muted-foreground mb-6">Crossword Puzzle</p>
-
+                      
                       {/* Grid for Preview */}
-                      <div className="flex-1 flex justify-center items-start overflow-auto">
-                        <div className="relative" style={{
-                          display: 'grid',
-                          gridTemplateColumns: `repeat(${crosswordData.width}, 24px)`,
-                          gap: '1px',
-                          backgroundColor: '#000',
-                          border: '1px solid #000',
-                          padding: '1px'
+                      <div className="flex justify-center mb-8 w-full overflow-x-auto">
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: `repeat(${crosswordData.width}, 20px)`,
+                            gap: '0',
                         }}>
-                          {crosswordData.grid.map((row, r) =>
-                            row.map((cell, c) => {
-                              const isBlack = cell === "";
-                              const wordInfo = crosswordData.words.find(w => w.row === r && w.col === c);
-                              return (
-                                <div key={`${r}-${c}`} className={`w-6 h-6 relative ${isBlack ? 'bg-black' : 'bg-white'}`}>
-                                  {wordInfo && !isBlack && (
-                                    <span className="absolute top-0.5 left-0.5 text-[8px] font-bold leading-none">{wordInfo.number}</span>
-                                  )}
-                                </div>
-                              );
-                            })
-                          )}
+                             {crosswordData.grid.map((row, r) => 
+                                row.map((cell, c) => {
+                                   const isBlack = cell === "";
+                                   const wordInfo = crosswordData.words.find(w => w.row === r && w.col === c);
+                                   return (
+                                     <div key={`${r}-${c}`} 
+                                        className={`w-5 h-5 relative flex items-center justify-center text-[10px] font-bold ${!isBlack ? 'bg-white border border-gray-800' : 'bg-transparent'}`}
+                                     >
+                                        {wordInfo && !isBlack && (
+                                            <span className="absolute top-0.5 left-0.5 text-[6px] font-bold leading-none">{wordInfo.number}</span>
+                                        )}
+                                     </div>
+                                   );
+                                })
+                             )}
                         </div>
                       </div>
 
-                      <div className="mt-8 grid grid-cols-2 gap-4 text-xs">
-                        <div>
-                          <h3 className="font-bold border-b border-black mb-2">Across</h3>
-                          <ul className="space-y-1 max-h-40 overflow-y-auto">
-                            {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                              <li key={`a-${w.number}`}><b>{w.number}</b>. {w.clue}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h3 className="font-bold border-b border-black mb-2">Down</h3>
-                          <ul className="space-y-1 max-h-40 overflow-y-auto">
-                            {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                              <li key={`d-${w.number}`}><b>{w.number}</b>. {w.clue}</li>
-                            ))}
-                          </ul>
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs w-full">
+                          <div>
+                              <h3 className="font-bold border-b border-gray-800 mb-2 pb-1">Across</h3>
+                               <ul className="space-y-1">
+                                  {crosswordData.words.filter(w => w.isAcross).sort((a,b) => a.number - b.number).map(w => (
+                                      <li key={`a-${w.number}`}><b>{w.number}</b>. {w.clue}</li>
+                                  ))}
+                               </ul>
+                          </div>
+                           <div>
+                              <h3 className="font-bold border-b border-gray-800 mb-2 pb-1">Down</h3>
+                               <ul className="space-y-1">
+                                  {crosswordData.words.filter(w => !w.isAcross).sort((a,b) => a.number - b.number).map(w => (
+                                      <li key={`d-${w.number}`}><b>{w.number}</b>. {w.clue}</li>
+                                  ))}
+                               </ul>
+                          </div>
                       </div>
-                    </div>
-                  </motion.div>
+                   </div>
+                </motion.div>
 
-                  {/* Hidden Render for PDF Capture */}
-                  <div className="fixed left-[-9999px] top-0">
+                {/* Hidden Render for PDF Capture */}
+                <div className="fixed left-[-9999px] top-0">
                     {/* Page 1: Puzzle */}
-                    <div ref={puzzleRef} style={{ width: '210mm', height: '297mm', padding: '20mm', background: 'white', fontFamily: 'serif', display: 'flex', flexDirection: 'column' }}>
-                      <h1 className="text-3xl font-bold text-center mb-2">{crosswordTopic || "Crossword"}</h1>
-                      <div className="w-full h-px bg-black mb-8"></div>
-
-                      <div className="flex-1 flex justify-center items-start mb-8">
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: `repeat(${crosswordData.width}, 26px)`,
-                          gap: '1px',
-                          backgroundColor: '#000',
-                          border: '2px solid #000',
-                          padding: '2px'
-                        }}>
-                          {crosswordData.grid.map((row, r) =>
-                            row.map((cell, c) => {
-                              const isBlack = cell === "";
-                              const wordInfo = crosswordData.words.find(w => w.row === r && w.col === c);
-                              return (
-                                <div key={`${r}-${c}`} className={`w-[26px] h-[26px] relative ${isBlack ? 'bg-black' : 'bg-white'}`}>
-                                  {wordInfo && !isBlack && (
-                                    <span className="absolute top-[2px] left-[2px] text-[9px] font-bold leading-none">{wordInfo.number}</span>
-                                  )}
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-8 text-sm">
-                        <div>
-                          <h3 className="font-bold text-lg mb-2 border-b-2 border-black">ACROSS</h3>
-                          {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                            <div key={`pdf-a-${w.number}`} className="mb-1">
-                              <span className="font-bold">{w.number}.</span> {w.clue}
+                    <div ref={puzzleRef} style={{ width: '210mm', minHeight: '297mm', padding: '20mm', background: 'white', fontFamily: 'serif', display: 'flex', flexDirection: 'column' }}>
+                       <h1 className="text-3xl font-bold text-center mb-2">{crosswordTopic || "Crossword"}</h1>
+                       <div className="w-full h-px bg-gray-800 mb-8"></div>
+                       
+                        <div className="flex justify-center mb-8">
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: `repeat(${crosswordData.width}, 24px)`,
+                            }}>
+                                {crosswordData.grid.map((row, r) => 
+                                    row.map((cell, c) => {
+                                        const isBlack = cell === "";
+                                        const wordInfo = crosswordData.words.find(w => w.row === r && w.col === c);
+                                        return (
+                                            <div key={`${r}-${c}`} className={`w-[24px] h-[24px] relative ${!isBlack ? 'border border-black' : ''}`}>
+                                            {wordInfo && !isBlack && (
+                                                <span className="absolute top-[2px] left-[2px] text-[8px] font-bold leading-none">{wordInfo.number}</span>
+                                            )}
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
-                          ))}
                         </div>
-                        <div>
-                          <h3 className="font-bold text-lg mb-2 border-b-2 border-black">DOWN</h3>
-                          {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                            <div key={`pdf-d-${w.number}`} className="mb-1">
-                              <span className="font-bold">{w.number}.</span> {w.clue}
+
+                        <div className="grid grid-cols-2 gap-8 text-sm">
+                            <div>
+                                <h3 className="font-bold text-lg mb-2 border-b-2 border-black">ACROSS</h3>
+                                {crosswordData.words.filter(w => w.isAcross).sort((a,b) => a.number - b.number).map(w => (
+                                    <div key={`pdf-a-${w.number}`} className="mb-1">
+                                        <span className="font-bold">{w.number}.</span> {w.clue}
+                                    </div>
+                                ))}
                             </div>
-                          ))}
+                            <div>
+                                <h3 className="font-bold text-lg mb-2 border-b-2 border-black">DOWN</h3>
+                                {crosswordData.words.filter(w => !w.isAcross).sort((a,b) => a.number - b.number).map(w => (
+                                    <div key={`pdf-d-${w.number}`} className="mb-1">
+                                        <span className="font-bold">{w.number}.</span> {w.clue}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                      </div>
                     </div>
 
                     {/* Page 2: Answer Key */}
-                    <div ref={answerRef} style={{ width: '210mm', height: '297mm', padding: '20mm', background: 'white', fontFamily: 'serif', display: 'flex', flexDirection: 'column' }}>
-                      <h1 className="text-3xl font-bold text-center mb-2">ANSWER KEY</h1>
-                      <h2 className="text-xl text-center text-gray-500 mb-8">{crosswordTopic || "Crossword"}</h2>
-
-                      <div className="flex-1 flex justify-center items-center">
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: `repeat(${crosswordData.width}, 26px)`,
-                          gap: '1px',
-                          backgroundColor: '#000',
-                          border: '2px solid #000',
-                          padding: '2px'
-                        }}>
-                          {crosswordData.grid.map((row, r) =>
-                            row.map((cell, c) => {
-                              const isBlack = cell === "";
-                              return (
-                                <div key={`ans-${r}-${c}`} className={`w-[26px] h-[26px] flex items-center justify-center text-sm font-bold relative ${isBlack ? 'bg-black' : 'bg-white'}`}>
-                                  {!isBlack && cell}
-                                </div>
-                              );
-                            })
-                          )}
+                    <div ref={answerRef} style={{ width: '210mm', minHeight: '297mm', padding: '20mm', background: 'white', fontFamily: 'serif', display: 'flex', flexDirection: 'column' }}>
+                       <h1 className="text-3xl font-bold text-center mb-2">ANSWER KEY</h1>
+                       <h2 className="text-xl text-center text-gray-500 mb-8">{crosswordTopic || "Crossword"}</h2>
+                       
+                        <div className="flex justify-center items-center">
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: `repeat(${crosswordData.width}, 24px)`, 
+                            }}>
+                                {crosswordData.grid.map((row, r) => 
+                                    row.map((cell, c) => {
+                                        const isBlack = cell === "";
+                                        return (
+                                            <div key={`ans-${r}-${c}`} className={`w-[24px] h-[24px] flex items-center justify-center text-sm font-bold relative ${!isBlack ? 'border border-black' : ''}`}>
+                                                {!isBlack && cell}
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
                         </div>
-                      </div>
-
-                      <div className="mt-8 p-4 border border-gray-300 rounded text-center text-sm text-gray-500">
-                        Generated by AI Teacher Tools
-                      </div>
+                        
+                         <div className="mt-8 p-4 border border-gray-300 rounded text-center text-sm text-gray-500">
+                            Generated by AI Teacher Tools
+                        </div>
                     </div>
-                  </div>
+                </div>
                 </>
               )}
             </>
@@ -704,55 +695,55 @@ const Generator = () => {
             </motion.div>
           )}
         </AnimatePresence>
+      </div >
+
+  {/* Edit Dialog */ }
+  < Dialog open = { showEdit } onOpenChange = { setShowEdit } >
+    <DialogContent className="sm:max-w-lg">
+      <DialogHeader>
+        <DialogTitle className="font-serif">Edit Content</DialogTitle>
+      </DialogHeader>
+      <div className="py-4">
+        <textarea
+          value={editContent}
+          onChange={(e) => setEditContent(e.target.value)}
+          className="w-full h-60 p-3 rounded-xl border border-input bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+        />
       </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
+        <Button onClick={saveEdit}>Apply Changes</Button>
+      </DialogFooter>
+    </DialogContent>
+</Dialog >
 
-      {/* Edit Dialog */}
-      <Dialog open={showEdit} onOpenChange={setShowEdit}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-serif">Edit Content</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              className="w-full h-60 p-3 rounded-xl border border-input bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
-            <Button onClick={saveEdit}>Apply Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Save Dialog */}
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="font-serif">Save to Profile</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Resource Title</Label>
-              <Input
-                value={saveTitle}
-                onChange={(e) => setSaveTitle(e.target.value)}
-                placeholder="e.g. Algebra Quiz 1"
-                className="rounded-xl"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
-            <Button onClick={handleSaveResource} disabled={isSaving}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+  {/* Save Dialog */ }
+  < Dialog open = { showSaveDialog } onOpenChange = { setShowSaveDialog } >
+    <DialogContent className="sm:max-w-sm">
+      <DialogHeader>
+        <DialogTitle className="font-serif">Save to Profile</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label>Resource Title</Label>
+          <Input
+            value={saveTitle}
+            onChange={(e) => setSaveTitle(e.target.value)}
+            placeholder="e.g. Algebra Quiz 1"
+            className="rounded-xl"
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
+        <Button onClick={handleSaveResource} disabled={isSaving}>
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Save
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+</Dialog >
+    </div >
   );
 };
 

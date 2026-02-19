@@ -120,13 +120,71 @@ const Generator = () => {
 
   const canGenerate = genType === "math" ? mathTopic.trim().length > 0 : crosswordTopic.trim().length > 0;
 
+
+  // Edit & Save State
+  const [showEdit, setShowEdit] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [saveTitle, setSaveTitle] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const openEdit = () => {
+    if (genType === "math") {
+      setEditContent(generatedProblems.join("\n"));
+    } else {
+      // Crossword editing is complex, maybe just skip for now or just text
+      toast.info("Editing crossword layout is not supported yet.");
+      return;
+    }
+    setShowEdit(true);
+  };
+
+  const saveEdit = () => {
+    if (genType === "math") {
+      setGeneratedProblems(editContent.split("\n").filter(l => l.trim().length > 0));
+    }
+    setShowEdit(false);
+    toast.success("Changes applied!");
+  };
+
+  const handleSaveResource = async () => {
+    if (!saveTitle.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const content = genType === "math"
+        ? JSON.stringify({ problems: generatedProblems })
+        : JSON.stringify({ words: crosswordData?.words, grid: crosswordData?.grid, width: crosswordData?.width, height: crosswordData?.height });
+
+      await api.post("/resources/", {
+        title: saveTitle,
+        type: genType,
+        content: content
+      });
+      toast.success("Resource saved to Profile!");
+      setShowSaveDialog(false);
+      setSaveTitle("");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to save resource");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left Settings Panel */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="w-full md:w-[400px] bg-card border-r border-border flex flex-col"
+        className="w-full md:w-[400px] bg-card border-r border-border flex flex-col print:hidden"
       >
         {/* Header */}
         <div className="p-6 border-b border-border">
@@ -304,15 +362,6 @@ const Generator = () => {
                   onChange={setDifficulty}
                   segId="difficulty"
                 />
-                <div className="mt-8 text-center space-y-2">
-                  <div className="text-xs text-gray-400 font-mono">
-                    <p>Debug Info:</p>
-                    <p>Token: {localStorage.getItem("token")?.slice(0, 20)}...</p>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => { localStorage.clear(); window.location.href = "/"; }}>
-                    Force Logout & Reset
-                  </Button>
-                </div>
               </motion.div>
             ) : (
               <motion.div
@@ -382,7 +431,16 @@ const Generator = () => {
       </motion.div>
 
       {/* Right Preview */}
-      <div className="hidden md:flex flex-1 bg-muted/50 items-center justify-center p-10 relative">
+      <div className="hidden md:flex flex-1 bg-muted/50 items-center justify-center p-10 relative print:p-0 print:block print:bg-white inset-0 print:absolute print:z-[9999]">
+        <style>{`
+          @media print {
+            body * { visibility: hidden; }
+            .print\\:block, .print\\:block * { visibility: visible; }
+            .print\\:absolute { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 20px; }
+            .print\\:hidden { display: none !important; }
+          }
+        `}</style>
+
         <AnimatePresence mode="wait">
           {isGenerating && (
             <motion.div
@@ -390,109 +448,123 @@ const Generator = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex flex-col items-center gap-4"
+              className="flex flex-col items-center gap-4 print:hidden"
             >
               <Loader2 className="w-12 h-12 text-primary animate-spin" />
               <p className="text-muted-foreground font-sans">AI is generating your content...</p>
             </motion.div>
           )}
 
-          {generated && !isGenerating && genType === "math" && (
-            <motion.div
-              key="math-paper"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto"
-              style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
-            >
-              <div className="p-10 h-full flex flex-col">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
-                    <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
-                  </div>
-                  <span className="text-xs text-gray-500 font-sans">{difficulty} • {mathTopic}</span>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 text-center mb-1 font-serif">Mathematics Worksheet</h3>
-                <div className="space-y-3 flex-1 mt-6">
-                  {generatedProblems.map((problem, i) => (
-                    <div key={i} className="text-sm text-gray-800 font-mono py-1 border-b border-gray-100">{problem}</div>
-                  ))}
-                </div>
+          {generated && !isGenerating && (
+            <>
+              {/* Toolbar */}
+              <div className="absolute top-6 right-10 flex gap-2 print:hidden z-10">
+                {genType === "math" && (
+                  <Button variant="outline" size="sm" onClick={openEdit} className="gap-2 bg-white/80 backdrop-blur">
+                    <Pencil className="w-4 h-4" /> Edit
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 bg-white/80 backdrop-blur">
+                  <Printer className="w-4 h-4" /> Print / PDF
+                </Button>
+                <Button size="sm" onClick={() => setShowSaveDialog(true)} className="gap-2">
+                  <Download className="w-4 h-4" /> Save
+                </Button>
               </div>
-            </motion.div>
-          )}
 
-          {generated && !isGenerating && genType === "crossword" && crosswordData && (
-            <motion.div
-              key="crossword-paper"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto"
-              style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
-            >
-              <div className="p-10 h-full flex flex-col">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
-                    <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
-                  </div>
-                  <span className="text-xs text-gray-500 font-sans">{language} • {crosswordTopic}</span>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 text-center mb-6 font-serif">Crossword Puzzle</h3>
-
-                {/* Grid */}
-                <div className="flex justify-center mb-8">
-                  <div className="inline-grid gap-px bg-gray-900 border-2 border-gray-900 p-px"
-                    style={{
-                      gridTemplateColumns: `repeat(${crosswordData.width}, 1.5rem)`,
-                      gridTemplateRows: `repeat(${crosswordData.height}, 1.5rem)`
-                    }}>
-                    {crosswordData.grid.map((row, r) => (
-                      row.map((cell, c) => {
-                        // Find if this cell has a number
-                        const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
-                        return (
-                          <div key={`${r}-${c}`} className={`w-6 h-6 relative flex items-center justify-center text-xs font-bold ${cell ? "bg-white" : "bg-gray-300"}`}>
-                            {/* White square if cell has letter, else black/gray */}
-                            {cell ? (
-                              <>
-                                {/* Number */}
-                                {wordStart && (
-                                  <span className="absolute top-0.5 left-0.5 text-[6px] leading-none">{wordStart.number}</span>
-                                )}
-                                {/* Letter (hidden for print, but shown for preview?) - Let's show empty for worksheet! */}
-                                {/* <span className="opacity-20">{cell}</span> */}
-                              </>
-                            ) : ""}
-                          </div>
-                        );
-                      })
-                    ))}
-                  </div>
-                </div>
-
-                {/* Clues */}
-                <div className="grid grid-cols-2 gap-4 text-[10px] font-sans">
-                  <div>
-                    <h4 className="font-bold text-gray-900 mb-2 uppercase">Across</h4>
-                    <ul className="space-y-1 list-none">
-                      {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                        <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
+              {genType === "math" && (
+                <motion.div
+                  key="math-paper"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
+                  style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
+                >
+                  <div className="p-10 h-full flex flex-col print:p-0 print:h-auto">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                        <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                      </div>
+                      <span className="text-xs text-gray-500 font-sans">{difficulty} • {mathTopic}</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 text-center mb-1 font-serif">Mathematics Worksheet</h3>
+                    <div className="space-y-3 flex-1 mt-6">
+                      {generatedProblems.map((problem, i) => (
+                        <div key={i} className="text-sm text-gray-800 font-mono py-1 border-b border-gray-100">{problem}</div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 mb-2 uppercase">Down</h4>
-                    <ul className="space-y-1 list-none">
-                      {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                        <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
-                      ))}
-                    </ul>
+                </motion.div>
+              )}
+
+              {genType === "crossword" && crosswordData && (
+                <motion.div
+                  key="crossword-paper"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
+                  style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
+                >
+                  <div className="p-10 h-full flex flex-col print:p-0 print:h-auto">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                        <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                      </div>
+                      <span className="text-xs text-gray-500 font-sans">{language} • {crosswordTopic}</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 text-center mb-6 font-serif">Crossword Puzzle</h3>
+
+                    {/* Grid */}
+                    <div className="flex justify-center mb-8">
+                      <div className="inline-grid gap-px bg-gray-900 border-2 border-gray-900 p-px"
+                        style={{
+                          gridTemplateColumns: `repeat(${crosswordData.width}, 1.5rem)`,
+                          gridTemplateRows: `repeat(${crosswordData.height}, 1.5rem)`
+                        }}>
+                        {crosswordData.grid.map((row, r) => (
+                          row.map((cell, c) => {
+                            const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
+                            return (
+                              <div key={`${r}-${c}`} className={`w-6 h-6 relative flex items-center justify-center text-xs font-bold ${cell ? "bg-white" : "bg-gray-300"}`}>
+                                {cell ? (
+                                  <>
+                                    {wordStart && (
+                                      <span className="absolute top-0.5 left-0.5 text-[6px] leading-none">{wordStart.number}</span>
+                                    )}
+                                  </>
+                                ) : ""}
+                              </div>
+                            );
+                          })
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Clues */}
+                    <div className="grid grid-cols-2 gap-4 text-[10px] font-sans">
+                      <div>
+                        <h4 className="font-bold text-gray-900 mb-2 uppercase">Across</h4>
+                        <ul className="space-y-1 list-none">
+                          {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
+                            <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 mb-2 uppercase">Down</h4>
+                        <ul className="space-y-1 list-none">
+                          {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
+                            <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </motion.div>
+                </motion.div>
+              )}
+            </>
           )}
 
           {!generated && !isGenerating && (
@@ -500,7 +572,7 @@ const Generator = () => {
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center gap-4 text-center"
+              className="flex flex-col items-center gap-4 text-center print:hidden"
             >
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
                 <Sparkles className="w-10 h-10 text-muted-foreground" />
@@ -513,6 +585,49 @@ const Generator = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+        <div className="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-card w-full max-w-lg p-6 rounded-2xl border border-border shadow-xl space-y-4">
+            <h3 className="text-lg font-bold font-serif">Edit Content</h3>
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full h-60 p-3 rounded-xl border border-input bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
+              <Button onClick={saveEdit}>Apply Changes</Button>
+            </div>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Save Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <div className="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-card w-full max-w-sm p-6 rounded-2xl border border-border shadow-xl space-y-4">
+            <h3 className="text-lg font-bold font-serif">Save to Profile</h3>
+            <div className="space-y-2">
+              <Label>Resource Title</Label>
+              <Input
+                value={saveTitle}
+                onChange={e => setSaveTitle(e.target.value)}
+                placeholder="e.g. Algebra Quiz 1"
+                className="rounded-xl"
+              />
+            </div>
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
+              <Button onClick={handleSaveResource} disabled={isSaving}>
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 };

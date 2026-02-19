@@ -7,20 +7,9 @@ from routes import auth, classes, generator, admin
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="ClassPlay Backend")
+app = FastAPI(title="Online Game API")
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    print(f"REQUEST: {request.method} {request.url}")
-    print(f"HEADERS: {request.headers}")
-    try:
-        response = await call_next(request)
-        print(f"RESPONSE STATUS: {response.status_code}")
-        return response
-    except Exception as e:
-        print(f"REQUEST FAILED: {str(e)}")
-        raise e
-
+# CORS Configuration
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",

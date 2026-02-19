@@ -5,6 +5,7 @@ import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, La
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog } from "@/components/ui/dialog";
 import thompsonLogo from "@/assets/thompson-logo.png";
 import { useClass } from "@/context/ClassContext";
 import api from "@/lib/api";
@@ -303,6 +304,15 @@ const Generator = () => {
                   onChange={setDifficulty}
                   segId="difficulty"
                 />
+                <div className="mt-8 text-center space-y-2">
+                  <div className="text-xs text-gray-400 font-mono">
+                    <p>Debug Info:</p>
+                    <p>Token: {localStorage.getItem("token")?.slice(0, 20)}...</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => { localStorage.clear(); window.location.href = "/"; }}>
+                    Force Logout & Reset
+                  </Button>
+                </div>
               </motion.div>
             ) : (
               <motion.div

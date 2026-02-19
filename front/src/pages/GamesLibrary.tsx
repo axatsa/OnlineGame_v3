@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Star, Play, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { mockGames } from "@/lib/mock-data";
+import { GAMES_CONFIG } from "@/lib/mock-data";
 import { useState } from "react";
 import gameTugOfWar from "@/assets/game-tug-of-war.png";
 import gameJeopardy from "@/assets/game-jeopardy.png";
@@ -23,7 +23,7 @@ const coverImages: Record<string, string> = {
 const GamesLibrary = () => {
   const navigate = useNavigate();
   const { t } = useLang();
-  const [howToPlayGame, setHowToPlayGame] = useState<typeof mockGames[0] | null>(null);
+  const [howToPlayGame, setHowToPlayGame] = useState<typeof GAMES_CONFIG[0] | null>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,7 +47,7 @@ const GamesLibrary = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-          {mockGames.map((game, i) => (
+          {GAMES_CONFIG.map((game, i) => (
             <motion.div
               key={game.id}
               initial={{ opacity: 0, y: 20 }}

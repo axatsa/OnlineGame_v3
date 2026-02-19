@@ -11,7 +11,7 @@ import {
   Filter, Download, Calendar, Cpu,
   ToggleLeft, ToggleRight, FileText,
   ArrowUpRight, ArrowDownRight, WifiOff, Wifi,
-  CreditCard, Receipt, BarChart3,
+  CreditCard, Receipt, BarChart3, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,57 +36,7 @@ type Payment = {
 };
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
-const INITIAL_TEACHERS: Teacher[] = [
-  { id: 1, name: "Азиз Каримов", login: "aziz.karimov", school: "Школа №5, Ташкент", status: "active", lastLogin: "2 мин назад", plan: "pro", tokenUsage: 5420, ip: "195.168.1.10" },
-  { id: 2, name: "Нилуфар Хасанова", login: "nilufar.h", school: "Школа №12, Самарканд", status: "active", lastLogin: "1 час назад", plan: "basic", tokenUsage: 1200, ip: "178.213.45.22" },
-  { id: 3, name: "Жамшид Турсунов", login: "jamshid.t", school: "Лицей №2, Бухара", status: "expiring", lastLogin: "3 дня назад", plan: "pro", tokenUsage: 890, ip: "91.185.22.44" },
-  { id: 4, name: "Малика Юсупова", login: "malika.y", school: "Гимназия №7", status: "expired", lastLogin: "14 дней назад", plan: "basic", tokenUsage: 0, ip: "—" },
-  { id: 5, name: "Сардор Рашидов", login: "sardor.r", school: "Школа №5, Ташкент", status: "blocked", lastLogin: "Заблокирован", plan: "pro", tokenUsage: 12800, ip: "195.168.1.10" },
-  { id: 6, name: "Гулнора Мирзаева", login: "gulnora.m", school: "Школа №19, Фергана", status: "active", lastLogin: "30 мин назад", plan: "pro", tokenUsage: 3100, ip: "82.215.10.5" },
-];
-
-const ORGS: Org[] = [
-  { id: 1, name: "Школа №5, Ташкент", contact: "Директор Рашидов А.", seats: 50, used: 38, expires: "2026-01-01", status: "active" },
-  { id: 2, name: "Лицей №2, Бухара", contact: "Директор Турсунов М.", seats: 20, used: 15, expires: "2025-03-01", status: "expiring" },
-  { id: 3, name: "Гимназия №7, Ташкент", contact: "Директор Хасанова З.", seats: 30, used: 30, expires: "2024-12-01", status: "expired" },
-  { id: 4, name: "Школа №19, Фергана", contact: "Директор Юсупов Б.", seats: 40, used: 12, expires: "2026-06-01", status: "active" },
-];
-
-const DAILY_TOKENS = [
-  { day: "Пн", tokens: 4200, cost: 0.84 },
-  { day: "Вт", tokens: 6800, cost: 1.36 },
-  { day: "Ср", tokens: 5100, cost: 1.02 },
-  { day: "Чт", tokens: 9200, cost: 1.84 },
-  { day: "Пт", tokens: 7400, cost: 1.48 },
-  { day: "Сб", tokens: 3200, cost: 0.64 },
-  { day: "Вс", tokens: 1800, cost: 0.36 },
-];
-
-const PAYMENTS: Payment[] = [
-  { id: 1, org: "Школа №5, Ташкент", amount: 250, currency: "USD", date: "2025-01-15", method: "Перевод", status: "paid", period: "2025–2026" },
-  { id: 2, org: "Школа №19, Фергана", amount: 200, currency: "USD", date: "2025-01-10", method: "Наличные", status: "paid", period: "2025–2026" },
-  { id: 3, org: "Лицей №2, Бухара", amount: 120, currency: "USD", date: "2025-02-01", method: "Перевод", status: "pending", period: "2025" },
-  { id: 4, org: "Гимназия №7, Ташкент", amount: 150, currency: "USD", date: "2024-12-01", method: "Перевод", status: "failed", period: "2024" },
-  { id: 5, org: "Школа №5, Ташкент", amount: 250, currency: "USD", date: "2024-01-20", method: "Наличные", status: "paid", period: "2024–2025" },
-  { id: 6, org: "Школа №19, Фергана", amount: 200, currency: "USD", date: "2024-02-10", method: "Перевод", status: "paid", period: "2024–2025" },
-];
-
-const MRR_DATA = [
-  { month: "Авг", mrr: 320 },
-  { month: "Сен", mrr: 420 },
-  { month: "Окт", mrr: 520 },
-  { month: "Ноя", mrr: 490 },
-  { month: "Дек", mrr: 620 },
-  { month: "Янв", mrr: 770 },
-];
-
-const AUDIT_LOGS = [
-  { id: 1, action: "Сброс пароля", target: "Азиз Каримов", time: "5 мин назад", type: "warning" },
-  { id: 2, action: "Создана школа", target: "Школа №19, Фергана", time: "2 часа назад", type: "success" },
-  { id: 3, action: "Аккаунт заблокирован", target: "Сардор Рашидов", time: "1 день назад", type: "danger" },
-  { id: 4, action: "Обновлён API ключ", target: "Gemini API", time: "2 дня назад", type: "info" },
-  { id: 5, action: "Лицензия продлена", target: "Школа №5, Ташкент", time: "3 дня назад", type: "success" },
-];
+// Mock data removed. Real data fetched from API.
 
 // ─── Export Utilities ─────────────────────────────────────────────────────────
 const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
@@ -375,13 +325,13 @@ const ExportMenu = ({
 };
 
 // ─── Dashboard View ───────────────────────────────────────────────────────────
-const DashboardView = ({ teachers }: { teachers: Teacher[] }) => (
+const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { teachers: Teacher[]; orgs: Org[]; payments: Payment[]; auditLogs: any[]; isLoading: boolean }) => (
   <div className="space-y-6">
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <MetricCard icon={Users} label="Всего учителей" value="248" sub="+12 за месяц" trend="up" color="bg-primary/10 text-primary" />
-      <MetricCard icon={Building2} label="Организации" value="34" sub="4 истекают" color="bg-yellow-500/10 text-yellow-600" />
-      <MetricCard icon={Zap} label="Токенов сегодня" value="47.2K" sub="+18% вчера" trend="up" color="bg-violet-500/10 text-violet-600" />
-      <MetricCard icon={DollarSign} label="MRR" value="$770" sub="+24% vs прошл." trend="up" color="bg-success/10 text-success" />
+      <MetricCard icon={Users} label="Всего учителей" value={String(teachers.length)} sub="+12 за месяц" trend="up" color="bg-primary/10 text-primary" />
+      <MetricCard icon={Building2} label="Организации" value={String(orgs.length)} sub={`${orgs.filter(o => o.status === "expiring").length} истекают`} color="bg-yellow-500/10 text-yellow-600" />
+      <MetricCard icon={Zap} label="Токенов сегодня" value={`${(teachers.reduce((acc, t) => acc + t.tokenUsage, 0) / 1000).toFixed(1)}K`} sub="+18% вчера" trend="up" color="bg-violet-500/10 text-violet-600" />
+      <MetricCard icon={DollarSign} label="MRR" value={`$${payments.filter(p => p.status === 'paid').reduce((acc, p) => acc + p.amount, 0)}`} sub="+24% vs прошл." trend="up" color="bg-success/10 text-success" />
     </div>
 
     <div className="grid lg:grid-cols-3 gap-6">
@@ -422,35 +372,42 @@ const DashboardView = ({ teachers }: { teachers: Teacher[] }) => (
           onCSV={() => downloadCSV(
             `classplay_audit_${new Date().toISOString().slice(0, 10)}.csv`,
             ["Действие", "Объект", "Время", "Тип"],
-            AUDIT_LOGS.map(l => [l.action, l.target, l.time, l.type])
+            auditLogs.map(l => [l.action, l.target, l.time, l.type])
           )}
           onPDF={() => {
-            const rows = AUDIT_LOGS.map(l => `<tr><td>${l.action}</td><td>${l.target}</td><td>${l.time}</td></tr>`).join("");
+            const rows = auditLogs.map(l => `<tr><td>${l.action}</td><td>${l.target}</td><td>${l.time}</td></tr>`).join("");
             exportPDF("Журнал действий", `<table><thead><tr><th>Действие</th><th>Объект</th><th>Время</th></tr></thead><tbody>${rows}</tbody></table>`);
           }}
         />
       </div>
       <div className="space-y-0">
-        {AUDIT_LOGS.map((log, i) => {
-          const colorMap: Record<string, string> = {
-            success: "text-success", warning: "text-yellow-500",
-            danger: "text-destructive", info: "text-primary",
-          };
-          const iconMap: Record<string, React.ElementType> = {
-            success: CheckCircle2, warning: AlertTriangle, danger: Ban, info: Activity,
-          };
-          const Icon = iconMap[log.type];
-          return (
-            <div key={log.id} className={`flex items-center gap-3 py-3 ${i < AUDIT_LOGS.length - 1 ? "border-b border-border" : ""}`}>
-              <Icon className={`w-4 h-4 flex-shrink-0 ${colorMap[log.type]}`} />
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-foreground font-sans">{log.action}: </span>
-                <span className="text-sm text-muted-foreground font-sans">{log.target}</span>
+        {isLoading ? (
+          <div className="p-4">
+            <TableSkeleton rows={5} columns={3} />
+          </div>
+        ) : auditLogs.length === 0 ? (
+          <EmptyState icon={Search} title="Нет данных" description="Журнал действий пуст" />
+        ) : (
+          auditLogs.map((log, i) => {
+            const colorMap: Record<string, string> = {
+              success: "text-success", warning: "text-yellow-500",
+              danger: "text-destructive", info: "text-primary",
+            };
+            const iconMap: Record<string, React.ElementType> = {
+              success: CheckCircle2, warning: AlertTriangle, danger: Ban, info: Activity,
+            };
+            const Icon = iconMap[log.type];
+            return (
+              <div key={log.id} className={`flex items-center gap-3 py-3 ${i < auditLogs.length - 1 ? "border-b border-border" : ""}`}>
+                <Icon className={`w-4 h-4 flex-shrink-0 ${colorMap[log.type]}`} />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-foreground font-sans">{log.action}: </span>
+                  <span className="text-sm text-muted-foreground font-sans">{log.target}</span>
+                </div>
+                <span className="text-xs text-muted-foreground font-sans flex-shrink-0">{log.time}</span>
               </div>
-              <span className="text-xs text-muted-foreground font-sans flex-shrink-0">{log.time}</span>
-            </div>
-          );
-        })}
+            );
+          }))}
       </div>
     </div>
   </div>
@@ -458,7 +415,7 @@ const DashboardView = ({ teachers }: { teachers: Teacher[] }) => (
 
 // ─── Teachers View ────────────────────────────────────────────────────────────
 const TeachersView = ({
-  teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal,
+  teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal, isLoading
 }: {
   teachers: Teacher[];
   searchQuery: string;
@@ -466,10 +423,10 @@ const TeachersView = ({
   toggleBlock: (id: number) => void;
   showResetModal: number | null;
   setShowResetModal: (v: number | null) => void;
+  isLoading: boolean;
 }) => {
-  const filtered = teachers.filter(t =>
-    [t.name, t.login, t.school].some(f => f.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Local filtering removed, handled by backend
+  const filtered = teachers;
   const [tmpPwd] = useState(() => Math.random().toString(36).slice(2, 8).toUpperCase());
 
   return (
@@ -507,52 +464,65 @@ const TeachersView = ({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((t, i) => (
-                <motion.tr
-                  key={t.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.04 }}
-                  className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"}`}
-                >
-                  <td className="px-5 py-4">
-                    <p className="font-medium text-foreground font-sans text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground font-sans">@{t.login}</p>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="p-4">
+                    <TableSkeleton rows={5} columns={6} />
                   </td>
-                  <td className="px-5 py-4 text-sm text-muted-foreground font-sans">{t.school}</td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground font-sans">{t.lastLogin}</span>
-                    </div>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyState icon={Users} title="Учителей не найдено" description="Попробуйте изменить запрос" />
                   </td>
-                  <td className="px-5 py-4">
-                    <span className={`text-sm font-sans font-semibold ${t.tokenUsage > 5000 ? "text-destructive" : "text-foreground"}`}>
-                      {t.tokenUsage.toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4"><StatusBadge status={t.status} /></td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => setShowResetModal(t.id)} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Сбросить пароль">
-                        <Key className="w-3.5 h-3.5 text-muted-foreground" />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-muted transition-colors" title="Войти как...">
-                        <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                      </button>
-                      <button
-                        onClick={() => toggleBlock(t.id)}
-                        className={`p-2 rounded-lg transition-colors ${t.status === "blocked" ? "hover:bg-success/10" : "hover:bg-destructive/10"}`}
-                        title={t.status === "blocked" ? "Разблокировать" : "Заблокировать"}
-                      >
-                        {t.status === "blocked"
-                          ? <Unlock className="w-3.5 h-3.5 text-success" />
-                          : <Lock className="w-3.5 h-3.5 text-destructive" />}
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+                </tr>
+              ) : (
+                filtered.map((t, i) => (
+                  <motion.tr
+                    key={t.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.04 }}
+                    className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"}`}
+                  >
+                    <td className="px-5 py-4">
+                      <p className="font-medium text-foreground font-sans text-sm">{t.name}</p>
+                      <p className="text-xs text-muted-foreground font-sans">@{t.login}</p>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-muted-foreground font-sans">{t.school}</td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground font-sans">{t.lastLogin}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`text-sm font-sans font-semibold ${t.tokenUsage > 5000 ? "text-destructive" : "text-foreground"}`}>
+                        {t.tokenUsage.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4"><StatusBadge status={t.status} /></td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => setShowResetModal(t.id)} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Сбросить пароль">
+                          <Key className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                        <button className="p-2 rounded-lg hover:bg-muted transition-colors" title="Войти как...">
+                          <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => toggleBlock(t.id)}
+                          className={`p-2 rounded-lg transition-colors ${t.status === "blocked" ? "hover:bg-success/10" : "hover:bg-destructive/10"}`}
+                          title={t.status === "blocked" ? "Разблокировать" : "Заблокировать"}
+                        >
+                          {t.status === "blocked"
+                            ? <Unlock className="w-3.5 h-3.5 text-success" />
+                            : <Lock className="w-3.5 h-3.5 text-destructive" />}
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                )))}
             </tbody>
           </table>
         </div>
@@ -598,7 +568,7 @@ const TeachersView = ({
 };
 
 // ─── Organizations View ───────────────────────────────────────────────────────
-const OrgsView = ({ orgs }: { orgs: Org[] }) => (
+const OrgsView = ({ orgs, isLoading }: { orgs: Org[]; isLoading: boolean }) => (
   <div className="space-y-4">
     <div className="flex justify-end gap-2">
       <ExportMenu
@@ -608,70 +578,78 @@ const OrgsView = ({ orgs }: { orgs: Org[] }) => (
       <Button className="gap-2 rounded-xl font-sans"><Plus className="w-4 h-4" /> Новая организация</Button>
     </div>
     <div className="grid gap-4">
-      {orgs.map((org, i) => (
-        <motion.div
-          key={org.id}
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-          className="bg-card border border-border rounded-2xl p-5"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-1">
-                <Building2 className="w-4 h-4 text-muted-foreground" />
-                <h3 className="font-semibold text-foreground font-sans">{org.name}</h3>
-                <StatusBadge status={org.status} />
+      {isLoading ? (
+        <TableSkeleton rows={3} columns={1} />
+      ) : orgs.length === 0 ? (
+        <EmptyState icon={Building2} title="Нет организаций" description="Список организаций пуст" />
+      ) : (
+        orgs.map((org, i) => (
+          <motion.div
+            key={org.id}
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+            className="bg-card border border-border rounded-2xl p-5"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-1">
+                  <Building2 className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="font-semibold text-foreground font-sans">{org.name}</h3>
+                  <StatusBadge status={org.status} />
+                </div>
+                <p className="text-xs text-muted-foreground font-sans">{org.contact}</p>
               </div>
-              <p className="text-xs text-muted-foreground font-sans">{org.contact}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground font-sans">Лицензии</p>
-                <p className="font-bold text-foreground">{org.used}/{org.seats}</p>
-                <div className="w-20 bg-muted rounded-full h-1.5 mt-1">
-                  <div className="h-1.5 rounded-full bg-primary" style={{ width: `${(org.used / org.seats) * 100}%` }} />
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground font-sans">Лицензии</p>
+                  <p className="font-bold text-foreground">{org.used}/{org.seats}</p>
+                  <div className="w-20 bg-muted rounded-full h-1.5 mt-1">
+                    <div className="h-1.5 rounded-full bg-primary" style={{ width: `${(org.used / org.seats) * 100}%` }} />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground font-sans">Истекает</p>
+                  <p className={`font-bold font-sans ${org.status === "expired" ? "text-destructive" : org.status === "expiring" ? "text-yellow-600" : "text-foreground"
+                    }`}>
+                    {new Date(org.expires).toLocaleDateString("ru-RU")}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="rounded-xl font-sans h-8 text-xs gap-1">
+                    <Calendar className="w-3 h-3" /> Продлить
+                  </Button>
+                  <Button variant="outline" size="sm" className="rounded-xl font-sans h-8 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10">
+                    <Ban className="w-3 h-3" /> Блок
+                  </Button>
                 </div>
               </div>
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground font-sans">Истекает</p>
-                <p className={`font-bold font-sans ${org.status === "expired" ? "text-destructive" : org.status === "expiring" ? "text-yellow-600" : "text-foreground"
-                  }`}>
-                  {new Date(org.expires).toLocaleDateString("ru-RU")}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="rounded-xl font-sans h-8 text-xs gap-1">
-                  <Calendar className="w-3 h-3" /> Продлить
-                </Button>
-                <Button variant="outline" size="sm" className="rounded-xl font-sans h-8 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10">
-                  <Ban className="w-3 h-3" /> Блок
-                </Button>
-              </div>
             </div>
-          </div>
-        </motion.div>
-      ))}
+          </motion.div>
+        ))
+      )}
     </div>
   </div>
 );
 
 // ─── AI Monitor View ──────────────────────────────────────────────────────────
 const AiMonitorView = ({
-  teachers, aiProvider, setAiProvider, toggleBlock,
+  teachers, aiProvider, setAiProvider, toggleBlock, dailyTokens = [], isLoading
 }: {
   teachers: Teacher[];
   aiProvider: "gemini" | "openai";
   setAiProvider: (p: "gemini" | "openai") => void;
   toggleBlock: (id: number) => void;
+  dailyTokens?: { day: string; tokens: number; cost: number }[];
+  isLoading: boolean;
 }) => {
-  const totalTokens = DAILY_TOKENS.reduce((s, d) => s + d.tokens, 0);
-  const totalCost = DAILY_TOKENS.reduce((s, d) => s + d.cost, 0);
+  const totalTokens = dailyTokens.reduce((s, d) => s + d.tokens, 0);
+  const totalCost = dailyTokens.reduce((s, d) => s + d.cost, 0);
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard icon={Zap} label="Токенов за неделю" value={totalTokens.toLocaleString()} sub="все учителя" color="bg-violet-500/10 text-violet-600" />
-        <MetricCard icon={DollarSign} label="Расходы за неделю" value={`$${totalCost.toFixed(2)}`} sub="≈ $1.07/день" color="bg-success/10 text-success" />
-        <MetricCard icon={Users} label="Активных сессий" value="12" sub="прямо сейчас" color="bg-primary/10 text-primary" />
-        <MetricCard icon={AlertTriangle} label="Аномалий" value="1" sub="Сардор Р. — 12.8K" color="bg-destructive/10 text-destructive" />
+        <MetricCard icon={DollarSign} label="Расходы за неделю" value={`$${totalCost.toFixed(2)}`} sub={`≈ $${(totalCost / 7).toFixed(2)}/день`} color="bg-success/10 text-success" />
+        <MetricCard icon={Users} label="Активных сессий" value="-" sub="недоступно" color="bg-primary/10 text-primary" />
+        <MetricCard icon={AlertTriangle} label="Аномалий" value={String(teachers.filter(t => t.tokenUsage > 10000).length)} sub="> 10k токенов" color="bg-destructive/10 text-destructive" />
       </div>
 
       {/* Provider Switch */}
@@ -702,9 +680,15 @@ const AiMonitorView = ({
       {/* Chart */}
       <div className="bg-card border border-border rounded-2xl p-5">
         <h3 className="font-semibold text-foreground mb-4">График потребления токенов</h3>
-        <BarChart data={DAILY_TOKENS} />
+        {isLoading ? (
+          <div className="h-32 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <BarChart data={dailyTokens} />
+        )}
         <div className="mt-3 pt-3 border-t border-border flex gap-6">
-          {DAILY_TOKENS.map(d => (
+          {dailyTokens.map(d => (
             <div key={d.day} className="text-center">
               <p className="text-xs text-muted-foreground font-sans">{d.day}</p>
               <p className="text-xs font-semibold text-foreground font-sans">${d.cost.toFixed(2)}</p>
@@ -735,26 +719,39 @@ const AiMonitorView = ({
               </tr>
             </thead>
             <tbody>
-              {[...teachers].sort((a, b) => b.tokenUsage - a.tokenUsage).map((t, i) => (
-                <tr key={t.id} className={`border-b border-border last:border-0 ${t.tokenUsage > 5000 ? "bg-destructive/5" : ""}`}>
-                  <td className="px-5 py-3 text-sm font-bold text-muted-foreground font-sans">#{i + 1}</td>
-                  <td className="px-5 py-3 text-sm font-medium text-foreground font-sans">{t.name}</td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground font-sans">{t.school}</td>
-                  <td className="px-5 py-3 text-xs font-mono text-muted-foreground">{t.ip}</td>
-                  <td className={`px-5 py-3 text-sm font-bold font-sans ${t.tokenUsage > 5000 ? "text-destructive" : "text-foreground"}`}>
-                    {t.tokenUsage.toLocaleString()}
-                    {t.tokenUsage > 5000 && <AlertTriangle className="inline w-3 h-3 ml-1" />}
-                  </td>
-                  <td className="px-5 py-3"><StatusBadge status={t.status} /></td>
-                  <td className="px-5 py-3">
-                    {t.tokenUsage > 5000 && (
-                      <button onClick={() => toggleBlock(t.id)} className="text-xs text-destructive hover:underline font-sans">
-                        {t.status === "blocked" ? "Разблокировать" : "Заблокировать"}
-                      </button>
-                    )}
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="p-4">
+                    <TableSkeleton rows={10} columns={7} />
                   </td>
                 </tr>
-              ))}
+              ) : teachers.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState icon={Users} title="Нет учителей" description="Список учителей пуст" />
+                  </td>
+                </tr>
+              ) : (
+                [...teachers].sort((a, b) => b.tokenUsage - a.tokenUsage).map((t, i) => (
+                  <tr key={t.id} className={`border-b border-border last:border-0 ${t.tokenUsage > 5000 ? "bg-destructive/5" : ""}`}>
+                    <td className="px-5 py-3 text-sm font-bold text-muted-foreground font-sans">#{i + 1}</td>
+                    <td className="px-5 py-3 text-sm font-medium text-foreground font-sans">{t.name}</td>
+                    <td className="px-5 py-3 text-xs text-muted-foreground font-sans">{t.school}</td>
+                    <td className="px-5 py-3 text-xs font-mono text-muted-foreground">{t.ip}</td>
+                    <td className={`px-5 py-3 text-sm font-bold font-sans ${t.tokenUsage > 5000 ? "text-destructive" : "text-foreground"}`}>
+                      {t.tokenUsage.toLocaleString()}
+                      {t.tokenUsage > 5000 && <AlertTriangle className="inline w-3 h-3 ml-1" />}
+                    </td>
+                    <td className="px-5 py-3"><StatusBadge status={t.status} /></td>
+                    <td className="px-5 py-3">
+                      {t.tokenUsage > 5000 && (
+                        <button onClick={() => toggleBlock(t.id)} className="text-xs text-destructive hover:underline font-sans">
+                          {t.status === "blocked" ? "Разблокировать" : "Заблокировать"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )))}
             </tbody>
           </table>
         </div>
@@ -764,9 +761,20 @@ const AiMonitorView = ({
 };
 
 // ─── Finances View ────────────────────────────────────────────────────────────
-const FinancesView = ({ payments }: { payments: Payment[] }) => {
-  const totalMRR = MRR_DATA[MRR_DATA.length - 1].mrr;
-  const prevMRR = MRR_DATA[MRR_DATA.length - 2].mrr;
+const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading: boolean }) => {
+  // Aggregate payments by month for simple MRR viz
+  const mrrData = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    const m = d.toLocaleString('ru', { month: 'short' });
+    // Sum paid payments in this month
+    const mrr = payments.filter(p => p.status === 'paid' && new Date(p.date).getMonth() === d.getMonth() && new Date(p.date).getFullYear() === d.getFullYear())
+      .reduce((sum, p) => sum + p.amount, 0);
+    return { month: m, mrr };
+  });
+
+  const totalMRR = mrrData[mrrData.length - 1].mrr;
+  const prevMRR = mrrData[mrrData.length - 2].mrr || 1; // avoid /0
   const mrrGrowth = (((totalMRR - prevMRR) / prevMRR) * 100).toFixed(1);
   const totalPaid = payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0);
   const pendingCount = payments.filter(p => p.status === "pending").length;
@@ -800,7 +808,13 @@ const FinancesView = ({ payments }: { payments: Payment[] }) => {
             <span className="text-sm font-semibold font-sans">+{mrrGrowth}%</span>
           </div>
         </div>
-        <MrrChart data={MRR_DATA} />
+        {isLoading ? (
+          <div className="h-36 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <MrrChart data={mrrData} />
+        )}
         <div className="mt-4 pt-4 border-t border-border grid grid-cols-3 gap-4">
           <div>
             <p className="text-xs text-muted-foreground font-sans">Новые клиенты</p>
@@ -836,38 +850,51 @@ const FinancesView = ({ payments }: { payments: Payment[] }) => {
               </tr>
             </thead>
             <tbody>
-              {payments.map((p, i) => {
-                const st = payStatusMap[p.status] ?? { label: p.status, cls: "" };
-                return (
-                  <tr key={p.id} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"}`}>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm font-medium text-foreground font-sans">{p.org}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className="text-sm font-bold text-foreground font-sans">${p.amount}</span>
-                      <span className="text-xs text-muted-foreground font-sans ml-1">{p.currency}</span>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-muted-foreground font-sans">
-                      {new Date(p.date).toLocaleDateString("ru-RU")}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-muted-foreground font-sans">{p.method}</td>
-                    <td className="px-5 py-4 text-sm text-muted-foreground font-sans">{p.period}</td>
-                    <td className="px-5 py-4">
-                      <Badge className={`font-sans rounded-full px-3 text-xs ${st.cls}`}>{st.label}</Badge>
-                    </td>
-                    <td className="px-5 py-4">
-                      {p.status === "pending" && (
-                        <Button variant="outline" size="sm" className="rounded-xl h-7 text-xs font-sans gap-1">
-                          <Receipt className="w-3 h-3" /> Счёт
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="p-4">
+                    <TableSkeleton rows={5} columns={7} />
+                  </td>
+                </tr>
+              ) : payments.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState icon={CreditCard} title="Нет платежей" description="История платежей пуста" />
+                  </td>
+                </tr>
+              ) : (
+                payments.map((p, i) => {
+                  const st = payStatusMap[p.status] ?? { label: p.status, cls: "" };
+                  return (
+                    <tr key={p.id} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"}`}>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm font-medium text-foreground font-sans">{p.org}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-sm font-bold text-foreground font-sans">${p.amount}</span>
+                        <span className="text-xs text-muted-foreground font-sans ml-1">{p.currency}</span>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-muted-foreground font-sans">
+                        {new Date(p.date).toLocaleDateString("ru-RU")}
+                      </td>
+                      <td className="px-5 py-4 text-sm text-muted-foreground font-sans">{p.method}</td>
+                      <td className="px-5 py-4 text-sm text-muted-foreground font-sans">{p.period}</td>
+                      <td className="px-5 py-4">
+                        <Badge className={`font-sans rounded-full px-3 text-xs ${st.cls}`}>{st.label}</Badge>
+                      </td>
+                      <td className="px-5 py-4">
+                        {p.status === "pending" && (
+                          <Button variant="outline" size="sm" className="rounded-xl h-7 text-xs font-sans gap-1">
+                            <Receipt className="w-3 h-3" /> Счёт
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                }))}
             </tbody>
           </table>
         </div>
@@ -881,22 +908,28 @@ const FinancesView = ({ payments }: { payments: Payment[] }) => {
           <Badge className="bg-yellow-500/15 text-yellow-600 border-0 font-sans">2 организации</Badge>
         </div>
         <div className="space-y-3">
-          {ORGS.filter(o => o.status !== "active").map(org => (
-            <div key={org.id} className="flex items-center justify-between gap-4 p-3 rounded-xl bg-muted/50">
-              <div>
-                <p className="text-sm font-medium text-foreground font-sans">{org.name}</p>
-                <p className="text-xs text-muted-foreground font-sans">{org.contact} • {org.seats} мест</p>
+          {isLoading ? (
+            <TableSkeleton rows={2} columns={1} />
+          ) : orgs.filter(o => o.status !== "active").length === 0 ? (
+            <EmptyState icon={Building2} title="Нет организаций" description="Все организации активны" />
+          ) : (
+            orgs.filter(o => o.status !== "active").map(org => (
+              <div key={org.id} className="flex items-center justify-between gap-4 p-3 rounded-xl bg-muted/50">
+                <div>
+                  <p className="text-sm font-medium text-foreground font-sans">{org.name}</p>
+                  <p className="text-xs text-muted-foreground font-sans">{org.contact} • {org.seats} мест</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-bold font-sans ${org.status === "expired" ? "text-destructive" : "text-yellow-600"}`}>
+                    {new Date(org.expires).toLocaleDateString("ru-RU")}
+                  </span>
+                  <Button size="sm" className="rounded-xl h-7 text-xs font-sans gap-1">
+                    <Calendar className="w-3 h-3" /> Продлить
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-sm font-bold font-sans ${org.status === "expired" ? "text-destructive" : "text-yellow-600"}`}>
-                  {new Date(org.expires).toLocaleDateString("ru-RU")}
-                </span>
-                <Button size="sm" className="rounded-xl h-7 text-xs font-sans gap-1">
-                  <Calendar className="w-3 h-3" /> Продлить
-                </Button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -905,13 +938,14 @@ const FinancesView = ({ payments }: { payments: Payment[] }) => {
 
 // ─── System View ──────────────────────────────────────────────────────────────
 const SystemView = ({
-  aiProvider, systemAlert, setSystemAlert, alertEnabled, setAlertEnabled,
+  aiProvider, systemAlert, setSystemAlert, alertEnabled, setAlertEnabled, isLoading
 }: {
   aiProvider: "gemini" | "openai";
   systemAlert: string;
   setSystemAlert: (v: string) => void;
   alertEnabled: boolean;
   setAlertEnabled: (v: boolean) => void;
+  isLoading: boolean;
 }) => (
   <div className="space-y-6 max-w-2xl">
     {/* System Alert */}
@@ -974,25 +1008,38 @@ const SystemView = ({
         <h3 className="font-semibold text-foreground">Журнал действий</h3>
       </div>
       <div className="space-y-0">
-        {AUDIT_LOGS.map((log, i) => {
-          const colorMap: Record<string, string> = {
-            success: "bg-success/15 text-success", warning: "bg-yellow-500/15 text-yellow-600",
-            danger: "bg-destructive/15 text-destructive", info: "bg-primary/15 text-primary",
-          };
-          return (
-            <div key={log.id} className={`flex items-center gap-3 py-3 ${i < AUDIT_LOGS.length - 1 ? "border-b border-border" : ""}`}>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-sans font-medium flex-shrink-0 ${colorMap[log.type]}`}>
-                {log.action}
-              </span>
-              <span className="text-sm text-foreground font-sans flex-1 min-w-0 truncate">{log.target}</span>
-              <span className="text-xs text-muted-foreground font-sans flex-shrink-0">{log.time}</span>
-            </div>
-          );
-        })}
+        {isLoading ? (
+          <div className="p-4">
+            <TableSkeleton rows={5} columns={3} />
+          </div>
+        ) : auditLogs.length === 0 ? (
+          <EmptyState icon={Search} title="Нет данных" description="Журнал действий пуст" />
+        ) : (
+          auditLogs.map((log, i) => {
+            const colorMap: Record<string, string> = {
+              success: "bg-success/15 text-success", warning: "bg-yellow-500/15 text-yellow-600",
+              danger: "bg-destructive/15 text-destructive", info: "bg-primary/15 text-primary",
+            };
+            return (
+              <div key={log.id} className={`flex items-center gap-3 py-3 ${i < auditLogs.length - 1 ? "border-b border-border" : ""}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-sans font-medium flex-shrink-0 ${colorMap[log.type]}`}>
+                  {log.action}
+                </span>
+                <span className="text-sm text-foreground font-sans flex-1 min-w-0 truncate">{log.target}</span>
+                <span className="text-xs text-muted-foreground font-sans flex-shrink-0">{log.time}</span>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   </div>
 );
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+import { TableSkeleton } from "@/components/TableSkeleton";
+import { EmptyState } from "@/components/EmptyState";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AdminPanel = () => {
@@ -1004,30 +1051,100 @@ const AdminPanel = () => {
   const [systemAlert, setSystemAlert] = useState("В субботу плановое обновление системы с 02:00 до 04:00.");
   const [alertEnabled, setAlertEnabled] = useState(true);
   const [showResetModal, setShowResetModal] = useState<number | null>(null);
+
+  // Real Data State
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [orgs, setOrgs] = useState<Org[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]); // simplified type for logs
+  const [analytics, setAnalytics] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Pagination & Search State
+  const [page, setPage] = useState(1);
+  const LIMIT = 50;
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const res = await api.get("/admin/analytics");
-        const mapped: Teacher[] = res.data.map((u: any) => ({
-          id: u.user_id,
-          name: u.full_name,
-          login: u.email,
-          school: "Online",
-          status: "active",
-          lastLogin: u.last_active ? new Date(u.last_active).toLocaleString("ru-RU") : "—",
-          plan: "Pro",
-          tokenUsage: u.total_tokens,
-          ip: "—"
-        }));
-        setTeachers(mapped);
+        const skip = (page - 1) * LIMIT;
+
+        // Parallel fetching with pagination params
+        const [teachersRes, analyticsRes, orgsRes, paymentsRes, logsRes] = await Promise.all([
+          api.get(`/admin/teachers?skip=${skip}&limit=${LIMIT}&search=${searchQuery}`),
+          api.get("/admin/analytics"),
+          api.get(`/admin/organizations?skip=${skip}&limit=${LIMIT}`),
+          api.get(`/admin/payments?skip=${skip}&limit=${LIMIT}`),
+          api.get(`/admin/audit-logs?skip=${skip}&limit=${LIMIT}`),
+        ]);
+
+        // ... processing logic remains the same ...
+        // Process Teachers/Analytics
+        const analyticsMap = new Map(analyticsRes.data.map((a: any) => [a.user_id, a]));
+
+        const mappedTeachers: Teacher[] = teachersRes.data.map((u: any) => {
+          const stats = analyticsMap.get(u.id) as any;
+          return {
+            id: u.id,
+            name: u.full_name || "Unknown",
+            login: u.email,
+            school: "Online",
+            status: "active",
+            lastLogin: stats?.last_active ? new Date(stats.last_active).toLocaleString("ru-RU") : "—",
+            plan: "Pro",
+            tokenUsage: stats?.total_tokens || 0,
+            ip: "—"
+          };
+        });
+        setTeachers(mappedTeachers);
+
+        // Process Orgs
+        setOrgs(orgsRes.data.map((o: any) => ({
+          id: o.id,
+          name: o.name,
+          contact: o.contact_person,
+          seats: o.license_seats,
+          used: o.used_seats || 0,
+          expires: o.expires_at,
+          status: o.status
+        })));
+
+        // Process Payments
+        setPayments(paymentsRes.data.map((p: any) => ({
+          id: p.id,
+          org: p.org_name || "Unknown",
+          amount: p.amount,
+          currency: p.currency,
+          date: p.date,
+          method: p.method,
+          status: p.status,
+          period: p.period
+        })));
+
+        // Process Logs
+        setAuditLogs(logsRes.data.map((l: any) => ({
+          id: l.id,
+          action: l.action,
+          target: l.target,
+          time: new Date(l.timestamp).toLocaleString("ru-RU"),
+          type: l.log_type
+        })));
+
       } catch (e) {
-        console.error("Failed to fetch analytics", e);
+        console.error("Failed to fetch admin data", e);
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchData();
-  }, []);
+
+    // Debounce search
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [page, searchQuery]);
 
   const toggleBlock = (id: number) => {
     setTeachers(prev =>
@@ -1040,7 +1157,7 @@ const AdminPanel = () => {
     { icon: Users, label: "Учителя", section: "teachers", badge: teachers.filter(t => t.status === "expiring").length },
     { icon: Building2, label: "Организации", section: "organizations" },
     { icon: BrainCircuit, label: "AI Мониторинг", section: "ai-monitor" },
-    { icon: DollarSign, label: "Финансы", section: "finances", badge: PAYMENTS.filter(p => p.status === "pending").length },
+    { icon: DollarSign, label: "Финансы", section: "finances", badge: payments.filter(p => p.status === "pending").length },
     { icon: Settings, label: "Система", section: "system" },
   ];
 
@@ -1150,6 +1267,7 @@ const AdminPanel = () => {
               <Menu className="w-6 h-6 text-foreground" />
             </button>
             <div>
+              <Breadcrumbs items={[{ label: "Admin Panel", href: "/admin" }, { label: current.title }]} />
               <h1 className="text-xl font-bold text-foreground">{current.title}</h1>
               <p className="text-xs text-muted-foreground font-sans">{current.sub}</p>
             </div>
@@ -1175,7 +1293,7 @@ const AdminPanel = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              {activeSection === "dashboard" && <DashboardView teachers={teachers} />}
+              {activeSection === "dashboard" && <DashboardView teachers={teachers} orgs={orgs} payments={payments} auditLogs={auditLogs} isLoading={isLoading} />}
               {activeSection === "teachers" && (
                 <TeachersView
                   teachers={teachers}
@@ -1184,18 +1302,21 @@ const AdminPanel = () => {
                   toggleBlock={toggleBlock}
                   showResetModal={showResetModal}
                   setShowResetModal={setShowResetModal}
+                  isLoading={isLoading}
                 />
               )}
-              {activeSection === "organizations" && <OrgsView orgs={ORGS} />}
+              {activeSection === "organizations" && <OrgsView orgs={orgs} isLoading={isLoading} />}
               {activeSection === "ai-monitor" && (
                 <AiMonitorView
                   teachers={teachers}
                   aiProvider={aiProvider}
                   setAiProvider={setAiProvider}
                   toggleBlock={toggleBlock}
+                  dailyTokens={[]} // No history data yet
+                  isLoading={isLoading}
                 />
               )}
-              {activeSection === "finances" && <FinancesView payments={PAYMENTS} />}
+              {activeSection === "finances" && <FinancesView payments={payments} isLoading={isLoading} />}
               {activeSection === "system" && (
                 <SystemView
                   aiProvider={aiProvider}
@@ -1203,10 +1324,36 @@ const AdminPanel = () => {
                   setSystemAlert={setSystemAlert}
                   alertEnabled={alertEnabled}
                   setAlertEnabled={setAlertEnabled}
+                  isLoading={isLoading}
                 />
               )}
             </motion.div>
           </AnimatePresence>
+
+          {/* Pagination Controls */}
+          {["teachers", "organizations", "finances", "audit-logs"].includes(activeSection) && !isLoading && (
+            <div className="mt-6 flex justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-xl font-sans"
+              >
+                Назад
+              </Button>
+              <span className="flex items-center px-4 font-mono text-sm">{page}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => p + 1)}
+                disabled={teachers.length < LIMIT && orgs.length < LIMIT && payments.length < LIMIT && auditLogs.length < LIMIT}
+                className="rounded-xl font-sans"
+              >
+                Вперед
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>

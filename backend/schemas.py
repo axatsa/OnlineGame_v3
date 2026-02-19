@@ -51,6 +51,53 @@ class MathRequest(BaseModel):
 
 class CrosswordRequest(BaseModel):
     topic: str
-    word_count: int
     language: str
     class_id: Optional[int] = None
+
+# Admin / Analytics Schemas
+class OrganizationBase(BaseModel):
+    name: str
+    contact_person: str
+    license_seats: int
+    expires_at: datetime
+    status: str
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+class OrganizationResponse(OrganizationBase):
+    id: int
+    used_seats: int
+    
+    class Config:
+        from_attributes = True
+
+class PaymentBase(BaseModel):
+    amount: int
+    currency: str
+    method: str
+    status: str
+    period: str
+    organization_id: int
+
+class PaymentCreate(PaymentBase):
+    pass
+
+class PaymentResponse(PaymentBase):
+    id: int
+    date: datetime
+    org_name: Optional[str] = None # For convenience in frontend
+
+    class Config:
+        from_attributes = True
+
+class AuditLogResponse(BaseModel):
+    id: int
+    action: str
+    target: str
+    user_id: Optional[int]
+    timestamp: datetime
+    log_type: str
+
+    class Config:
+        from_attributes = True

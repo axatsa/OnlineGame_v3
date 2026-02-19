@@ -1,21 +1,3 @@
-export interface Student {
-  id: string;
-  name: string;
-  grade: string;
-  email: string;
-  status: "active" | "inactive";
-}
-
-export const mockStudents: Student[] = [
-  { id: "1", name: "Anya Petrova", grade: "3B", email: "anya.p@school.edu", status: "active" },
-  { id: "2", name: "Liam Chen", grade: "4A", email: "liam.c@school.edu", status: "active" },
-  { id: "3", name: "Sofia Martinez", grade: "3B", email: "sofia.m@school.edu", status: "inactive" },
-  { id: "4", name: "Omar Hassan", grade: "5C", email: "omar.h@school.edu", status: "active" },
-  { id: "5", name: "Emma Johansson", grade: "2A", email: "emma.j@school.edu", status: "active" },
-  { id: "6", name: "Kai Nakamura", grade: "1B", email: "kai.n@school.edu", status: "inactive" },
-  { id: "7", name: "Isabella Rossi", grade: "4A", email: "isabella.r@school.edu", status: "active" },
-  { id: "8", name: "Noah Williams", grade: "3B", email: "noah.w@school.edu", status: "active" },
-];
 
 export interface Game {
   id: string;
@@ -28,7 +10,7 @@ export interface Game {
   howToPlay: string;
 }
 
-export const mockGames: Game[] = [
+export const GAMES_CONFIG: Game[] = [
   {
     id: "tug-of-war",
     title: "Перетягивание каната",

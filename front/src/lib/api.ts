@@ -19,6 +19,7 @@ api.interceptors.request.use(
     },
     (error) => {
         if (error.response && error.response.status === 401) {
+            console.warn("Unauthorized access - redirecting to login");
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             window.location.href = "/";

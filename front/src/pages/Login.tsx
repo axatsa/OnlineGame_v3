@@ -35,12 +35,7 @@ const Login = () => {
       // Use context login to set state
       login(res.data.access_token, res.data.user);
 
-      // Navigate based on role
-      if (res.data.user.role === "super_admin") {
-        navigate("/admin");
-      } else {
-        navigate("/teacher");
-      }
+      // Navigation will be handled by the useEffect once user state is updated
     } catch (error) {
       toast.error("Invalid credentials. Try generic 'teacher@school.edu' / 'password'");
       console.error(error);

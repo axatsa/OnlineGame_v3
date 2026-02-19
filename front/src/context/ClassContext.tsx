@@ -37,6 +37,10 @@ export function ClassProvider({ children }: { children: ReactNode }) {
     queryKey: ["classes"],
     queryFn: async () => {
       const res = await api.get("/classes/");
+      if (!Array.isArray(res.data)) {
+        console.error("API Error: /classes/ returned non-array", res.data);
+        return [];
+      }
       return res.data.map((c: any) => ({
         ...c,
         studentCount: c.student_count, // Map snake_case to camelCase

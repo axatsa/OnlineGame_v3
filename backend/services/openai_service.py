@@ -137,4 +137,4 @@ def generate_jeopardy(topic: str, grade: str = "", context: str = "") -> Tuple[D
     return _get_completion([
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_prompt}
-    ], model="gpt-3.5-turbo-16k")
+    ], model="gpt-3.5-turbo")

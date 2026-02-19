@@ -68,7 +68,7 @@ const TeacherDashboard = () => {
           </div>
 
           {/* Nav Pills */}
-          <div className="flex items-center bg-muted rounded-full p-1">
+          <div className="flex items-center bg-muted rounded-full p-1 mx-4">
             {navPills.map((pill) => (
               <button
                 key={pill.key}
@@ -88,8 +88,56 @@ const TeacherDashboard = () => {
             ))}
           </div>
 
-          {/* Right: lang + profile */}
+          {/* Right: Class Picker + Lang + Profile */}
           <div className="flex items-center gap-2">
+
+            {/* Class Picker */}
+            <div className="relative mr-2">
+              <button
+                onClick={() => setShowClassPicker(v => !v)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted transition-colors text-sm font-sans font-medium"
+              >
+                <GraduationCap className="w-4 h-4 text-primary" />
+                {activeClass ? (
+                  <span className="max-w-[100px] truncate">{activeClass.name}</span>
+                ) : (
+                  <span className="text-muted-foreground">Select Class</span>
+                )}
+                <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showClassPicker ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence>
+                {showClassPicker && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    className="absolute right-0 top-12 bg-card border border-border rounded-xl shadow-lg p-1.5 min-w-[200px] z-50 flex flex-col gap-1"
+                  >
+                    {classes.map((cls) => (
+                      <button
+                        key={cls.id}
+                        onClick={() => { setActiveClassId(cls.id); setShowClassPicker(false); }}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted transition-colors text-left text-sm font-sans"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">{cls.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{cls.studentCount} students</span>
+                        </div>
+                        {cls.id === activeClass?.id && <Check className="w-3.5 h-3.5 text-primary" />}
+                      </button>
+                    ))}
+                    <div className="h-px bg-border my-1" />
+                    <button
+                      onClick={() => { setShowClassPicker(false); navigate("/classes"); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-primary font-semibold font-sans hover:bg-muted rounded-lg transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> {t("addClass")}
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {/* Language Switcher */}
             <div className="relative">
               <button
@@ -97,7 +145,7 @@ const TeacherDashboard = () => {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors text-sm font-sans font-medium text-foreground"
               >
                 <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                {lang === "ru" ? "🇷🇺 RU" : "🇺🇿 UZ"}
+                {lang === "ru" ? "RU" : "UZ"}
               </button>
               <AnimatePresence>
                 {showLangMenu && (

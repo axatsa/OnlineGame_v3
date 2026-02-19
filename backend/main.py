@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from config import DATABASE_URL
 from database import engine, Base
@@ -8,6 +8,18 @@ from routes import auth, classes, generator, admin
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="ClassPlay Backend")
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"REQUEST: {request.method} {request.url}")
+    print(f"HEADERS: {request.headers}")
+    try:
+        response = await call_next(request)
+        print(f"RESPONSE STATUS: {response.status_code}")
+        return response
+    except Exception as e:
+        print(f"REQUEST FAILED: {str(e)}")
+        raise e
 
 origins = [
     "http://localhost:5173",

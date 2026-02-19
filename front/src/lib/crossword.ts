@@ -14,142 +14,185 @@ export interface CrosswordGrid {
     words: CrosswordWord[];
 }
 
-export function generateCrosswordLayout(wordsData: { word: string; clue: string }[]): CrosswordGrid | null {
-    // 1. Sort words by length descending
-    const sortedWords = [...wordsData].sort((a, b) => b.word.length - a.word.length);
 
-    // 2. Initialize grid (start large, crop later)
-    const GRID_SIZE = 40;
-    const CENTER = Math.floor(GRID_SIZE / 2);
-    let grid: string[][] = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(""));
-    const placedWords: CrosswordWord[] = [];
+export interface CrosswordWord {
+    word: string;
+    clue: string;
+    row: number; // 0-indexed
+    col: number; // 0-indexed
+    isAcross: boolean;
+    number: number;
+}
 
-    // Helper to check if a word fits
-    const canPlace = (word: string, r: number, c: number, isAcross: boolean): boolean => {
-        // Boundary check
-        if (r < 0 || c < 0 || r >= GRID_SIZE || c >= GRID_SIZE) return false;
-        if (isAcross && c + word.length > GRID_SIZE) return false;
-        if (!isAcross && r + word.length > GRID_SIZE) return false;
+export interface CrosswordGrid {
+    width: number;
+    height: number;
+    grid: string[][]; // 2D array, empty string for black, char for white
+    words: CrosswordWord[];
+}
 
-        let hasIntersection = false;
+// Helper to check if a word fits
+function canPlace(grid: string[][], word: string, r: number, c: number, direction: 'across' | 'down'): boolean {
+    const height = grid.length;
+    const width = grid[0].length;
+    const isAcross = direction === 'across';
 
-        // Check cells
-        for (let i = 0; i < word.length; i++) {
-            const cr = isAcross ? r : r + i;
-            const cc = isAcross ? c + i : c;
-            const cell = grid[cr][cc];
+    // 1. Boundary check
+    if (r < 0 || c < 0 || r >= height || c >= width) return false;
+    if (isAcross && c + word.length > width) return false;
+    if (!isAcross && r + word.length > height) return false;
 
-            // Conflict: cell occupied by different letter
-            if (cell !== "" && cell !== word[i]) return false;
+    // 2. Check overlap and conflicts
+    for (let i = 0; i < word.length; i++) {
+        const cr = isAcross ? r : r + i;
+        const cc = isAcross ? c + i : c;
+        const cell = grid[cr][cc];
 
-            // Intersection found
-            if (cell === word[i]) hasIntersection = true;
+        // Conflict: cell occupied by different letter
+        if (cell !== "" && cell !== word[i]) return false;
+    }
 
-            // Check neighbors (to prevent accidental adjacency)
-            // If this cell is empty in the grid, we must ensure we are not placing it right next to another word 
-            // parallel to us, or extending a word incorrectly.
-            // Simplified check: 
-            if (cell === "") {
-                // Check immediate neighbors perpendicular to direction
-                // If across, check up/down. If vertical, check left/right.
-                // UNLESS it's an intersection point.
+    // 3. Check adjacency (ensure we don't accidentally merge with other words)
+    // We need to check the cells surrounding the word.
+    // If a cell is empty (was not an intersection), its perpendicular neighbors must also be empty.
 
-                const neighbors = [
-                    { dr: -1, dc: 0 }, { dr: 1, dc: 0 }, // Up/Down
-                    { dr: 0, dc: -1 }, { dr: 0, dc: 1 }  // Left/Right
-                ];
+    // Check cell before start
+    const beforeR = isAcross ? r : r - 1;
+    const beforeC = isAcross ? c - 1 : c;
+    if (beforeR >= 0 && beforeR < height && beforeC >= 0 && beforeC < width && grid[beforeR][beforeC] !== "") return false;
 
-                for (const n of neighbors) {
-                    const nr = cr + n.dr;
-                    const nc = cc + n.dc;
-                    // If neighbor is occupied...
-                    if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && grid[nr][nc] !== "") {
-                        // If we are Across, and checking Up/Down, that's okay ONLY if it's part of a crossing word.
-                        // But here we are in an empty cell, so if there is a neighbor, it creates a 2-letter cluster if not crossing properly.
-                        // For simplicity: strict isolation. Cells perpendicular must be empty.
-                        if (isAcross && (n.dr !== 0)) return false;
-                        if (!isAcross && (n.dc !== 0)) return false;
-                    }
-                }
+    // Check cell after end
+    const afterR = isAcross ? r : r + word.length;
+    const afterC = isAcross ? c + word.length : c;
+    if (afterR >= 0 && afterR < height && afterC >= 0 && afterC < width && grid[afterR][afterC] !== "") return false;
 
-                // Also check directly before start and after end
-                if (i === 0) {
-                    const pr = isAcross ? r : r - 1;
-                    const pc = isAcross ? c - 1 : c;
-                    if (pr >= 0 && pr < GRID_SIZE && pc >= 0 && pc < GRID_SIZE && grid[pr][pc] !== "") return false;
-                }
-                if (i === word.length - 1) {
-                    const nr = isAcross ? r : r + 1;
-                    const nc = isAcross ? c + 1 : c;
-                    if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && grid[nr][nc] !== "") return false;
-                }
-            }
-        }
+    for (let i = 0; i < word.length; i++) {
+        const cr = isAcross ? r : r + i;
+        const cc = isAcross ? c + i : c;
+        const cell = grid[cr][cc];
 
-        // First word doesn't need intersection
-        if (placedWords.length === 0) return true;
+        if (cell === "") {
+            // This cell is currently empty, so we are placing a new letter here.
+            // We must ensure there are no perpendicular neighbors, otherwise we create a 2-letter word.
+            const n1r = isAcross ? cr - 1 : cr;
+            const n1c = isAcross ? cc : cc - 1;
+            const n2r = isAcross ? cr + 1 : cr;
+            const n2c = isAcross ? cc : cc + 1;
 
-        return hasIntersection;
-    };
-
-    const place = (word: string, r: number, c: number, isAcross: boolean) => {
-        for (let i = 0; i < word.length; i++) {
-            const cr = isAcross ? r : r + i;
-            const cc = isAcross ? c + i : c;
-            grid[cr][cc] = word[i];
-        }
-    };
-
-    // 3. Place words
-    for (const item of sortedWords) {
-        const word = item.word.toUpperCase();
-        let placed = false;
-
-        // First word centered
-        if (placedWords.length === 0) {
-            const r = CENTER;
-            const c = CENTER - Math.floor(word.length / 2);
-            place(word, r, c, true);
-            placedWords.push({ ...item, word, row: r, col: c, isAcross: true, number: 0 });
-            continue;
-        }
-
-        // Attempt to intersect with existing placed words
-        // Shuffle placed words to vary layout? No, deterministic is fine.
-        for (const pw of placedWords) {
-            if (placed) break;
-
-            // Check every letter overlap
-            for (let i = 0; i < word.length; i++) {
-                if (placed) break;
-                for (let j = 0; j < pw.word.length; j++) {
-                    if (word[i] === pw.word[j]) {
-                        // Potential intersection
-                        // pw is at pw.row, pw.col. Letter j is at ...
-                        const intersectR = pw.isAcross ? pw.row : pw.row + j;
-                        const intersectC = pw.isAcross ? pw.col + j : pw.col;
-
-                        // If new word intersects at its index i:
-                        // New word start position:
-                        const startR = pw.isAcross ? intersectR - i : intersectR; // If pw is across, we must be down
-                        const startC = pw.isAcross ? intersectC : intersectC - i; // If pw is down, we must be across
-
-                        const newIsAcross = !pw.isAcross;
-
-                        if (canPlace(word, startR, startC, newIsAcross)) {
-                            place(word, startR, startC, newIsAcross);
-                            placedWords.push({ ...item, word, row: startR, col: startC, isAcross: newIsAcross, number: 0 });
-                            placed = true;
-                            break;
-                        }
-                    }
-                }
-            }
+            if (n1r >= 0 && n1r < height && n1c >= 0 && n1c < width && grid[n1r][n1c] !== "") return false;
+            if (n2r >= 0 && n2r < height && n2c >= 0 && n2c < width && grid[n2r][n2c] !== "") return false;
         }
     }
 
-    // 4. Crop and number
-    if (placedWords.length === 0) return null;
+    return true;
+}
+
+function placeWord(grid: string[][], word: string, r: number, c: number, direction: 'across' | 'down') {
+    const isAcross = direction === 'across';
+    for (let i = 0; i < word.length; i++) {
+        const cr = isAcross ? r : r + i;
+        const cc = isAcross ? c + i : c;
+        grid[cr][cc] = word[i];
+    }
+}
+
+export function generateCrosswordLayout(wordsData: { word: string; clue: string }[]): CrosswordGrid | null {
+    const GRID_SIZE = 30; // working size, will crop later
+    let bestResult: { grid: string[][], placedWords: any[] } | null = null;
+
+    // 1. Try 10 times to find the best layout
+    for (let attempt = 0; attempt < 10; attempt++) {
+        const grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(""));
+        const placedWords: any[] = [];
+
+        // 2. Sort words
+        // Primary sort by length (desc), Secondary randomization for variety
+        const shuffled = [...wordsData]
+            .map(w => ({ ...w, word: w.word.toUpperCase() }))
+            .sort((a, b) => b.word.length - a.word.length);
+
+        if (attempt > 0) {
+            // Keep longest first, but shuffle equals? Or just slight shuffle?
+            // Let's shuffle the whole list slightly but weight by length
+            shuffled.sort(() => Math.random() - 0.5);
+            // Re-sort roughly by length to keep packing efficient
+            shuffled.sort((a, b) => (b.word.length - a.word.length) + (Math.random() * 2 - 1));
+        }
+
+        // 3. Place first word in center
+        if (shuffled.length > 0) {
+            const first = shuffled[0];
+            const r = Math.floor(GRID_SIZE / 2);
+            const c = Math.floor((GRID_SIZE - first.word.length) / 2);
+            // First word always ACROSS for symmetry
+            if (canPlace(grid, first.word, r, c, 'across')) {
+                placeWord(grid, first.word, r, c, 'across');
+                placedWords.push({ ...first, row: r, col: c, isAcross: true });
+            }
+        }
+
+        // 4. Try to fit remaining words
+        for (let i = 1; i < shuffled.length; i++) {
+            const wordObj = shuffled[i];
+            let bestMove: { r: number, c: number, dir: 'across' | 'down' } | null = null;
+
+            // Try to find ANY intersection with ANY already placed word
+            // We want to minimize grid expansion, so maybe prioritize closeness to center?
+            // For now, valid intersection is enough.
+
+            // Iterate through all placed words
+            // To add variety, shuffle placedWords order for checking?
+            const shuffledPlaced = [...placedWords].sort(() => Math.random() - 0.5);
+
+            for (const pw of shuffledPlaced) {
+                if (bestMove) break; // Greedy: take first valid fit? or best fit? 
+                // Let's try to take first valid fit to simulate "growing"
+
+                for (let j = 0; j < pw.word.length; j++) {
+                    const letter = pw.word[j];
+
+                    // Does the new word have this letter?
+                    for (let k = 0; k < wordObj.word.length; k++) {
+                        if (wordObj.word[k] === letter) {
+                            // Proposed intersection at pw's j-th letter and new word's k-th letter
+                            // pw is at pw.row, pw.col
+                            const intersectR = pw.isAcross ? pw.row : pw.row + j;
+                            const intersectC = pw.isAcross ? pw.col + j : pw.col;
+
+                            // New word direction must be perpendicular
+                            const newDir = pw.isAcross ? 'down' : 'across';
+                            const isNewAcross = newDir === 'across';
+
+                            // Calculate new word start position
+                            const startR = isNewAcross ? intersectR : intersectR - k;
+                            const startC = isNewAcross ? intersectC - k : intersectC;
+
+                            if (canPlace(grid, wordObj.word, startR, startC, newDir)) {
+                                bestMove = { r: startR, c: startC, dir: newDir };
+                                break;
+                            }
+                        }
+                    }
+                    if (bestMove) break;
+                }
+            }
+
+            if (bestMove) {
+                placeWord(grid, wordObj.word, bestMove.r, bestMove.c, bestMove.dir);
+                placedWords.push({ ...wordObj, row: bestMove.r, col: bestMove.c, isAcross: bestMove.dir === 'across' });
+            }
+        }
+
+        // Evaluate this layout: simply number of words placed
+        if (!bestResult || placedWords.length > bestResult.placedWords.length) {
+            bestResult = { grid, placedWords };
+        }
+    }
+
+    if (!bestResult || bestResult.placedWords.length === 0) return null;
+
+    // 5. Finalize: Crop and Number
+    const { grid, placedWords } = bestResult;
 
     // Find bounds
     let minR = GRID_SIZE, maxR = 0, minC = GRID_SIZE, maxC = 0;
@@ -164,48 +207,52 @@ export function generateCrosswordLayout(wordsData: { word: string; clue: string 
         }
     }
 
-    // Crop grid
     const width = maxC - minC + 1;
     const height = maxR - minR + 1;
     const finalGrid = Array(height).fill(null).map(() => Array(width).fill(""));
 
+    // Copy to new grid
     for (let r = 0; r < height; r++) {
         for (let c = 0; c < width; c++) {
             finalGrid[r][c] = grid[minR + r][minC + c];
         }
     }
 
-    // Adjust word coordinates and assign numbers
-    // Sort placed words by position (top-left to bottom-right) to assign numbers logically
+    // Adjust word coordinates
     placedWords.forEach(w => {
         w.row -= minR;
         w.col -= minC;
     });
 
-    // Assign numbers
-    // A cell gets a number if it is the start of an Across word or a Down word
-    let counter = 1;
-    // We need to map start positions to numbers
-    const numberMap = new Map<string, number>();
+    // Assign numbers (Standard Crossword Numbering)
+    // 1. Sort all "start positions" by row, then col
+    // 2. Iterate through grid cells (left-right, top-bottom)
+    // 3. If a cell is a start of any word, assign it a number
 
-    // Sort by row then col to assign numbers in reading order
-    const starts = placedWords.map(w => `${w.row},${w.col}`).sort((a, b) => {
-        const [r1, c1] = a.split(',').map(Number);
-        const [r2, c2] = b.split(',').map(Number);
-        if (r1 !== r2) return r1 - r2;
-        return c1 - c2;
-    });
-
-    // Unique starts
-    const uniqueStarts = [...new Set(starts)];
-
-    uniqueStarts.forEach(s => {
-        numberMap.set(s, counter++);
-    });
-
+    // We need to know which word starts where
+    const wordStarts = new Map<string, any[]>(); // "r,c" -> [wordObj, ...]
     placedWords.forEach(w => {
-        w.number = numberMap.get(`${w.row},${w.col}`) || 0;
+        const key = `${w.row},${w.col}`;
+        if (!wordStarts.has(key)) wordStarts.set(key, []);
+        wordStarts.get(key)!.push(w);
     });
+
+    let currentNumber = 1;
+    for (let r = 0; r < height; r++) {
+        for (let c = 0; c < width; c++) {
+            const key = `${r},${c}`;
+            if (wordStarts.has(key)) {
+                // Assign this number to all words starting here
+                const wordsStartingHere = wordStarts.get(key)!;
+                let assigned = false;
+                wordsStartingHere.forEach(w => {
+                    w.number = currentNumber;
+                    assigned = true;
+                });
+                if (assigned) currentNumber++;
+            }
+        }
+    }
 
     return {
         width,
@@ -214,3 +261,4 @@ export function generateCrosswordLayout(wordsData: { word: string; clue: string 
         words: placedWords
     };
 }
+

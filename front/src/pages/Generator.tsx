@@ -1,4 +1,6 @@
-import { useState } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { useRef, RefObject, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, Settings2, ChevronDown, Check, Plus, Save } from "lucide-react";
@@ -128,8 +130,45 @@ const Generator = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
-  const handlePrint = () => {
-    window.print();
+  const puzzleRef = useRef<HTMLDivElement>(null);
+  const answerRef = useRef<HTMLDivElement>(null);
+
+  const downloadPDF = async () => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const width = pdf.internal.pageSize.getWidth();
+    const height = pdf.internal.pageSize.getHeight();
+
+    // Helper to add a page
+    const addPage = async (element: HTMLElement | null, isFirstPage: boolean) => {
+      if (!element) return;
+
+      // Temporarily make visible for capture if needed, though they should be rendered
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff"
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      if (!isFirstPage) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+    };
+
+    try {
+      toast.info("Generating PDF... Please wait.");
+      // Page 1: Puzzle
+      await addPage(puzzleRef.current, true);
+
+      // Page 2: Answers
+      await addPage(answerRef.current, false);
+
+      pdf.save('crossword.pdf');
+      toast.success("PDF downloaded successfully!");
+    } catch (e) {
+      console.error("PDF Generation failed", e);
+      toast.error("Failed to generate PDF");
+    }
   };
 
   const openEdit = () => {
@@ -464,7 +503,7 @@ const Generator = () => {
                     <Pencil className="w-4 h-4" /> Edit
                   </Button>
                 )}
-                <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 bg-white/80 backdrop-blur">
+                <Button variant="outline" size="sm" onClick={downloadPDF} className="gap-2 bg-white/80 backdrop-blur">
                   <Printer className="w-4 h-4" /> Print / PDF
                 </Button>
                 <Button size="sm" onClick={() => setShowSaveDialog(true)} className="gap-2">
@@ -499,70 +538,151 @@ const Generator = () => {
               )}
 
               {genType === "crossword" && crosswordData && (
-                <motion.div
-                  key="crossword-paper"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
-                  style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
-                >
-                  <div className="p-10 h-full flex flex-col print:p-0 print:h-auto">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
-                        <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
-                      </div>
-                      <span className="text-xs text-gray-500 font-sans">{language} • {crosswordTopic}</span>
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 text-center mb-6 font-serif">Crossword Puzzle</h3>
+                <>
+                  {/* Preview Area (Interactive/Visible) */}
+                  <motion.div
+                    key="crossword-paper"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-hidden relative"
+                    style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
+                  >
+                    <div className="p-8 h-full flex flex-col">
+                      <h2 className="text-2xl font-bold text-center font-serif mb-2">{crosswordTopic}</h2>
+                      <p className="text-center text-sm text-muted-foreground mb-6">Crossword Puzzle</p>
 
-                    {/* Grid */}
-                    <div className="flex justify-center mb-8">
-                      <div className="inline-grid gap-px bg-gray-900 border-2 border-gray-900 p-px"
-                        style={{
-                          gridTemplateColumns: `repeat(${crosswordData.width}, 1.5rem)`,
-                          gridTemplateRows: `repeat(${crosswordData.height}, 1.5rem)`
+                      {/* Grid for Preview */}
+                      <div className="flex-1 flex justify-center items-start overflow-auto">
+                        <div className="relative" style={{
+                          display: 'grid',
+                          gridTemplateColumns: `repeat(${crosswordData.width}, 24px)`,
+                          gap: '1px',
+                          backgroundColor: '#000',
+                          border: '1px solid #000',
+                          padding: '1px'
                         }}>
-                        {crosswordData.grid.map((row, r) => (
-                          row.map((cell, c) => {
-                            const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
-                            return (
-                              <div key={`${r}-${c}`} className={`w-6 h-6 relative flex items-center justify-center text-xs font-bold ${cell ? "bg-white" : "bg-gray-300"}`}>
-                                {cell ? (
-                                  <>
-                                    {wordStart && (
-                                      <span className="absolute top-0.5 left-0.5 text-[6px] leading-none">{wordStart.number}</span>
-                                    )}
-                                  </>
-                                ) : ""}
-                              </div>
-                            );
-                          })
-                        ))}
+                          {crosswordData.grid.map((row, r) =>
+                            row.map((cell, c) => {
+                              const isBlack = cell === "";
+                              const wordInfo = crosswordData.words.find(w => w.row === r && w.col === c);
+                              return (
+                                <div key={`${r}-${c}`} className={`w-6 h-6 relative ${isBlack ? 'bg-black' : 'bg-white'}`}>
+                                  {wordInfo && !isBlack && (
+                                    <span className="absolute top-0.5 left-0.5 text-[8px] font-bold leading-none">{wordInfo.number}</span>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-8 grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <h3 className="font-bold border-b border-black mb-2">Across</h3>
+                          <ul className="space-y-1 max-h-40 overflow-y-auto">
+                            {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
+                              <li key={`a-${w.number}`}><b>{w.number}</b>. {w.clue}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <h3 className="font-bold border-b border-black mb-2">Down</h3>
+                          <ul className="space-y-1 max-h-40 overflow-y-auto">
+                            {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
+                              <li key={`d-${w.number}`}><b>{w.number}</b>. {w.clue}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Hidden Render for PDF Capture */}
+                  <div className="fixed left-[-9999px] top-0">
+                    {/* Page 1: Puzzle */}
+                    <div ref={puzzleRef} style={{ width: '210mm', height: '297mm', padding: '20mm', background: 'white', fontFamily: 'serif', display: 'flex', flexDirection: 'column' }}>
+                      <h1 className="text-3xl font-bold text-center mb-2">{crosswordTopic || "Crossword"}</h1>
+                      <div className="w-full h-px bg-black mb-8"></div>
+
+                      <div className="flex-1 flex justify-center items-start mb-8">
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: `repeat(${crosswordData.width}, 26px)`,
+                          gap: '1px',
+                          backgroundColor: '#000',
+                          border: '2px solid #000',
+                          padding: '2px'
+                        }}>
+                          {crosswordData.grid.map((row, r) =>
+                            row.map((cell, c) => {
+                              const isBlack = cell === "";
+                              const wordInfo = crosswordData.words.find(w => w.row === r && w.col === c);
+                              return (
+                                <div key={`${r}-${c}`} className={`w-[26px] h-[26px] relative ${isBlack ? 'bg-black' : 'bg-white'}`}>
+                                  {wordInfo && !isBlack && (
+                                    <span className="absolute top-[2px] left-[2px] text-[9px] font-bold leading-none">{wordInfo.number}</span>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-8 text-sm">
+                        <div>
+                          <h3 className="font-bold text-lg mb-2 border-b-2 border-black">ACROSS</h3>
+                          {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
+                            <div key={`pdf-a-${w.number}`} className="mb-1">
+                              <span className="font-bold">{w.number}.</span> {w.clue}
+                            </div>
+                          ))}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg mb-2 border-b-2 border-black">DOWN</h3>
+                          {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
+                            <div key={`pdf-d-${w.number}`} className="mb-1">
+                              <span className="font-bold">{w.number}.</span> {w.clue}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Clues */}
-                    <div className="grid grid-cols-2 gap-4 text-[10px] font-sans">
-                      <div>
-                        <h4 className="font-bold text-gray-900 mb-2 uppercase">Across</h4>
-                        <ul className="space-y-1 list-none">
-                          {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                            <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
-                          ))}
-                        </ul>
+                    {/* Page 2: Answer Key */}
+                    <div ref={answerRef} style={{ width: '210mm', height: '297mm', padding: '20mm', background: 'white', fontFamily: 'serif', display: 'flex', flexDirection: 'column' }}>
+                      <h1 className="text-3xl font-bold text-center mb-2">ANSWER KEY</h1>
+                      <h2 className="text-xl text-center text-gray-500 mb-8">{crosswordTopic || "Crossword"}</h2>
+
+                      <div className="flex-1 flex justify-center items-center">
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: `repeat(${crosswordData.width}, 26px)`,
+                          gap: '1px',
+                          backgroundColor: '#000',
+                          border: '2px solid #000',
+                          padding: '2px'
+                        }}>
+                          {crosswordData.grid.map((row, r) =>
+                            row.map((cell, c) => {
+                              const isBlack = cell === "";
+                              return (
+                                <div key={`ans-${r}-${c}`} className={`w-[26px] h-[26px] flex items-center justify-center text-sm font-bold relative ${isBlack ? 'bg-black' : 'bg-white'}`}>
+                                  {!isBlack && cell}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-gray-900 mb-2 uppercase">Down</h4>
-                        <ul className="space-y-1 list-none">
-                          {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                            <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
-                          ))}
-                        </ul>
+
+                      <div className="mt-8 p-4 border border-gray-300 rounded text-center text-sm text-gray-500">
+                        Generated by AI Teacher Tools
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </>
               )}
             </>
           )}

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -190,93 +190,84 @@ const Profile = () => {
             {/* View Resource Modal */}
             <Dialog open={!!viewRes} onOpenChange={(open) => !open && setViewRes(null)}>
                 {viewRes && (
-                    <div className="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4">
-                        <div className="bg-card w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-border shadow-2xl overflow-hidden">
-                            <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+                    <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+                        <DialogHeader className="p-4 border-b border-border bg-muted/30">
+                            <div className="flex justify-between items-center mr-8">
                                 <div>
-                                    <h3 className="font-bold text-lg">{viewRes.title}</h3>
-                                    <p className="text-xs text-muted-foreground uppercase">{viewRes.type}</p>
+                                    <DialogTitle className="text-lg font-bold">{viewRes.title}</DialogTitle>
+                                    <p className="text-xs text-muted-foreground uppercase mt-1">{viewRes.type}</p>
                                 </div>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
-                                        <Printer className="w-4 h-4" /> Print
-                                    </Button>
-                                    <Button variant="ghost" onClick={() => setViewRes(null)}>Close</Button>
-                                </div>
+                                <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
+                                    <Printer className="w-4 h-4" /> Print
+                                </Button>
                             </div>
-                            <div className="p-8 overflow-y-auto bg-white flex-1 print:p-0">
-                                {/* Render content based on type */}
-                                <div className="print-content">
-                                    {(() => {
-                                        try {
-                                            const content = JSON.parse(viewRes.content);
-                                            if (viewRes.type === "math" && content.problems) {
-                                                return (
-                                                    <div className="space-y-4 font-mono text-sm max-w-lg mx-auto">
-                                                        <h2 className="text-center font-serif text-xl font-bold mb-6 underline decoration-2 decoration-gray-200 underline-offset-4">{viewRes.title}</h2>
-                                                        {content.problems.map((p: string, i: number) => (
-                                                            <div key={i} className="pb-2 border-b border-gray-100">{p}</div>
-                                                        ))}
+                        </DialogHeader>
+
+                        <div className="p-8 overflow-y-auto bg-white flex-1 print:p-0">
+                            {/* Render content based on type */}
+                            <div className="print-content">
+                                {(() => {
+                                    try {
+                                        const content = JSON.parse(viewRes.content);
+                                        if (viewRes.type === "math" && content.problems) {
+                                            return (
+                                                <div className="space-y-4 font-mono text-sm max-w-lg mx-auto">
+                                                    <h2 className="text-center font-serif text-xl font-bold mb-6 underline decoration-2 decoration-gray-200 underline-offset-4">{viewRes.title}</h2>
+                                                    {content.problems.map((p: string, i: number) => (
+                                                        <div key={i} className="pb-2 border-b border-gray-100">{p}</div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        } else if (viewRes.type === "crossword" && content.grid) {
+                                            return (
+                                                <div className="flex flex-col items-center">
+                                                    <h2 className="text-center font-serif text-xl font-bold mb-6">{viewRes.title}</h2>
+                                                    <div className="inline-grid gap-px bg-gray-900 border-2 border-gray-900 p-px mb-8"
+                                                        style={{
+                                                            gridTemplateColumns: `repeat(${content.width}, 1.5rem)`,
+                                                            gridTemplateRows: `repeat(${content.height}, 1.5rem)`
+                                                        }}>
+                                                        {content.grid.map((row: any[], r: number) =>
+                                                            row.map((cell: any, c: any) => {
+                                                                const wordStart = content.words.find((w: any) => w.row === r && w.col === c);
+                                                                return (
+                                                                    <div key={`${r}-${c}`} className={`w-6 h-6 relative flex items-center justify-center text-xs font-bold ${cell ? "bg-white" : "bg-gray-300"}`}>
+                                                                        {cell && wordStart && (
+                                                                            <span className="absolute top-0.5 left-0.5 text-[6px] leading-none">{wordStart.number}</span>
+                                                                        )}
+                                                                    </div>
+                                                                )
+                                                            })
+                                                        )}
                                                     </div>
-                                                );
-                                            } else if (viewRes.type === "crossword" && content.grid) {
-                                                return (
-                                                    <div className="flex flex-col items-center">
-                                                        <h2 className="text-center font-serif text-xl font-bold mb-6">{viewRes.title}</h2>
-                                                        <div className="inline-grid gap-px bg-gray-900 border-2 border-gray-900 p-px mb-8"
-                                                            style={{
-                                                                gridTemplateColumns: `repeat(${content.width}, 1.5rem)`,
-                                                                gridTemplateRows: `repeat(${content.height}, 1.5rem)`
-                                                            }}>
-                                                            {content.grid.map((row: any[], r: number) =>
-                                                                row.map((cell, c) => {
-                                                                    const wordStart = content.words.find((w: any) => w.row === r && w.col === c);
-                                                                    return (
-                                                                        <div key={`${r}-${c}`} className={`w-6 h-6 relative flex items-center justify-center text-xs font-bold ${cell ? "bg-white" : "bg-gray-300"}`}>
-                                                                            {cell && wordStart && (
-                                                                                <span className="absolute top-0.5 left-0.5 text-[6px] leading-none">{wordStart.number}</span>
-                                                                            )}
-                                                                        </div>
-                                                                    )
-                                                                })
-                                                            )}
+                                                    <div className="grid grid-cols-2 gap-8 text-xs font-sans w-full max-w-lg">
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-900 mb-2 uppercase">Across</h4>
+                                                            <ul className="space-y-1 list-none">
+                                                                {content.words.filter((w: any) => w.isAcross).sort((a: any, b: any) => a.number - b.number).map((w: any) => (
+                                                                    <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
+                                                                ))}
+                                                            </ul>
                                                         </div>
-                                                        <div className="grid grid-cols-2 gap-8 text-xs font-sans w-full max-w-lg">
-                                                            <div>
-                                                                <h4 className="font-bold text-gray-900 mb-2 uppercase">Across</h4>
-                                                                <ul className="space-y-1 list-none">
-                                                                    {content.words.filter((w: any) => w.isAcross).sort((a: any, b: any) => a.number - b.number).map((w: any) => (
-                                                                        <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="font-bold text-gray-900 mb-2 uppercase">Down</h4>
-                                                                <ul className="space-y-1 list-none">
-                                                                    {content.words.filter((w: any) => !w.isAcross).sort((a: any, b: any) => a.number - b.number).map((w: any) => (
-                                                                        <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-900 mb-2 uppercase">Down</h4>
+                                                            <ul className="space-y-1 list-none">
+                                                                {content.words.filter((w: any) => !w.isAcross).sort((a: any, b: any) => a.number - b.number).map((w: any) => (
+                                                                    <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
+                                                                ))}
+                                                            </ul>
                                                         </div>
                                                     </div>
-                                                );
-                                            }
-                                        } catch (e) {
-                                            return <p className="text-destructive">Error parsing content</p>;
+                                                </div>
+                                            );
                                         }
-                                    })()}
-                                </div>
+                                    } catch (e) {
+                                        return <p className="text-destructive">Error parsing content</p>;
+                                    }
+                                })()}
                             </div>
                         </div>
-                        <style>{`
-                           @media print {
-                               body * { visibility: hidden; }
-                               .print-content, .print-content * { visibility: visible; }
-                               .print-content { position: absolute; left: 0; top: 0; width: 100%; height: 100%; padding: 40px; margin: 0; }
-                           }
-                       `}</style>
-                    </div>
+                    </DialogContent>
                 )}
             </Dialog>
         </div>

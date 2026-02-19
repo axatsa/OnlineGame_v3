@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, Settings2, ChevronDown, Check, Plus } from "lucide-react";
+import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, Settings2, ChevronDown, Check, Plus, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import thompsonLogo from "@/assets/thompson-logo.png";
 import { useClass } from "@/context/ClassContext";
 import api from "@/lib/api";
@@ -588,45 +588,49 @@ const Generator = () => {
 
       {/* Edit Dialog */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
-        <div className="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-card w-full max-w-lg p-6 rounded-2xl border border-border shadow-xl space-y-4">
-            <h3 className="text-lg font-bold font-serif">Edit Content</h3>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Edit Content</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               className="w-full h-60 p-3 rounded-xl border border-input bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
-              <Button onClick={saveEdit}>Apply Changes</Button>
-            </div>
           </div>
-        </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
+            <Button onClick={saveEdit}>Apply Changes</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* Save Dialog */}
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <div className="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-card w-full max-w-sm p-6 rounded-2xl border border-border shadow-xl space-y-4">
-            <h3 className="text-lg font-bold font-serif">Save to Profile</h3>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Save to Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Resource Title</Label>
               <Input
                 value={saveTitle}
-                onChange={e => setSaveTitle(e.target.value)}
+                onChange={(e) => setSaveTitle(e.target.value)}
                 placeholder="e.g. Algebra Quiz 1"
                 className="rounded-xl"
               />
             </div>
-            <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
-              <Button onClick={handleSaveResource} disabled={isSaving}>
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                Save
-              </Button>
-            </div>
           </div>
-        </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
+            <Button onClick={handleSaveResource} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );

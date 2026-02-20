@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import GameShell from "./GameShell";
 import { Button } from "@/components/ui/button";
@@ -23,10 +23,11 @@ const TugOfWar = () => {
   const [position, setPosition] = useState(0); // -5 to +5, negative = blue (team1) wins
   const [blueScore, setBlueScore] = useState(0);
   const [redScore, setRedScore] = useState(0);
-  const [feedback, setFeedback] = useState<{ team: "blue" | "red"; correct: boolean } | null>(null);
-  const [activeTeam, setActiveTeam] = useState<"blue" | "red">("blue");
+  const [feedback, setFeedback] = useState<{ team: "blue" | "red" | "time"; correct: boolean } | null>(null);
   const [team1Name, setTeam1Name] = useState("Team 1");
   const [team2Name, setTeam2Name] = useState("Team 2");
+  const [timeLeft, setTimeLeft] = useState(15);
+  const [blockedTeams, setBlockedTeams] = useState<{ blue: boolean, red: boolean }>({ blue: false, red: false });
 
   const startGame = async () => {
     const searchTopic = topic.trim() || "General Knowledge";
@@ -49,8 +50,9 @@ const TugOfWar = () => {
       setPosition(0);
       setBlueScore(0);
       setRedScore(0);
-      setActiveTeam("blue");
       setFeedback(null);
+      setBlockedTeams({ blue: false, red: false });
+      setTimeLeft(15);
       setStatus("playing");
       toast.success("Battle prepared!");
     } catch (e) {
@@ -60,28 +62,67 @@ const TugOfWar = () => {
     }
   };
 
-  const selectAnswer = (option: string) => {
-    if (feedback) return;
+  useEffect(() => {
+    if (status !== "playing" || feedback) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setFeedback({ team: "time", correct: false });
+          setTimeout(() => {
+            setFeedback(null);
+            setBlockedTeams({ blue: false, red: false });
+            setCurrentQ((q) => (q + 1) % questions.length);
+            setTimeLeft(15);
+          }, 1500);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [status, feedback, currentQ, questions.length]);
+
+  const selectAnswer = (team: "blue" | "red", option: string) => {
+    if (feedback || blockedTeams[team] || status !== "playing") return;
     const correct = option === questions[currentQ]?.a;
-    setFeedback({ team: activeTeam, correct });
 
     if (correct) {
-      const newPos = position + (activeTeam === "blue" ? -1 : 1);
+      setFeedback({ team, correct: true });
+      const newPos = position + (team === "blue" ? -1 : 1);
       setPosition(newPos);
-      if (activeTeam === "blue") setBlueScore((s) => s + 1);
+      if (team === "blue") setBlueScore((s) => s + 1);
       else setRedScore((s) => s + 1);
 
       if (Math.abs(newPos) >= 4) {
-        setTimeout(() => { setStatus("finished"); setFeedback(null); }, 900);
+        setTimeout(() => { setStatus("finished"); setFeedback(null); }, 1500);
         return;
       }
-    }
 
-    setTimeout(() => {
-      setFeedback(null);
-      setActiveTeam((t) => (t === "blue" ? "red" : "blue"));
-      setCurrentQ((q) => (q + 1) % questions.length);
-    }, 1000);
+      setTimeout(() => {
+        setFeedback(null);
+        setBlockedTeams({ blue: false, red: false });
+        setCurrentQ((q) => (q + 1) % questions.length);
+        setTimeLeft(15);
+      }, 1500);
+    } else {
+      // Wrong answer
+      const newBlocked = { ...blockedTeams, [team]: true };
+      setBlockedTeams(newBlocked);
+
+      if (newBlocked.blue && newBlocked.red) {
+        // Both teams got it wrong
+        setFeedback({ team, correct: false }); // Show final wrong feedback
+        setTimeout(() => {
+          setFeedback(null);
+          setBlockedTeams({ blue: false, red: false });
+          setCurrentQ((q) => (q + 1) % questions.length);
+          setTimeLeft(15);
+        }, 1500);
+      }
+    }
   };
 
   const winner = position <= -4 ? team1Name : position >= 4 ? team2Name : null;
@@ -148,41 +189,34 @@ const TugOfWar = () => {
                 <span className="text-white font-bold font-sans text-base">{team1Name}</span>
                 <span className="bg-white text-blue-600 font-bold rounded-full w-8 h-8 flex items-center justify-center text-sm">{blueScore}</span>
               </div>
-              {/* Blue question (shown when blue's turn) */}
-              {activeTeam === "blue" && (
-                <div className="flex-1 flex flex-col gap-3">
-                  <p className="text-blue-700 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{q.q}</p>
-                  <div className="flex flex-col gap-2 mt-1">
-                    {q.options.map((opt, i) => {
-                      const isCorrect = opt === q.a;
-                      const isFeedback = feedback && feedback.team === "blue";
-                      return (
-                        <motion.button key={opt}
-                          onClick={() => selectAnswer(opt)}
-                          disabled={!!feedback}
-                          whileHover={!feedback ? { scale: 1.02 } : {}}
-                          whileTap={!feedback ? { scale: 0.98 } : {}}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
-                            isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
-                              "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 text-gray-700"
-                            }`}
-                        >
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
-                            isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
-                              "bg-blue-100 text-blue-600"
-                            }`}>{LABELS[i]}</span>
-                          {opt}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
+              {/* Blue question */}
+              <div className={`flex-1 flex flex-col gap-3 transition-opacity ${blockedTeams.blue ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
+                <p className="text-blue-700 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{q.q}</p>
+                <div className="flex flex-col gap-2 mt-1">
+                  {q.options.map((opt, i) => {
+                    const isCorrect = opt === q.a;
+                    const isFeedback = feedback && feedback.team === "blue";
+                    return (
+                      <motion.button key={opt}
+                        onClick={() => selectAnswer("blue", opt)}
+                        disabled={!!feedback || blockedTeams.blue}
+                        whileHover={!feedback && !blockedTeams.blue ? { scale: 1.02 } : {}}
+                        whileTap={!feedback && !blockedTeams.blue ? { scale: 0.98 } : {}}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
+                          isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
+                            "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 text-gray-700"
+                          }`}
+                      >
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
+                          isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
+                            "bg-blue-100 text-blue-600"
+                          }`}>{LABELS[i]}</span>
+                        {opt}
+                      </motion.button>
+                    );
+                  })}
                 </div>
-              )}
-              {activeTeam === "red" && (
-                <div className="flex-1 flex items-center justify-center">
-                  <p className="text-gray-400 text-sm font-sans text-center">Ожидание хода команды {team2Name}...</p>
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Center arena */}
@@ -194,7 +228,9 @@ const TugOfWar = () => {
                   <p className="text-3xl font-bold text-gray-800 font-serif">{blueScore}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-blue-500 font-mono font-bold text-lg">⏱ 00:00</p>
+                  <p className={`font-mono font-bold text-lg ${timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-blue-500"}`}>
+                    ⏱ 00:{timeLeft.toString().padStart(2, "0")}
+                  </p>
                 </div>
                 <div className="flex-1 text-center">
                   <p className="text-xs text-gray-500 font-sans">{team2Name}</p>
@@ -229,21 +265,22 @@ const TugOfWar = () => {
                 </motion.div>
               </div>
 
-              {/* Feedback */}
+              {/* Feedback Overlay */}
               <AnimatePresence>
                 {feedback && (
                   <motion.div key="fb" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
-                    className={`text-4xl font-bold px-6 py-2 rounded-2xl ${feedback.correct ? "text-green-600" : "text-red-500"}`}
+                    className={`text-3xl font-bold px-6 py-3 rounded-2xl bg-white shadow-xl border-2 z-50 absolute ${feedback.team === "time" ? "border-gray-400 text-gray-600" :
+                        feedback.correct ? "border-green-500 text-green-600" : "border-red-500 text-red-500"
+                      }`}
                   >
-                    {feedback.correct ? "✅ Правильно!" : "❌ Неверно!"}
+                    {feedback.team === "time" ? "⏰ Время вышло!" : feedback.correct ? "✅ Верно!" : "❌ Ошибка!"}
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Turn indicator */}
-              <div className={`px-5 py-2 rounded-full text-sm font-semibold font-sans shadow-sm ${activeTeam === "blue" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
-                }`}>
-                {activeTeam === "blue" ? `🔵 Ход команды ${team1Name}` : `🔴 Ход команды ${team2Name}`}
+              {/* Status indicator */}
+              <div className="px-5 py-2 rounded-full text-sm font-semibold font-sans shadow-sm bg-gray-100 text-gray-700">
+                Кто ответит быстрее?
               </div>
             </div>
 
@@ -253,40 +290,33 @@ const TugOfWar = () => {
                 <span className="text-white font-bold font-sans text-base">{team2Name}</span>
                 <span className="bg-white text-red-600 font-bold rounded-full w-8 h-8 flex items-center justify-center text-sm">{redScore}</span>
               </div>
-              {activeTeam === "red" && (
-                <div className="flex-1 flex flex-col gap-3">
-                  <p className="text-red-600 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{q.q}</p>
-                  <div className="flex flex-col gap-2 mt-1">
-                    {q.options.map((opt, i) => {
-                      const isCorrect = opt === q.a;
-                      const isFeedback = feedback && feedback.team === "red";
-                      return (
-                        <motion.button key={opt}
-                          onClick={() => selectAnswer(opt)}
-                          disabled={!!feedback}
-                          whileHover={!feedback ? { scale: 1.02 } : {}}
-                          whileTap={!feedback ? { scale: 0.98 } : {}}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
-                            isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
-                              "border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 text-gray-700"
-                            }`}
-                        >
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
-                            isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
-                              "bg-red-100 text-red-600"
-                            }`}>{LABELS[i]}</span>
-                          {opt}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
+              <div className={`flex-1 flex flex-col gap-3 transition-opacity ${blockedTeams.red ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
+                <p className="text-red-600 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{q.q}</p>
+                <div className="flex flex-col gap-2 mt-1">
+                  {q.options.map((opt, i) => {
+                    const isCorrect = opt === q.a;
+                    const isFeedback = feedback && feedback.team === "red";
+                    return (
+                      <motion.button key={opt}
+                        onClick={() => selectAnswer("red", opt)}
+                        disabled={!!feedback || blockedTeams.red}
+                        whileHover={!feedback && !blockedTeams.red ? { scale: 1.02 } : {}}
+                        whileTap={!feedback && !blockedTeams.red ? { scale: 0.98 } : {}}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
+                          isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
+                            "border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 text-gray-700"
+                          }`}
+                      >
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
+                          isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
+                            "bg-red-100 text-red-600"
+                          }`}>{LABELS[i]}</span>
+                        {opt}
+                      </motion.button>
+                    );
+                  })}
                 </div>
-              )}
-              {activeTeam === "blue" && (
-                <div className="flex-1 flex items-center justify-center">
-                  <p className="text-gray-400 text-sm font-sans text-center">Ожидание хода команды {team1Name}...</p>
-                </div>
-              )}
+              </div>
             </div>
           </motion.div>
         )}

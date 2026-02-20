@@ -10,13 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 import { useClass } from "@/context/ClassContext";
+import { useLang } from "@/context/LangContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { generateCrosswordLayout, CrosswordGrid } from "@/lib/crossword";
 
-type GeneratorType = "math" | "crossword" | "quiz" | "jeopardy" | "assignment";
+type GeneratorType = "math" | "crossword" | "quiz" | "assignment";
 const difficulties = ["Easy", "Medium", "Hard"];
-const languages = ["RU", "UZ"];
 
 const SegmentedControl = ({
   label,
@@ -58,6 +58,7 @@ const SegmentedControl = ({
 const Generator = () => {
   const navigate = useNavigate();
   const { activeClass, activeClassId, classes, setActiveClassId } = useClass();
+  const { lang, t } = useLang();
   const [showClassPicker, setShowClassPicker] = useState(false);
   const [genType, setGenType] = useState<GeneratorType>("math");
 
@@ -69,13 +70,10 @@ const Generator = () => {
   // Crossword fields
   const [crosswordTopic, setCrosswordTopic] = useState("");
   const [wordCount, setWordCount] = useState("10");
-  const [language, setLanguage] = useState("RU");
+
   // Quiz fields
   const [quizTopic, setQuizTopic] = useState("");
   const [quizCount, setQuizCount] = useState("5");
-
-  // Jeopardy fields
-  const [jeopardyTopic, setJeopardyTopic] = useState("");
 
   // Assignment fields
   const [assignSubject, setAssignSubject] = useState("");
@@ -84,7 +82,6 @@ const Generator = () => {
 
   // Results State
   const [quizData, setQuizData] = useState<any[]>([]);
-  const [jeopardyData, setJeopardyData] = useState<any>(null);
   const [assignmentData, setAssignmentData] = useState<any>(null);
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -117,13 +114,14 @@ const Generator = () => {
     setCrosswordData(null);
     setRawCrosswordWords([]);
     setQuizData([]);
-    setJeopardyData(null);
     setAssignmentData(null);
 
     try {
+      const langInstruction = lang === "uz" ? "in Uzbek language" : "in Russian language";
+
       if (genType === "math") {
         const payload = {
-          topic: mathTopic,
+          topic: `${mathTopic} (${langInstruction})`,
           count: parseInt(questionCount) || 10,
           difficulty: difficulty,
           class_id: activeClassId
@@ -132,23 +130,16 @@ const Generator = () => {
         setGeneratedProblems(res.data.problems);
       } else if (genType === "quiz") {
         const payload = {
-          topic: quizTopic,
+          topic: `${quizTopic} (${langInstruction})`,
           count: parseInt(quizCount) || 5,
           class_id: activeClassId
         };
         const res = await api.post("/generate/quiz", payload);
         setQuizData(res.data.questions);
-      } else if (genType === "jeopardy") {
-        const payload = {
-          topic: jeopardyTopic,
-          class_id: activeClassId
-        };
-        const res = await api.post("/generate/jeopardy", payload);
-        setJeopardyData(res.data);
       } else if (genType === "assignment") {
         const payload = {
           subject: assignSubject,
-          topic: assignTopic,
+          topic: `${assignTopic} (${langInstruction})`,
           count: parseInt(assignCount) || 5,
           class_id: activeClassId
         };
@@ -158,7 +149,7 @@ const Generator = () => {
         const payload = {
           topic: crosswordTopic,
           word_count: parseInt(wordCount) || 10,
-          language: language,
+          language: lang === "uz" ? "O'zbekcha" : "Русский",
           class_id: activeClassId
         };
         const res = await api.post("/generate/crossword", payload);
@@ -187,7 +178,6 @@ const Generator = () => {
     (genType === "math" && mathTopic.trim().length > 0) ||
     (genType === "crossword" && crosswordTopic.trim().length > 0) ||
     (genType === "quiz" && quizTopic.trim().length > 0) ||
-    (genType === "jeopardy" && jeopardyTopic.trim().length > 0) ||
     (genType === "assignment" && assignSubject.trim().length > 0 && assignTopic.trim().length > 0);
 
 
@@ -435,7 +425,6 @@ const Generator = () => {
               { id: "math", label: "Math", icon: Calculator },
               { id: "crossword", label: "Crossword", icon: LayoutGrid },
               { id: "quiz", label: "Quiz", icon: Brain },
-              { id: "jeopardy", label: "Jeopardy", icon: Trophy },
               { id: "assignment", label: "Assignment", icon: FileText },
             ].map((type) => (
               <button
@@ -557,27 +546,6 @@ const Generator = () => {
                     onChange={(e) => setQuizCount(e.target.value)}
                     className="h-11 rounded-xl font-sans"
                   />
-                </div>
-              </motion.div>
-            )}
-
-            {genType === "jeopardy" && (
-              <motion.div
-                key="jeopardy"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="space-y-5"
-              >
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Game Topic</Label>
-                  <Input
-                    placeholder="e.g. General Science, World Geography..."
-                    value={jeopardyTopic}
-                    onChange={(e) => setJeopardyTopic(e.target.value)}
-                    className="h-11 rounded-xl font-sans"
-                  />
-                  <p className="text-xs text-muted-foreground font-sans">Generates 5 categories with 5 questions each.</p>
                 </div>
               </motion.div>
             )}
@@ -705,12 +673,11 @@ const Generator = () => {
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {mathTopic}</span>
                       </div>
                       <h2 className="text-xl font-bold font-serif mb-6 text-center">Math Answers</h2>
-                      <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm font-mono">
+                      <div className="grid grid-cols-4 gap-1.5 mb-4">
                         {generatedProblems.map((p, i) => (
-                          <div key={i} className="flex gap-2">
-                            <span className="font-bold">{i + 1}.</span>
-                            <span className="text-gray-600 truncate">{p.q}</span>
-                            <span className="font-bold text-green-700 ml-auto">{p.a}</span>
+                          <div key={i} className="border border-gray-300 rounded text-center p-1">
+                            <div className="text-gray-400" style={{ fontSize: "9px" }}>№{i + 1}</div>
+                            <div className="font-bold text-xs">{p.a}</div>
                           </div>
                         ))}
                       </div>
@@ -735,12 +702,18 @@ const Generator = () => {
                       </div>
                       <h3 className="text-lg font-bold text-gray-900 text-center mb-1 font-serif">Mathematics Worksheet</h3>
                       <div className="grid grid-cols-2 gap-x-8 gap-y-6 flex-1 mt-6">
-                        {generatedProblems.map((p, i) => (
-                          <div key={i} className="text-sm text-gray-800 font-mono flex gap-2 border-b border-gray-100 pb-2">
-                            <span className="font-bold text-gray-400">{i + 1}.</span>
-                            <div className="flex-1">{p.q}</div>
-                          </div>
-                        ))}
+                        {generatedProblems.map((p, i) => {
+                          let equationText = p.q;
+                          if (generatedProblems.length > 6) {
+                            equationText = p.q.replace(/^[A-Za-zА-Яа-яЁё\s]+:\s*/, '');
+                          }
+                          return (
+                            <div key={i} className={`text-sm text-gray-800 font-mono flex gap-2 border-b border-gray-100 ${generatedProblems.length > 6 ? "pb-1" : "pb-2"}`}>
+                              <span className="font-bold text-gray-400">{i + 1}.</span>
+                              <div className="flex-1">{equationText}</div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </motion.div>
@@ -878,65 +851,6 @@ const Generator = () => {
                 </>
               )}
 
-              {genType === "jeopardy" && jeopardyData && (
-                <>
-                  <div className="fixed left-[-9999px] top-0">
-                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
-                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
-                        </div>
-                        <span className="text-xs text-gray-500 font-sans">Answer Key • {jeopardyTopic}</span>
-                      </div>
-                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Jeopardy Answers</h2>
-                      <div className="space-y-6">
-                        {jeopardyData.categories?.map((cat: any, i: number) => (
-                          <div key={i}>
-                            <h3 className="font-bold text-lg mb-2">{cat.name}</h3>
-                            <ul className="space-y-1 text-sm list-disc pl-5">
-                              {cat.questions?.map((q: any, qi: number) => (
-                                <li key={qi}>
-                                  <span className="font-semibold text-blue-700">{q.points}:</span> {q.q} — <span className="font-bold text-green-700">{q.a}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <motion.div
-                    ref={puzzleRef}
-                    key="jeopardy-board"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-4xl bg-blue-900 rounded-lg shadow-2xl p-4 overflow-y-auto text-white"
-                    style={{ maxHeight: "80vh" }}
-                  >
-                    <h2 className="text-2xl font-bold text-center mb-4 text-yellow-400 font-serif tracking-widest uppercase">Jeopardy!</h2>
-                    <div className="grid grid-cols-5 gap-2">
-                      {jeopardyData.categories?.map((cat: any, i: number) => (
-                        <div key={i} className="bg-blue-800 p-2 text-center font-bold text-xs uppercase flex items-center justify-center h-16 border-b-4 border-black/20">
-                          {cat.name}
-                        </div>
-                      ))}
-                      {[0, 1, 2, 3, 4].map((rowIdx) => (
-                        jeopardyData.categories?.map((cat: any, colIdx: number) => {
-                          const q = cat.questions?.[rowIdx];
-                          return (
-                            <div key={`${colIdx}-${rowIdx}`} className="bg-blue-700 aspect-video flex items-center justify-center font-bold text-yellow-400 text-xl border border-blue-600 shadow-inner">
-                              {q ? q.points : "-"}
-                            </div>
-                          );
-                        })
-                      ))}
-                    </div>
-                  </motion.div>
-                </>
-              )}
-
               {genType === "assignment" && assignmentData && (
                 <>
                   <div className="fixed left-[-9999px] top-0">
@@ -949,11 +863,11 @@ const Generator = () => {
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {assignmentData.title}</span>
                       </div>
                       <h2 className="text-xl font-bold font-serif mb-6 text-center">Teacher Key</h2>
-                      <div className="space-y-4 text-sm">
-                        {assignmentData.questions?.map((q: any, i: number) => (
-                          <div key={i} className="border-b border-gray-100 pb-2">
-                            <p className="font-semibold">{q.num}. {q.text}</p>
-                            <p className="font-bold text-green-700 mt-1">Answer: {q.answer}</p>
+                      <div className="grid grid-cols-4 gap-1.5 mb-4">
+                        {assignmentData.questions.map((q: any) => (
+                          <div key={q.num} className="border border-gray-300 rounded text-center p-1">
+                            <div className="text-gray-400" style={{ fontSize: "9px" }}>№{q.num}</div>
+                            <div className="font-bold text-xs">{q.answer?.split(")")[0] || q.answer})</div>
                           </div>
                         ))}
                       </div>

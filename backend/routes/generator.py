@@ -50,15 +50,7 @@ def gen_math(req: MathRequest, db: Session = Depends(get_db), user: User = Depen
 
 @router.post("/crossword")
 def gen_crossword(req: CrosswordRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # Note: CrosswordRequest might not have class_id in original schema, need to check/update schema if needed.
-    # Assuming we might want to add class_id to CrosswordRequest in schemas.py or just rely on defaults.
-    # For now, let's treat it safely.
-    grade = ""
-    context = ""
-    # If schema has it, use it. If not, default. 
-    # To be safe, let's assume raw dict access or just skip if field missing.
-    if hasattr(req, 'class_id'):
-        grade, context = get_class_context(db, req.class_id)
+    grade, context = get_class_context(db, req.class_id)
         
     words, tokens = generate_crossword_words(req.topic, req.word_count, req.language, grade, context)
     

@@ -22,7 +22,7 @@ api.interceptors.request.use(
             console.warn("Unauthorized access - redirecting to login");
             localStorage.removeItem("token");
             localStorage.removeItem("user");
-            window.location.href = "/";
+            window.dispatchEvent(new Event("auth:unauthorized"));
         }
         return Promise.reject(error);
     }

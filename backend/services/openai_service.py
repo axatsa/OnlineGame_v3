@@ -1,13 +1,20 @@
 import json
+import re
 from openai import OpenAI
-from config import OPENAI_API_KEY
+from openai import OpenAI
+from config import OPENAI_API_KEY, OPENAI_MODEL
+import logging
+
+logger = logging.getLogger(__name__)
 from typing import List, Dict, Any, Tuple
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 SYSTEM_PROMPT = "You are a helpful education assistant. Output valid JSON only."
 
-def _get_completion(messages: List[Dict[str, str]], model="gpt-3.5-turbo") -> Tuple[Any, int]:
+
+
+def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple[Any, int]:
     """Helper to call OpenAI and return (content, total_tokens)"""
     try:
         response = client.chat.completions.create(
@@ -18,15 +25,35 @@ def _get_completion(messages: List[Dict[str, str]], model="gpt-3.5-turbo") -> Tu
         content = response.choices[0].message.content
         usage = response.usage.total_tokens if response.usage else 0
         
-        # Clean up potential markdown filtering
-        if content.startswith("```json"):
-            content = content.replace("```json", "").replace("```", "")
-        elif content.startswith("```"):
-            content = content.replace("```", "")
-            
-        return json.loads(content), usage
+        # Robust JSON extraction
+        try:
+            # 1. Try parsing directly
+            return json.loads(content), usage
+        except json.JSONDecodeError:
+            pass
+
+        # 2. Try extracting from markdown code blocks
+        json_match = re.search(r"```(?:json)?\s*(.*?)```", content, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(1).strip()), usage
+            except json.JSONDecodeError:
+                pass
+
+        # 3. Try finding the first structure (array or object)
+        # Look for [ ... ] or { ... }
+        structure_match = re.search(r"(\{.*\}|\[.*\])", content, re.DOTALL)
+        if structure_match:
+            try:
+                return json.loads(structure_match.group(1).strip()), usage
+            except json.JSONDecodeError:
+                pass
+        
+        logger.error(f"Failed to parse JSON from content: {content[:100]}...")
+        return None, usage
+
     except Exception as e:
-        print(f"OpenAI Error: {e}")
+        logger.error(f"OpenAI Error: {e}")
         return None, 0
 
 def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "") -> Tuple[List[str], int]:
@@ -107,6 +134,10 @@ def generate_assignment(subject: str, topic: str, count: int, grade: str = "", c
     }}
     Make sure to provide 4 options for each question and the correct answer.
     """
+    return _get_completion([
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt}
+    ])
 def generate_jeopardy(topic: str, grade: str = "", context: str = "") -> Tuple[Dict, int]:
     """Generates a full Jeopardy game board"""
     user_prompt = f"""
@@ -137,4 +168,4 @@ def generate_jeopardy(topic: str, grade: str = "", context: str = "") -> Tuple[D
     return _get_completion([
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_prompt}
-    ], model="gpt-3.5-turbo")
+    ])

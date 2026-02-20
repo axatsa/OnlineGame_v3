@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 import { useRef, RefObject, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, Settings2, ChevronDown, Check, Plus, Save } from "lucide-react";
+import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, ChevronDown, Check, Plus, Save, Brain, Trophy, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 import { generateCrosswordLayout, CrosswordGrid } from "@/lib/crossword";
 
-type GeneratorType = "math" | "crossword";
+type GeneratorType = "math" | "crossword" | "quiz" | "jeopardy" | "assignment";
 const difficulties = ["Easy", "Medium", "Hard"];
 const languages = ["RU", "UZ"];
 
@@ -70,6 +70,22 @@ const Generator = () => {
   const [crosswordTopic, setCrosswordTopic] = useState("");
   const [wordCount, setWordCount] = useState("10");
   const [language, setLanguage] = useState("RU");
+  // Quiz fields
+  const [quizTopic, setQuizTopic] = useState("");
+  const [quizCount, setQuizCount] = useState("5");
+
+  // Jeopardy fields
+  const [jeopardyTopic, setJeopardyTopic] = useState("");
+
+  // Assignment fields
+  const [assignSubject, setAssignSubject] = useState("");
+  const [assignTopic, setAssignTopic] = useState("");
+  const [assignCount, setAssignCount] = useState("5");
+
+  // Results State
+  const [quizData, setQuizData] = useState<any[]>([]);
+  const [jeopardyData, setJeopardyData] = useState<any>(null);
+  const [assignmentData, setAssignmentData] = useState<any>(null);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
@@ -77,11 +93,32 @@ const Generator = () => {
 
   // Crossword state
   const [crosswordData, setCrosswordData] = useState<CrosswordGrid | null>(null);
+  const [rawCrosswordWords, setRawCrosswordWords] = useState<any[]>([]);
+
+  const handleRetryLayout = () => {
+    if (rawCrosswordWords.length === 0) return;
+    setIsGenerating(true);
+    // Small timeout to allow UI to show loading state
+    setTimeout(() => {
+      const layout = generateCrosswordLayout(rawCrosswordWords);
+      if (layout) {
+        setCrosswordData(layout);
+        toast.success("Layout regenerated!");
+      } else {
+        toast.error("Could not find a valid layout. Try again.");
+      }
+      setIsGenerating(false);
+    }, 100);
+  };
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     setGenerated(false);
     setCrosswordData(null);
+    setRawCrosswordWords([]);
+    setQuizData([]);
+    setJeopardyData(null);
+    setAssignmentData(null);
 
     try {
       if (genType === "math") {
@@ -93,6 +130,30 @@ const Generator = () => {
         };
         const res = await api.post("/generate/math", payload);
         setGeneratedProblems(res.data.problems);
+      } else if (genType === "quiz") {
+        const payload = {
+          topic: quizTopic,
+          count: parseInt(quizCount) || 5,
+          class_id: activeClassId
+        };
+        const res = await api.post("/generate/quiz", payload);
+        setQuizData(res.data.questions);
+      } else if (genType === "jeopardy") {
+        const payload = {
+          topic: jeopardyTopic,
+          class_id: activeClassId
+        };
+        const res = await api.post("/generate/jeopardy", payload);
+        setJeopardyData(res.data);
+      } else if (genType === "assignment") {
+        const payload = {
+          subject: assignSubject,
+          topic: assignTopic,
+          count: parseInt(assignCount) || 5,
+          class_id: activeClassId
+        };
+        const res = await api.post("/generate/assignment", payload);
+        setAssignmentData(res.data.result);
       } else {
         const payload = {
           topic: crosswordTopic,
@@ -102,11 +163,13 @@ const Generator = () => {
         };
         const res = await api.post("/generate/crossword", payload);
         // Backend returns { words: [{word, clue}, ...] }
+        setRawCrosswordWords(res.data.words);
+
         // We need to generate the layout
         const layout = generateCrosswordLayout(res.data.words);
         if (!layout) {
           toast.error("Could not arrange words into a crossword. Try again or fewer words.");
-          return; // Don't set generated true
+          return;
         }
         setCrosswordData(layout);
       }
@@ -120,7 +183,12 @@ const Generator = () => {
     }
   };
 
-  const canGenerate = genType === "math" ? mathTopic.trim().length > 0 : crosswordTopic.trim().length > 0;
+  const canGenerate =
+    (genType === "math" && mathTopic.trim().length > 0) ||
+    (genType === "crossword" && crosswordTopic.trim().length > 0) ||
+    (genType === "quiz" && quizTopic.trim().length > 0) ||
+    (genType === "jeopardy" && jeopardyTopic.trim().length > 0) ||
+    (genType === "assignment" && assignSubject.trim().length > 0 && assignTopic.trim().length > 0);
 
 
   // Edit & Save State
@@ -161,9 +229,11 @@ const Generator = () => {
       await addPage(puzzleRef.current, true);
 
       // Page 2: Answers
-      await addPage(answerRef.current, false);
+      if (answerRef.current) {
+        await addPage(answerRef.current, false);
+      }
 
-      pdf.save('crossword.pdf');
+      pdf.save('generated-content.pdf');
       toast.success("PDF downloaded successfully!");
     } catch (e) {
       console.error("PDF Generation failed", e);
@@ -174,20 +244,47 @@ const Generator = () => {
   const openEdit = () => {
     if (genType === "math") {
       setEditContent(generatedProblems.join("\n"));
+    } else if (genType === "crossword" && crosswordData) {
+      // For crossword, we edit the word list mostly, but let's expose the whole object structure for advanced users
+      // or maybe just the words? Let's do words + grid size if possible, but grid is auto-generated.
+      // Re-generating layout from edited words is better. 
+      // But here we are editing the *result* state.
+      // Let's just allow editing the words list for now if we want to re-generate layout?
+      // actually, the user wants to edit the CONTENT.
+      // If I edit the grid directly, it's hard.
+      // Let's allow editing the words text.
+      // But for simplicity of "universal" editing, let's just JSON dump the data.
+      setEditContent(JSON.stringify(crosswordData, null, 2));
+    } else if (genType === "quiz" && quizData) {
+      setEditContent(JSON.stringify(quizData, null, 2));
+    } else if (genType === "jeopardy" && jeopardyData) {
+      setEditContent(JSON.stringify(jeopardyData, null, 2));
+    } else if (genType === "assignment" && assignmentData) {
+      setEditContent(JSON.stringify(assignmentData, null, 2));
     } else {
-      // Crossword editing is complex, maybe just skip for now or just text
-      toast.info("Editing crossword layout is not supported yet.");
       return;
     }
     setShowEdit(true);
   };
 
   const saveEdit = () => {
-    if (genType === "math") {
-      setGeneratedProblems(editContent.split("\n").filter(l => l.trim().length > 0));
+    try {
+      if (genType === "math") {
+        setGeneratedProblems(editContent.split("\n").filter(l => l.trim().length > 0));
+      } else if (genType === "crossword") {
+        setCrosswordData(JSON.parse(editContent));
+      } else if (genType === "quiz") {
+        setQuizData(JSON.parse(editContent));
+      } else if (genType === "jeopardy") {
+        setJeopardyData(JSON.parse(editContent));
+      } else if (genType === "assignment") {
+        setAssignmentData(JSON.parse(editContent));
+      }
+      setShowEdit(false);
+      toast.success("Changes applied!");
+    } catch (e) {
+      toast.error("Invalid JSON format. Please check your syntax.");
     }
-    setShowEdit(false);
-    toast.success("Changes applied!");
   };
 
   const handleSaveResource = async () => {
@@ -197,9 +294,12 @@ const Generator = () => {
     }
     setIsSaving(true);
     try {
-      const content = genType === "math"
-        ? JSON.stringify({ problems: generatedProblems })
-        : JSON.stringify({ words: crosswordData?.words, grid: crosswordData?.grid, width: crosswordData?.width, height: crosswordData?.height });
+      let content = "";
+      if (genType === "math") content = JSON.stringify({ problems: generatedProblems });
+      else if (genType === "crossword") content = JSON.stringify({ words: crosswordData?.words, grid: crosswordData?.grid, width: crosswordData?.width, height: crosswordData?.height });
+      else if (genType === "quiz") content = JSON.stringify({ questions: quizData });
+      else if (genType === "jeopardy") content = JSON.stringify(jeopardyData);
+      else if (genType === "assignment") content = JSON.stringify(assignmentData);
 
       await api.post("/resources/", {
         title: saveTitle,
@@ -328,43 +428,32 @@ const Generator = () => {
 
 
           {/* Type Switcher */}
-          <div className="flex bg-muted rounded-xl p-1">
-            <button
-              onClick={() => { setGenType("math"); setGenerated(false); }}
-              className={`relative flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium font-sans rounded-lg transition-colors ${genType === "math" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              {genType === "math" && (
-                <motion.div
-                  layoutId="genTypePill"
-                  className="absolute inset-0 bg-primary rounded-lg shadow-sm"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-              <Calculator className="w-4 h-4 relative z-10" />
-              <span className="relative z-10">Mathematics</span>
-            </button>
-            <button
-              onClick={() => { setGenType("crossword"); setGenerated(false); }}
-              className={`relative flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium font-sans rounded-lg transition-colors ${genType === "crossword" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              {genType === "crossword" && (
-                <motion.div
-                  layoutId="genTypePill"
-                  className="absolute inset-0 bg-primary rounded-lg shadow-sm"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-              <LayoutGrid className="w-4 h-4 relative z-10" />
-              <span className="relative z-10">Crossword</span>
-            </button>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: "math", label: "Math", icon: Calculator },
+              { id: "crossword", label: "Crossword", icon: LayoutGrid },
+              { id: "quiz", label: "Quiz", icon: Brain },
+              { id: "jeopardy", label: "Jeopardy", icon: Trophy },
+              { id: "assignment", label: "Assignment", icon: FileText },
+            ].map((type) => (
+              <button
+                key={type.id}
+                onClick={() => { setGenType(type.id as GeneratorType); setGenerated(false); }}
+                className={`relative flex items-center justify-center gap-2 py-3 text-sm font-medium font-sans rounded-xl transition-all border ${genType === type.id
+                  ? "bg-primary text-primary-foreground border-primary shadow-md"
+                  : "bg-card hover:bg-muted text-muted-foreground hover:text-foreground border-border"
+                  } ${type.id === "assignment" ? "col-span-2" : ""}`}
+              >
+                <type.icon className="w-4 h-4" />
+                <span>{type.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="flex-1 p-6 overflow-y-auto">
           <AnimatePresence mode="wait">
-            {genType === "math" ? (
+            {genType === "math" && (
               <motion.div
                 key="math"
                 initial={{ opacity: 0, x: -10 }}
@@ -403,7 +492,8 @@ const Generator = () => {
                   segId="difficulty"
                 />
               </motion.div>
-            ) : (
+            )}
+            {genType === "crossword" && (
               <motion.div
                 key="crossword"
                 initial={{ opacity: 0, x: 10 }}
@@ -434,14 +524,100 @@ const Generator = () => {
                   />
                   <p className="text-xs text-muted-foreground font-sans">Wait ~10-20s for generation.</p>
                 </div>
+              </motion.div>
+            )}
 
-                <SegmentedControl
-                  label="Language"
-                  options={languages}
-                  value={language}
-                  onChange={setLanguage}
-                  segId="language"
-                />
+            {genType === "quiz" && (
+              <motion.div
+                key="quiz"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="space-y-5"
+              >
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Topic</Label>
+                  <Input
+                    placeholder="e.g. History of Rome, Photosynthesis..."
+                    value={quizTopic}
+                    onChange={(e) => setQuizTopic(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Number of Questions</Label>
+                  <Input
+                    type="number"
+                    min="3"
+                    max="20"
+                    placeholder="5"
+                    value={quizCount}
+                    onChange={(e) => setQuizCount(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {genType === "jeopardy" && (
+              <motion.div
+                key="jeopardy"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="space-y-5"
+              >
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Game Topic</Label>
+                  <Input
+                    placeholder="e.g. General Science, World Geography..."
+                    value={jeopardyTopic}
+                    onChange={(e) => setJeopardyTopic(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                  <p className="text-xs text-muted-foreground font-sans">Generates 5 categories with 5 questions each.</p>
+                </div>
+              </motion.div>
+            )}
+
+            {genType === "assignment" && (
+              <motion.div
+                key="assignment"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="space-y-5"
+              >
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subject</Label>
+                  <Input
+                    placeholder="e.g. Physics, Literature..."
+                    value={assignSubject}
+                    onChange={(e) => setAssignSubject(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Specific Topic</Label>
+                  <Input
+                    placeholder="e.g. Newton's Laws, Shakespeare's Sonnets..."
+                    value={assignTopic}
+                    onChange={(e) => setAssignTopic(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Question Count</Label>
+                  <Input
+                    type="number"
+                    min="3"
+                    max="20"
+                    placeholder="5"
+                    value={assignCount}
+                    onChange={(e) => setAssignCount(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -499,9 +675,12 @@ const Generator = () => {
             <>
               {/* Toolbar */}
               <div className="absolute top-6 right-10 flex gap-2 print:hidden z-10">
-                {genType === "math" && (
-                  <Button variant="outline" size="sm" onClick={openEdit} className="gap-2 bg-white/80 backdrop-blur">
-                    <Pencil className="w-4 h-4" /> Edit
+                <Button variant="outline" size="sm" onClick={openEdit} className="gap-2 bg-white/80 backdrop-blur">
+                  <Pencil className="w-4 h-4" /> Edit
+                </Button>
+                {genType === "crossword" && (
+                  <Button variant="outline" size="sm" onClick={handleRetryLayout} className="gap-2 bg-white/80 backdrop-blur">
+                    <Sparkles className="w-4 h-4" /> Rewrite Layout
                   </Button>
                 )}
                 <Button variant="outline" size="sm" onClick={downloadPDF} className="gap-2 bg-white/80 backdrop-blur">
@@ -514,6 +693,7 @@ const Generator = () => {
 
               {genType === "math" && (
                 <motion.div
+                  ref={puzzleRef}
                   key="math-paper"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -540,8 +720,26 @@ const Generator = () => {
 
               {genType === "crossword" && crosswordData && (
                 <>
-                  {/* Preview Area (Interactive/Visible) */}
+                  <div className="fixed left-[-9999px] top-0">
+                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-sans">Answer Key • {crosswordTopic}</span>
+                      </div>
+                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Answer Key</h2>
+                      <div className="grid grid-cols-3 gap-4 text-xs font-mono">
+                        {crosswordData.words.map((w, i) => (
+                          <div key={i}><span className="font-bold">{w.number}.</span> {w.word}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   <motion.div
+                    ref={puzzleRef}
                     key="crossword-paper"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -551,7 +749,6 @@ const Generator = () => {
                       <h2 className="text-2xl font-bold text-center font-serif mb-2 text-foreground">{crosswordTopic}</h2>
                       <p className="text-center text-sm text-muted-foreground mb-6">Crossword Puzzle</p>
 
-                      {/* Grid for Preview */}
                       <div className="flex justify-center mb-8 w-full overflow-x-auto">
                         <div style={{
                           display: 'grid',
@@ -596,83 +793,181 @@ const Generator = () => {
                       </div>
                     </div>
                   </motion.div>
+                </>
+              )}
 
-                  {/* Hidden Render for PDF Capture */}
+              {genType === "quiz" && quizData.length > 0 && (
+                <>
                   <div className="fixed left-[-9999px] top-0">
-                    {/* Page 1: Puzzle */}
-                    <div ref={puzzleRef} style={{ width: '210mm', minHeight: '297mm', padding: '20mm', background: 'white', fontFamily: 'serif', display: 'flex', flexDirection: 'column' }}>
-                      <h1 className="text-3xl font-bold text-center mb-2">{crosswordTopic || "Crossword"}</h1>
-                      <div className="w-full h-px bg-gray-800 mb-8"></div>
-
-                      <div className="flex justify-center mb-8">
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: `repeat(${crosswordData.width}, 24px)`,
-                        }}>
-                          {crosswordData.grid.map((row, r) =>
-                            row.map((cell, c) => {
-                              const isBlack = cell === "";
-                              const wordInfo = crosswordData.words.find(w => w.row === r && w.col === c);
-                              return (
-                                <div key={`${r}-${c}`} className={`w-[24px] h-[24px] relative ${!isBlack ? 'border border-black' : ''}`}>
-                                  {wordInfo && !isBlack && (
-                                    <span className="absolute top-[2px] left-[2px] text-[8px] font-bold leading-none">{wordInfo.number}</span>
-                                  )}
-                                </div>
-                              );
-                            })
-                          )}
+                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
+                        <span className="text-xs text-gray-500 font-sans">Answer Key • {quizTopic}</span>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-8 text-sm">
-                        <div>
-                          <h3 className="font-bold text-lg mb-2 border-b-2 border-black">ACROSS</h3>
-                          {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                            <div key={`pdf-a-${w.number}`} className="mb-1">
-                              <span className="font-bold">{w.number}.</span> {w.clue}
-                            </div>
-                          ))}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg mb-2 border-b-2 border-black">DOWN</h3>
-                          {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                            <div key={`pdf-d-${w.number}`} className="mb-1">
-                              <span className="font-bold">{w.number}.</span> {w.clue}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Page 2: Answer Key */}
-                    <div ref={answerRef} style={{ width: '210mm', minHeight: '297mm', padding: '20mm', background: 'white', fontFamily: 'serif', display: 'flex', flexDirection: 'column' }}>
-                      <h1 className="text-3xl font-bold text-center mb-2">ANSWER KEY</h1>
-                      <h2 className="text-xl text-center text-gray-500 mb-8">{crosswordTopic || "Crossword"}</h2>
-
-                      <div className="flex justify-center items-center">
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: `repeat(${crosswordData.width}, 24px)`,
-                        }}>
-                          {crosswordData.grid.map((row, r) =>
-                            row.map((cell, c) => {
-                              const isBlack = cell === "";
-                              return (
-                                <div key={`ans-${r}-${c}`} className={`w-[24px] h-[24px] flex items-center justify-center text-sm font-bold relative ${!isBlack ? 'border border-black' : ''}`}>
-                                  {!isBlack && cell}
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="mt-8 p-4 border border-gray-300 rounded text-center text-sm text-gray-500">
-                        Generated by AI Teacher Tools
+                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Quiz Answers</h2>
+                      <div className="space-y-2 text-sm">
+                        {quizData.map((q, i) => (
+                          <div key={i} className="flex gap-2">
+                            <span className="font-bold">{i + 1}.</span>
+                            <span className="text-gray-600">{q.q.substring(0, 50)}...</span>
+                            <span className="font-bold text-green-700 ml-auto">{q.a}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
+
+                  <motion.div
+                    ref={puzzleRef}
+                    key="quiz-paper"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto"
+                    style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
+                  >
+                    <div className="p-10 h-full flex flex-col">
+                      <h3 className="text-xl font-bold text-gray-900 mb-6 font-serif border-b pb-2">{quizTopic || "Quiz"}</h3>
+                      <div className="space-y-6 flex-1 text-sm">
+                        {quizData.map((q, i) => (
+                          <div key={i} className="space-y-2">
+                            <p className="font-semibold text-gray-800">{i + 1}. {q.q}</p>
+                            <div className="grid grid-cols-2 gap-2 pl-4">
+                              {q.options?.map((opt: string, idx: number) => (
+                                <div key={idx} className={`p-2 rounded border text-xs ${opt === q.a ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
+                                  {opt}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+
+              {genType === "jeopardy" && jeopardyData && (
+                <>
+                  <div className="fixed left-[-9999px] top-0">
+                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-sans">Answer Key • {jeopardyTopic}</span>
+                      </div>
+                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Jeopardy Answers</h2>
+                      <div className="space-y-6">
+                        {jeopardyData.categories?.map((cat: any, i: number) => (
+                          <div key={i}>
+                            <h3 className="font-bold text-lg mb-2">{cat.name}</h3>
+                            <ul className="space-y-1 text-sm list-disc pl-5">
+                              {cat.questions?.map((q: any, qi: number) => (
+                                <li key={qi}>
+                                  <span className="font-semibold text-blue-700">{q.points}:</span> {q.q} — <span className="font-bold text-green-700">{q.a}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <motion.div
+                    ref={puzzleRef}
+                    key="jeopardy-board"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-4xl bg-blue-900 rounded-lg shadow-2xl p-4 overflow-y-auto text-white"
+                    style={{ maxHeight: "80vh" }}
+                  >
+                    <h2 className="text-2xl font-bold text-center mb-4 text-yellow-400 font-serif tracking-widest uppercase">Jeopardy!</h2>
+                    <div className="grid grid-cols-5 gap-2">
+                      {jeopardyData.categories?.map((cat: any, i: number) => (
+                        <div key={i} className="bg-blue-800 p-2 text-center font-bold text-xs uppercase flex items-center justify-center h-16 border-b-4 border-black/20">
+                          {cat.name}
+                        </div>
+                      ))}
+                      {[0, 1, 2, 3, 4].map((rowIdx) => (
+                        jeopardyData.categories?.map((cat: any, colIdx: number) => {
+                          const q = cat.questions?.[rowIdx];
+                          return (
+                            <div key={`${colIdx}-${rowIdx}`} className="bg-blue-700 aspect-video flex items-center justify-center font-bold text-yellow-400 text-xl border border-blue-600 shadow-inner">
+                              {q ? q.points : "-"}
+                            </div>
+                          );
+                        })
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+
+              {genType === "assignment" && assignmentData && (
+                <>
+                  <div className="fixed left-[-9999px] top-0">
+                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-sans">Answer Key • {assignmentData.title}</span>
+                      </div>
+                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Teacher Key</h2>
+                      <div className="space-y-4 text-sm">
+                        {assignmentData.questions?.map((q: any, i: number) => (
+                          <div key={i} className="border-b border-gray-100 pb-2">
+                            <p className="font-semibold">{q.num}. {q.text}</p>
+                            <p className="font-bold text-green-700 mt-1">Answer: {q.answer}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <motion.div
+                    ref={puzzleRef}
+                    key="assignment-paper"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto"
+                    style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
+                  >
+                    <div className="p-10 h-full flex flex-col">
+                      <div className="text-center mb-8">
+                        <h1 className="text-2xl font-bold font-serif text-gray-900 mb-1">{assignmentData.title}</h1>
+                        <p className="text-sm text-gray-500 uppercase tracking-widest">{assignmentData.subject} • {assignmentData.grade}</p>
+                      </div>
+
+                      {assignmentData.intro && (
+                        <div className="mb-6 bg-gray-50 p-4 rounded-lg text-sm text-gray-700 italic border-l-4 border-primary/20">
+                          {assignmentData.intro}
+                        </div>
+                      )}
+
+                      <div className="space-y-6 flex-1 text-sm">
+                        {assignmentData.questions?.map((q: any, i: number) => (
+                          <div key={i} className="space-y-2 pb-4 border-b border-gray-100 last:border-0">
+                            <p className="font-semibold text-gray-800">{q.num}. {q.text}</p>
+                            <div className="space-y-1 pl-4">
+                              {q.options?.map((opt: string, idx: number) => (
+                                <div key={idx} className="text-gray-600 flex items-center gap-2">
+                                  <span className="w-4 h-4 rounded-full border border-gray-300 inline-block"></span>
+                                  {opt}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
                 </>
               )}
             </>

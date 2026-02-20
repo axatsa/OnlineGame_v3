@@ -131,13 +131,7 @@ def get_payments(
         .order_by(Payment.date.desc())\
         .offset(skip).limit(limit).all()
         
-    # Map org_name manually if needed or let Pydantic handle it via ORM
-    res = []
-    for p in payments:
-        p_dict = p.__dict__
-        p_dict["org_name"] = p.organization.name if p.organization else "Unknown"
-        res.append(p_dict)
-    return res
+    return payments
 
 @router.post("/payments", response_model=PaymentResponse)
 def create_payment(req: PaymentCreate, db: Session = Depends(get_db), admin: User = Depends(require_admin)):

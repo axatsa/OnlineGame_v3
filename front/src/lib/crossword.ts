@@ -100,23 +100,22 @@ export function generateCrosswordLayout(wordsData: { word: string; clue: string 
     const GRID_SIZE = 30; // working size, will crop later
     let bestResult: { grid: string[][], placedWords: any[] } | null = null;
 
-    // 1. Try 10 times to find the best layout
-    for (let attempt = 0; attempt < 10; attempt++) {
+    // 1. Try 50 times to find the best layout
+    for (let attempt = 0; attempt < 50; attempt++) {
         const grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(""));
         const placedWords: any[] = [];
 
         // 2. Sort words
         // Primary sort by length (desc), Secondary randomization for variety
-        const shuffled = [...wordsData]
-            .map(w => ({ ...w, word: w.word.toUpperCase() }))
-            .sort((a, b) => b.word.length - a.word.length);
+        const shuffled = [...wordsData].map(w => ({ ...w, word: w.word.toUpperCase() }));
 
-        if (attempt > 0) {
-            // Keep longest first, but shuffle equals? Or just slight shuffle?
-            // Let's shuffle the whole list slightly but weight by length
-            shuffled.sort(() => Math.random() - 0.5);
-            // Re-sort roughly by length to keep packing efficient
-            shuffled.sort((a, b) => (b.word.length - a.word.length) + (Math.random() * 2 - 1));
+        if (attempt === 0) {
+            // First attempt: Strict length sort
+            shuffled.sort((a, b) => b.word.length - a.word.length);
+        } else {
+            // Subsequent attempts: Shuffle with length weighting
+            // This allows smaller words to sometimes be placed earlier, which might help tight spots
+            shuffled.sort((a, b) => (b.word.length - a.word.length) + (Math.random() * 4 - 2));
         }
 
         // 3. Place first word in center

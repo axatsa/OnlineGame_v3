@@ -60,6 +60,10 @@ class Payment(Base):
 
     organization = relationship("Organization")
 
+    @property
+    def org_name(self):
+        return self.organization.name if self.organization else "Unknown"
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

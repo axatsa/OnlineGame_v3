@@ -1,6 +1,23 @@
 # Task List
 
-- [ ] Connect local repository to a remote (GitHub/GitLab)
-- [ ] Push local project to remote
-- [ ] Clone/Pull project on the second laptop
-- [ ] Verify synchronization of task.md and implementation_plan.md
+- [x] Improve AI Service Reliability
+    - [x] Refactor `openai_service.py` for robust JSON parsing
+    - [x] Handle larger responses/token limits
+- [x] Implement Missing Generator UI
+    - [x] Add "Quiz" tab to Generator.tsx
+    - [x] Add "Jeopardy" tab to Generator.tsx
+    - [x] Add "Assignment" tab to Generator.tsx
+    - [x] Create detailed results view for each type
+- [x] Backend Improvements
+    - [x] Clean up auth logs
+    - [x] Fix minor schema issues
+    - [x] Refactor admin routes (manual dict construction)
+- [x] Debug Production Generation Issues
+    - [x] Review `generator.py` error handling
+    - [x] Review `main.py` CORS and middleware
+    - [x] Improve error messages in Frontend
+    - [x] Check time/timeout constraints
+- [ ] Improve Generator Functionality
+    - [ ] **Crossword Robustness**: Improve layout algorithm & add retry
+    - [ ] **PDF Export**: Implement for Quiz, Jeopardy, Assignment
+    - [ ] **Editing**: Enable editing for Quiz, Jeopardy, Assignment

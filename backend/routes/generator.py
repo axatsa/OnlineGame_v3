@@ -40,6 +40,9 @@ def gen_math(req: MathRequest, db: Session = Depends(get_db), user: User = Depen
     
     problems, tokens = generate_math_problems(req.topic, req.count, req.difficulty, grade, context)
     
+    if problems is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+
     if tokens > 0:
         log_usage(db, user.id, "math", tokens)
         
@@ -59,6 +62,9 @@ def gen_crossword(req: CrosswordRequest, db: Session = Depends(get_db), user: Us
         
     words, tokens = generate_crossword_words(req.topic, req.word_count, req.language, grade, context)
     
+    if words is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+
     if tokens > 0:
         log_usage(db, user.id, "crossword", tokens)
         
@@ -70,6 +76,9 @@ def gen_quiz(req: QuizRequest, db: Session = Depends(get_db), user: User = Depen
     
     questions, tokens = generate_quiz(req.topic, req.count, grade, context)
     
+    if questions is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+
     if tokens > 0:
         log_usage(db, user.id, "quiz", tokens)
         
@@ -85,6 +94,9 @@ def gen_jeopardy(req: JeopardyRequest, db: Session = Depends(get_db), user: User
     
     data, tokens = generate_jeopardy(req.topic, grade, context)
     
+    if data is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+
     if tokens > 0:
         log_usage(db, user.id, "jeopardy", tokens)
         
@@ -96,6 +108,9 @@ def gen_assignment(req: AssignmentRequest, db: Session = Depends(get_db), user: 
     
     assignment, tokens = generate_assignment(req.subject, req.topic, req.count, grade, context)
     
+    if assignment is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+
     if tokens > 0:
         log_usage(db, user.id, "assignment", tokens)
         

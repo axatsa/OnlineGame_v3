@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import logoTisH from "@/assets/logo-tis-h.png";
+
 import { useClass } from "@/context/ClassContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -697,7 +697,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {mathTopic}</span>
@@ -726,7 +726,7 @@ const Generator = () => {
                     <div className="p-10 h-full flex flex-col print:p-0 print:h-auto">
                       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">{difficulty} • {mathTopic}</span>
@@ -829,7 +829,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {quizTopic}</span>
@@ -882,7 +882,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {jeopardyTopic}</span>
@@ -941,7 +941,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {assignmentData.title}</span>

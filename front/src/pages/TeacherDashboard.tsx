@@ -5,7 +5,6 @@ import {
   Sparkles, Dices, Gamepad2, GraduationCap, User, BookOpen,
   ChevronDown, Plus, Check, Settings2, Globe,
 } from "lucide-react";
-import logoTisH from "@/assets/logo-tis-h.png";
 import { useClass } from "@/context/ClassContext";
 import { useLang } from "@/context/LangContext";
 import { useAuth } from "@/context/AuthContext";
@@ -63,8 +62,8 @@ const TeacherDashboard = () => {
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoTisH} alt="ClassPlay Logo" className="w-9 h-9 rounded-lg object-contain" />
-            <span className="text-lg font-bold font-serif text-foreground hidden sm:inline">ClassPlay</span>
+            <img src="/logo-t.png" alt="ClassPlay Logo" className="w-12 h-12 rounded-lg object-contain" />
+            <span className="text-xl font-bold font-serif text-foreground hidden sm:inline">ClassPlay</span>
           </div>
 
           {/* Nav Pills */}

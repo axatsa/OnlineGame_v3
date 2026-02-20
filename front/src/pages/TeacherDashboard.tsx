@@ -20,9 +20,9 @@ const TeacherDashboard = () => {
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   const navPills = [
-    { key: "Generators", label: t("navGenerators") },
-    { key: "Tools", label: t("navTools") },
-    { key: "Games", label: t("navGames") },
+    { key: "Generators", label: t("navGenerators"), route: "/generator" },
+    { key: "Tools", label: t("navTools"), route: "/tools" },
+    { key: "Games", label: t("navGames"), route: "/games" },
   ] as const;
 
   const [activeNav, setActiveNav] = useState<typeof navPills[number]["key"]>("Generators");
@@ -72,7 +72,10 @@ const TeacherDashboard = () => {
             {navPills.map((pill) => (
               <button
                 key={pill.key}
-                onClick={() => setActiveNav(pill.key)}
+                onClick={() => {
+                  setActiveNav(pill.key);
+                  navigate(pill.route);
+                }}
                 className={`relative px-5 py-2 text-sm font-medium font-sans rounded-full transition-colors ${activeNav === pill.key ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
               >

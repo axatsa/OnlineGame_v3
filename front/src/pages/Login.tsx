@@ -146,15 +146,6 @@ const Login = () => {
               {isLoading ? "Logging in..." : t("loginButton")}
             </Button>
           </form>
-
-          <div className="text-center">
-            <button
-              onClick={() => navigate("/admin")}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors font-sans underline underline-offset-4"
-            >
-              {t("loginAdmin")}
-            </button>
-          </div>
         </div>
       </motion.div>
     </div>

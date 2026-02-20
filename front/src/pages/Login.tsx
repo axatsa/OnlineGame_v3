@@ -142,7 +142,7 @@ const Login = () => {
                 disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full h-13 text-base font-semibold rounded-xl font-sans" size="lg" disabled={isLoading}>
+            <Button type="submit" className="w-full h-16 text-xl font-bold rounded-2xl font-sans" size="lg" disabled={isLoading}>
               {isLoading ? "Logging in..." : t("loginButton")}
             </Button>
           </form>

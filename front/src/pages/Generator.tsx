@@ -217,10 +217,12 @@ const Generator = () => {
         logging: false,
         backgroundColor: "#ffffff"
       });
-
       const imgData = canvas.toDataURL('image/png');
+      const imgWidth = width;
+      const imgHeight = (canvas.height * width) / canvas.width;
+
       if (!isFirstPage) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
     };
 
     try {
@@ -751,7 +753,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-cover" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {crosswordTopic}</span>
@@ -852,18 +854,18 @@ const Generator = () => {
                     key="quiz-paper"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto"
-                    style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
+                    className="w-full max-w-xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
+                    style={{ maxHeight: "80vh" }}
                   >
-                    <div className="p-10 h-full flex flex-col">
-                      <h3 className="text-xl font-bold text-gray-900 mb-6 font-serif border-b pb-2">{quizTopic || "Quiz"}</h3>
-                      <div className="space-y-6 flex-1 text-sm">
+                    <div className="p-10 h-full flex flex-col print:p-2 print:h-auto">
+                      <h3 className="text-xl font-bold text-gray-900 mb-6 font-serif border-b pb-2 print:mb-4">{quizTopic || "Quiz"}</h3>
+                      <div className="space-y-4 flex-1 text-sm print:space-y-3">
                         {quizData.map((q, i) => (
-                          <div key={i} className="space-y-2">
+                          <div key={i} className="space-y-1 pb-2">
                             <p className="font-semibold text-gray-800">{i + 1}. {q.q}</p>
-                            <div className="grid grid-cols-2 gap-2 pl-4">
+                            <div className="grid grid-cols-2 gap-2 pl-4 print:gap-1">
                               {q.options?.map((opt: string, idx: number) => (
-                                <div key={idx} className={`p-2 rounded border text-xs ${opt === q.a ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
+                                <div key={idx} className={`p-1.5 rounded border text-xs print:p-1 ${opt === q.a ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
                                   {opt}
                                 </div>
                               ))}
@@ -963,11 +965,11 @@ const Generator = () => {
                     key="assignment-paper"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto"
-                    style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
+                    className="w-full max-w-xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
+                    style={{ maxHeight: "80vh" }}
                   >
-                    <div className="p-10 h-full flex flex-col">
-                      <div className="text-center mb-8">
+                    <div className="p-10 h-full flex flex-col print:p-2 print:h-auto">
+                      <div className="text-center mb-6 print:mb-4">
                         <h1 className="text-2xl font-bold font-serif text-gray-900 mb-1">{assignmentData.title}</h1>
                         <p className="text-sm text-gray-500 uppercase tracking-widest">{assignmentData.subject} • {assignmentData.grade}</p>
                       </div>
@@ -978,14 +980,14 @@ const Generator = () => {
                         </div>
                       )}
 
-                      <div className="space-y-6 flex-1 text-sm">
+                      <div className="space-y-4 flex-1 text-sm print:space-y-3">
                         {assignmentData.questions?.map((q: any, i: number) => (
-                          <div key={i} className="space-y-2 pb-4 border-b border-gray-100 last:border-0">
+                          <div key={i} className="space-y-1 pb-3 border-b border-gray-100 last:border-0 print:pb-2">
                             <p className="font-semibold text-gray-800">{q.num}. {q.text}</p>
-                            <div className="space-y-1 pl-4">
+                            <div className="space-y-1 pl-4 print:space-y-0.5">
                               {q.options?.map((opt: string, idx: number) => (
-                                <div key={idx} className="text-gray-600 flex items-center gap-2">
-                                  <span className="w-4 h-4 rounded-full border border-gray-300 inline-block"></span>
+                                <div key={idx} className="text-gray-600 flex items-center gap-2 text-sm print:text-xs">
+                                  <span className="w-3 h-3 rounded-full border border-gray-300 inline-block"></span>
                                   {opt}
                                 </div>
                               ))}

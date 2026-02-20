@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import thompsonLogo from "@/assets/thompson-logo.png";
+import logoTisH from "@/assets/logo-tis-h.png";
 import { useClass } from "@/context/ClassContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -89,7 +89,7 @@ const Generator = () => {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
-  const [generatedProblems, setGeneratedProblems] = useState<string[]>([]);
+  const [generatedProblems, setGeneratedProblems] = useState<{ q: string, a: string }[]>([]);
 
   // Crossword state
   const [crosswordData, setCrosswordData] = useState<CrosswordGrid | null>(null);
@@ -243,7 +243,7 @@ const Generator = () => {
 
   const openEdit = () => {
     if (genType === "math") {
-      setEditContent(generatedProblems.join("\n"));
+      setEditContent(JSON.stringify(generatedProblems, null, 2));
     } else if (genType === "crossword" && crosswordData) {
       // For crossword, we edit the word list mostly, but let's expose the whole object structure for advanced users
       // or maybe just the words? Let's do words + grid size if possible, but grid is auto-generated.
@@ -270,7 +270,7 @@ const Generator = () => {
   const saveEdit = () => {
     try {
       if (genType === "math") {
-        setGeneratedProblems(editContent.split("\n").filter(l => l.trim().length > 0));
+        setGeneratedProblems(JSON.parse(editContent));
       } else if (genType === "crossword") {
         setCrosswordData(JSON.parse(editContent));
       } else if (genType === "quiz") {
@@ -691,31 +691,58 @@ const Generator = () => {
                 </Button>
               </div>
 
-              {genType === "math" && (
-                <motion.div
-                  ref={puzzleRef}
-                  key="math-paper"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
-                  style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
-                >
-                  <div className="p-10 h-full flex flex-col print:p-0 print:h-auto">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
-                        <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+              {genType === "math" && generatedProblems.length > 0 && (
+                <>
+                  <div className="fixed left-[-9999px] top-0">
+                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-sans">Answer Key • {mathTopic}</span>
                       </div>
-                      <span className="text-xs text-gray-500 font-sans">{difficulty} • {mathTopic}</span>
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 text-center mb-1 font-serif">Mathematics Worksheet</h3>
-                    <div className="space-y-3 flex-1 mt-6">
-                      {generatedProblems.map((problem, i) => (
-                        <div key={i} className="text-sm text-gray-800 font-mono py-1 border-b border-gray-100">{problem}</div>
-                      ))}
+                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Math Answers</h2>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm font-mono">
+                        {generatedProblems.map((p, i) => (
+                          <div key={i} className="flex gap-2">
+                            <span className="font-bold">{i + 1}.</span>
+                            <span className="text-gray-600 truncate">{p.q}</span>
+                            <span className="font-bold text-green-700 ml-auto">{p.a}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </motion.div>
+
+                  <motion.div
+                    ref={puzzleRef}
+                    key="math-paper"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
+                    style={{ aspectRatio: "210/297", maxHeight: "80vh" }}
+                  >
+                    <div className="p-10 h-full flex flex-col print:p-0 print:h-auto">
+                      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-sans">{difficulty} • {mathTopic}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 text-center mb-1 font-serif">Mathematics Worksheet</h3>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-6 flex-1 mt-6">
+                        {generatedProblems.map((p, i) => (
+                          <div key={i} className="text-sm text-gray-800 font-mono flex gap-2 border-b border-gray-100 pb-2">
+                            <span className="font-bold text-gray-400">{i + 1}.</span>
+                            <div className="flex-1">{p.q}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
               )}
 
               {genType === "crossword" && crosswordData && (
@@ -802,7 +829,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {quizTopic}</span>
@@ -855,7 +882,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {jeopardyTopic}</span>
@@ -914,7 +941,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src={thompsonLogo} alt="Logo" className="w-8 h-8 rounded object-cover" />
+                          <img src={logoTisH} alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {assignmentData.title}</span>

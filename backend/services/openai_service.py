@@ -56,7 +56,7 @@ def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple
         logger.error(f"OpenAI Error: {e}")
         return None, 0
 
-def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "") -> Tuple[List[str], int]:
+def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "") -> Tuple[List[Dict[str, str]], int]:
     user_prompt = f"""
     Generate {count} math problems.
     Topic: {topic}
@@ -64,8 +64,8 @@ def generate_math_problems(topic: str, count: int, difficulty: str, grade: str =
     Grade Level: {grade}
     Class Context/Description: {context} (Use this style/theme if applicable)
     
-    Return ONLY a JSON array of strings.
-    Example: ["2 + 2 = ?", "Solve for x: 2x = 10"]
+    Return ONLY a JSON array of objects with 'q' and 'a' keys.
+    Example: [{{"q": "2 + 2 = ?", "a": "4"}}, {{"q": "Solve for x: 2x = 10", "a": "x = 5"}}]
     """
     return _get_completion([
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -95,6 +95,8 @@ def generate_quiz(topic: str, count: int, grade: str = "", context: str = "") ->
     Grade: {grade}
     Context: {context}
     
+    DO NOT include the answer, hint, or correct letter embedded within the question text itself. Keep questions and answers strictly separated.
+
     Return ONLY a JSON array of objects:
     {{
         "q": "Question text",
@@ -117,6 +119,8 @@ def generate_assignment(subject: str, topic: str, count: int, grade: str = "", c
     Context: {context} (Tailor the tone/examples to this description)
     Question Count: {count}
     
+    DO NOT include the answer, hint, or correct letter embedded within the question text itself. Keep questions and answers strictly separated.
+
     Return ONLY a JSON object matching this structure:
     {{
         "title": "Creative Title",
@@ -146,6 +150,8 @@ def generate_jeopardy(topic: str, grade: str = "", context: str = "") -> Tuple[D
     Grade: {grade}
     Context: {context}
     
+    DO NOT include the answer, hint, or correct letter embedded within the question text itself. Keep questions and answers strictly separated.
+
     Generate 5 distinct categories related to the topic.
     For each category, generate 5 questions with increasing difficulty (100 to 500 points).
     

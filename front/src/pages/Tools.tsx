@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, X, Dices, Eraser, Palette, FileText, Printer, Download
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useLang } from "@/context/LangContext";
 
 // ──────────────── Roulette ────────────────
 const COLORS = [
@@ -158,11 +159,11 @@ const DrawingBoard = () => {
         <div className="w-px h-6 bg-border" />
         <button onClick={() => setIsEraser(!isEraser)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-sans font-medium transition-colors ${isEraser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"}`}>
-          <Eraser className="w-4 h-4" /> Eraser
+          <Eraser className="w-4 h-4" /> {t("eraser")}
         </button>
         <button onClick={clearCanvas}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-sans font-medium bg-muted text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-auto">
-          <X className="w-4 h-4" /> Clear
+          <X className="w-4 h-4" /> {t("clear")}
         </button>
       </div>
       <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
@@ -318,11 +319,11 @@ const AssignmentPrintView = ({ assignment }: { assignment: GeneratedAssignment }
   const studentPage = (
     <div className="page" style={{ pageBreakAfter: "always" }}>
       <h1 style={{ fontSize: "16pt", textAlign: "center", marginBottom: "4pt" }}>{assignment.title}</h1>
-      <h2 style={{ fontSize: "13pt", textAlign: "center", marginBottom: "12pt", color: "#333" }}>Тест топшириқлари</h2>
+      <h2 style={{ fontSize: "13pt", textAlign: "center", marginBottom: "12pt", color: "#333" }}>{t("forStudent")}</h2>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10pt", marginBottom: "16pt", borderBottom: "1px solid #000", paddingBottom: "8pt" }}>
-        <span>Синф: <strong>{assignment.grade}</strong></span>
-        <span>Ўқувчи: <span style={{ borderBottom: "1px solid #000", display: "inline-block", minWidth: "150pt" }}></span></span>
-        <span>Сана: <strong>{assignment.date}</strong></span>
+        <span>{t("gradeLabel")}: <strong>{assignment.grade}</strong></span>
+        <span>{lang === "ru" ? "Ученик" : "O'quvchi"}: <span style={{ borderBottom: "1px solid #000", display: "inline-block", minWidth: "150pt" }}></span></span>
+        <span>{lang === "ru" ? "Дата" : "Sana"}: <strong>{assignment.date}</strong></span>
       </div>
       {assignment.questions.map((q) => (
         <div key={q.num} style={{ marginBottom: "14pt" }}>
@@ -339,15 +340,15 @@ const AssignmentPrintView = ({ assignment }: { assignment: GeneratedAssignment }
 
   const answerPage = (
     <div className="page">
-      <h1 style={{ fontSize: "16pt", textAlign: "center", marginBottom: "4pt" }}>ЖАВОБЛАР ВАРАҚАСИ</h1>
-      <h2 style={{ fontSize: "13pt", textAlign: "center", marginBottom: "12pt", color: "#333" }}>{assignment.title} — Ўқитувчи учун</h2>
+      <h1 style={{ fontSize: "16pt", textAlign: "center", marginBottom: "4pt" }}>{t("answerKey")}</h1>
+      <h2 style={{ fontSize: "13pt", textAlign: "center", marginBottom: "12pt", color: "#333" }}>{assignment.title} — {t("forTeacher")}</h2>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10pt", marginBottom: "16pt", borderBottom: "1px solid #000", paddingBottom: "8pt" }}>
-        <span>Синф: <strong>{assignment.grade}</strong></span>
-        <span>Сана: <strong>{assignment.date}</strong></span>
-        <span>Жами: <strong>{assignment.questions.length} та савол</strong></span>
+        <span>{t("gradeLabel")}: <strong>{assignment.grade}</strong></span>
+        <span>{lang === "ru" ? "Дата" : "Sana"}: <strong>{assignment.date}</strong></span>
+        <span>{t("genCount")}: <strong>{assignment.questions.length}</strong></span>
       </div>
       <div style={{ background: "#f5f5f5", padding: "8pt", marginBottom: "16pt", border: "1px solid #ccc", fontSize: "11pt" }}>
-        ⚠️ Бу варақа фақат ўқитувчи учун. Ўқувчиларга бермаслик керак!
+        {t("forTeacher")} ⚠️
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6pt", marginTop: "12pt" }}>
         {assignment.questions.map((q) => (
@@ -374,10 +375,10 @@ const AssignmentPrintView = ({ assignment }: { assignment: GeneratedAssignment }
       {/* Action buttons */}
       <div className="flex gap-3 justify-end">
         <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-          <Printer className="w-4 h-4" /> Chop etish / Печатать
+          <Printer className="w-4 h-4" /> {t("print")}
         </Button>
         <Button onClick={handlePrint} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> PDF сақлаш
+          <Download className="w-4 h-4" /> PDF
         </Button>
       </div>
 
@@ -524,6 +525,7 @@ interface GeneratedAssignment {
 }
 
 const AssignmentGenerator = () => {
+  const { t } = useLang();
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GeneratedAssignment | null>(null);
@@ -604,9 +606,9 @@ const AssignmentGenerator = () => {
             className="bg-blue-600 hover:bg-blue-700 text-white gap-2 px-6"
           >
             {loading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
+              <><Loader2 className="w-4 h-4 animate-spin" /> {t("generating")}</>
             ) : (
-              <><Sparkles className="w-4 h-4" /> Generate</>
+              <><Sparkles className="w-4 h-4" /> {t("genButton")}</>
             )}
           </Button>
         </div>
@@ -632,7 +634,7 @@ const AssignmentGenerator = () => {
       {!result && !loading && (
         <div className="bg-card border border-dashed border-border rounded-2xl p-12 flex flex-col items-center gap-3 text-center">
           <FileText className="w-12 h-12 text-muted-foreground/40" />
-          <p className="text-muted-foreground font-sans text-sm">Describe your assignment above and click Generate</p>
+          <p className="text-muted-foreground font-sans text-sm">{t("describeAssignment")}</p>
           <div className="flex flex-wrap gap-2 justify-center mt-2">
             {[
               "10 Geography questions about Europe",
@@ -656,6 +658,7 @@ type Tool = "roulette" | "board" | "generator";
 
 const Tools = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [activeTool, setActiveTool] = useState<Tool>("roulette");
   const [names, setNames] = useState<string[]>(["Alice", "Bob", "Charlie", "Diana"]);
   const [inputName, setInputName] = useState("");
@@ -684,9 +687,9 @@ const Tools = () => {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-4">
           <button onClick={() => navigate("/teacher")}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground font-sans transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {t("back")}
           </button>
-          <h1 className="text-xl font-bold text-foreground font-serif">Classroom Tools</h1>
+          <h1 className="text-xl font-bold text-foreground font-serif">{t("navTools")}</h1>
 
           <div className="ml-6 flex bg-muted rounded-full p-1">
             {tabs.map((t) => (
@@ -711,9 +714,9 @@ const Tools = () => {
             <motion.div key="roulette" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
               className="flex flex-col lg:flex-row gap-8 items-start">
               <div className="w-full lg:w-80 bg-card rounded-2xl border border-border p-6 flex flex-col gap-4">
-                <h3 className="font-bold text-foreground font-serif text-lg">Student Names</h3>
+                <h3 className="font-bold text-foreground font-serif text-lg">{t("studentNames")}</h3>
                 <div className="flex gap-2">
-                  <Input placeholder="Add a name..." value={inputName} onChange={(e) => setInputName(e.target.value)}
+                  <Input placeholder={t("addName")} value={inputName} onChange={(e) => setInputName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addName()} className="h-10 rounded-xl font-sans" disabled={spinning} />
                   <Button size="sm" className="h-10 px-3 rounded-xl" onClick={addName} disabled={spinning}><Plus className="w-4 h-4" /></Button>
                 </div>
@@ -733,9 +736,9 @@ const Tools = () => {
                 </div>
                 <Button onClick={spin} disabled={names.length < 2 || spinning} className="w-full h-12 rounded-xl font-sans font-semibold gap-2 mt-2">
                   {spinning ? (
-                    <><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }}><Dices className="w-5 h-5" /></motion.div> Spinning...</>
+                    <><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }}><Dices className="w-5 h-5" /></motion.div> {t("spinning")}</>
                   ) : (
-                    <><Dices className="w-5 h-5" /> Spin the Wheel!</>
+                    <><Dices className="w-5 h-5" /> {t("spinWheel")}</>
                   )}
                 </Button>
               </div>
@@ -745,7 +748,7 @@ const Tools = () => {
                 ) : (
                   <div className="text-center text-muted-foreground font-sans">
                     <Dices className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                    <p>Add at least 2 names to spin</p>
+                    <p>{t("addAtLeastTwo")}</p>
                   </div>
                 )}
               </div>

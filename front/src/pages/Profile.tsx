@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { useLang } from "@/context/LangContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const Profile = () => {
     const navigate = useNavigate();
+    const { t } = useLang();
     const { user, logout } = useAuth();
 
     const [oldPassword, setOldPassword] = useState("");
@@ -38,20 +40,20 @@ const Profile = () => {
     };
 
     const deleteResource = async (id: number) => {
-        if (!confirm("Are you sure?")) return;
+        if (!confirm(t("areYouSure"))) return;
         try {
             await api.delete(`/resources/${id}`);
-            toast.success("Resource deleted");
+            toast.success(t("resourceDeleted"));
             setResources(prev => prev.filter(r => r.id !== id));
         } catch (e) {
-            toast.error("Failed to delete");
+            toast.error(t("deleteFailed"));
         }
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newPassword || !oldPassword) {
-            toast.error("Please fill in both fields");
+            toast.error(t("fillBothFields"));
             return;
         }
 
@@ -61,12 +63,12 @@ const Profile = () => {
                 old_password: oldPassword,
                 new_password: newPassword
             });
-            toast.success("Password updated successfully!");
+            toast.success(t("passwordUpdated"));
             setOldPassword("");
             setNewPassword("");
         } catch (error: any) {
             console.error(error);
-            toast.error(error.response?.data?.detail || "Failed to update password");
+            toast.error(error.response?.data?.detail || t("deleteFailed"));
         } finally {
             setIsLoading(false);
         }
@@ -82,9 +84,9 @@ const Profile = () => {
                             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground font-sans transition-colors"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            Back to Dashboard
+                            {t("backToDash")}
                         </button>
-                        <h1 className="text-xl font-bold text-foreground font-serif">Profile</h1>
+                        <h1 className="text-xl font-bold text-foreground font-serif">{t("profile")}</h1>
                     </div>
                 </div>
             </header>
@@ -104,7 +106,7 @@ const Profile = () => {
                                 <span className="px-3 py-1 rounded-full bg-muted text-xs font-mono text-muted-foreground uppercase">{user?.role}</span>
                             </div>
                             <Button variant="destructive" className="w-full mt-4 rounded-xl" onClick={logout}>
-                                <LogOut className="w-4 h-4 mr-2" /> Logout
+                                <LogOut className="w-4 h-4 mr-2" /> {t("adminLogout")}
                             </Button>
                         </div>
 
@@ -112,12 +114,12 @@ const Profile = () => {
                         <div className="bg-card rounded-2xl border border-border p-6">
                             <div className="flex items-center gap-2 mb-6">
                                 <Lock className="w-5 h-5 text-primary" />
-                                <h3 className="text-lg font-bold text-foreground font-serif">Change Password</h3>
+                                <h3 className="text-lg font-bold text-foreground font-serif">{t("changePassword")}</h3>
                             </div>
 
                             <form onSubmit={handleChangePassword} className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="old-pass">Current Password</Label>
+                                    <Label htmlFor="old-pass">{t("currentPassword")}</Label>
                                     <Input
                                         id="old-pass"
                                         type="password"
@@ -128,7 +130,7 @@ const Profile = () => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="new-pass">New Password</Label>
+                                    <Label htmlFor="new-pass">{t("newPassword")}</Label>
                                     <Input
                                         id="new-pass"
                                         type="password"
@@ -140,7 +142,7 @@ const Profile = () => {
                                 </div>
                                 <Button type="submit" disabled={isLoading} className="w-full rounded-xl">
                                     {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                                    Update Password
+                                    {t("updatePassword")}
                                 </Button>
                             </form>
                         </div>
@@ -151,7 +153,7 @@ const Profile = () => {
                         <div className="bg-card rounded-2xl border border-border p-6 min-h-[500px]">
                             <div className="flex items-center gap-2 mb-6">
                                 <FileText className="w-5 h-5 text-primary" />
-                                <h3 className="text-lg font-bold text-foreground font-serif">Saved Resources</h3>
+                                <h3 className="text-lg font-bold text-foreground font-serif">{t("savedResources")}</h3>
                             </div>
 
                             {loadingRes ? (
@@ -160,7 +162,7 @@ const Profile = () => {
                                 </div>
                             ) : resources.length === 0 ? (
                                 <div className="text-center py-10 text-muted-foreground">
-                                    No saved resources yet.
+                                    {t("noResources")}
                                 </div>
                             ) : (
                                 <div className="space-y-3">
@@ -172,7 +174,7 @@ const Profile = () => {
                                             </div>
                                             <div className="flex gap-2">
                                                 <Button variant="outline" size="sm" onClick={() => setViewRes(res)}>
-                                                    View
+                                                    {t("view")}
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteResource(res.id)}>
                                                     <Trash2 className="w-4 h-4" />
@@ -198,7 +200,7 @@ const Profile = () => {
                                     <p className="text-xs text-muted-foreground uppercase mt-1">{viewRes.type}</p>
                                 </div>
                                 <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
-                                    <Printer className="w-4 h-4" /> Print
+                                    <Printer className="w-4 h-4" /> {t("print")}
                                 </Button>
                             </div>
                         </DialogHeader>

@@ -31,13 +31,13 @@ const Login = () => {
     setIsLoading(true);
     try {
       const res = await api.post("/auth/login", { email, password });
-      toast.success("Login successful!");
+      toast.success(t("loginSuccess"));
       // Use context login to set state
       login(res.data.access_token, res.data.user);
 
       // Navigation will be handled by the useEffect once user state is updated
     } catch (error) {
-      toast.error("Invalid credentials. Try generic 'teacher@school.edu' / 'password'");
+      toast.error(t("invalidCredits"));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -143,7 +143,7 @@ const Login = () => {
               />
             </div>
             <Button type="submit" className="w-full h-16 text-xl font-bold rounded-2xl font-sans" size="lg" disabled={isLoading}>
-              {isLoading ? "Logging in..." : t("loginButton")}
+              {isLoading ? t("loggingIn") : t("loginButton")}
             </Button>
           </form>
         </div>

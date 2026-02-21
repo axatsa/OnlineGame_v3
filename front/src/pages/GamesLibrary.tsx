@@ -65,9 +65,9 @@ const GamesLibrary = () => {
               </div>
 
               <div className="p-4">
-                <p className="text-xs text-muted-foreground font-sans mb-0.5">{game.category}</p>
-                <h3 className="text-sm font-bold text-foreground font-serif mb-0.5">{game.title}</h3>
-                <p className="text-xs text-muted-foreground font-sans mb-3">{game.subtitle}</p>
+                <p className="text-xs text-muted-foreground font-sans mb-0.5">{t(`game_${game.id.replace(/-/g, "_")}_cat` as any)}</p>
+                <h3 className="text-sm font-bold text-foreground font-serif mb-0.5">{t(`game_${game.id.replace(/-/g, "_")}_title` as any)}</h3>
+                <p className="text-xs text-muted-foreground font-sans mb-3">{t(`game_${game.id.replace(/-/g, "_")}_sub` as any)}</p>
 
                 <div className="flex items-center gap-1 mb-3">
                   {Array.from({ length: 5 }).map((_, si) => (
@@ -108,11 +108,11 @@ const GamesLibrary = () => {
           <DialogHeader>
             <DialogTitle className="font-serif flex items-center gap-2">
               <Info className="w-5 h-5 text-primary" />
-              {t("howToPlay")}: {howToPlayGame?.title}
+              {t("howToPlay")}: {t(`game_${howToPlayGame?.id.replace(/-/g, "_")}_title` as any)}
             </DialogTitle>
           </DialogHeader>
           <p className="text-muted-foreground font-sans text-sm leading-relaxed">
-            {howToPlayGame?.howToPlay}
+            {t(`game_${howToPlayGame?.id.replace(/-/g, "_")}_how` as any)}
           </p>
           <Button onClick={() => howToPlayGame && navigate(howToPlayGame.route)} className="w-full mt-2 gap-2">
             <Play className="w-4 h-4" />

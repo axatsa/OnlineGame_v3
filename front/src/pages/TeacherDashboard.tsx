@@ -103,7 +103,7 @@ const TeacherDashboard = () => {
                 {activeClass ? (
                   <span className="max-w-[100px] truncate">{activeClass.name}</span>
                 ) : (
-                  <span className="text-muted-foreground">Select Class</span>
+                  <span className="text-muted-foreground">{t("selectClass")}</span>
                 )}
                 <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showClassPicker ? "rotate-180" : ""}`} />
               </button>
@@ -123,7 +123,7 @@ const TeacherDashboard = () => {
                       >
                         <div className="flex flex-col">
                           <span className="font-medium text-foreground">{cls.name}</span>
-                          <span className="text-[10px] text-muted-foreground">{cls.studentCount} students</span>
+                          <span className="text-[10px] text-muted-foreground">{cls.studentCount} {t("studentsLabel")}</span>
                         </div>
                         {cls.id === activeClass?.id && <Check className="w-3.5 h-3.5 text-primary" />}
                       </button>
@@ -189,7 +189,7 @@ const TeacherDashboard = () => {
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
           <h1 className="text-4xl font-bold text-foreground mb-2">
-            {t("welcomeBack")} {user?.full_name || "Teacher"}
+            {t("welcomeBack")} {user?.full_name || (lang === "ru" ? "Учитель" : "O'qituvchi")}
           </h1>
           <p className="text-lg text-muted-foreground font-sans">{t("dashSub")}</p>
         </motion.div>

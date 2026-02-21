@@ -11,8 +11,9 @@ import {
   Filter, Download, Calendar, Cpu,
   ToggleLeft, ToggleRight, FileText,
   ArrowUpRight, ArrowDownRight, WifiOff, Wifi,
-  CreditCard, Receipt, BarChart3, Loader2
+  CreditCard, Receipt, BarChart3, Loader2, Globe
 } from "lucide-react";
+import { useLang } from "@/context/LangContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -798,19 +799,19 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
   const arr = totalMRR * 12;
 
   const payStatusMap: Record<string, { label: string; cls: string }> = {
-    paid: { label: "✅ Оплачено", cls: "bg-success/15 text-success border-0" },
-    pending: { label: "⏳ Ожидание", cls: "bg-yellow-500/15 text-yellow-600 border-0" },
-    failed: { label: "❌ Ошибка", cls: "bg-destructive/15 text-destructive border-0" },
+    paid: { label: `✅ ${t("adminStatusPaid")}`, cls: "bg-success/15 text-success border-0" },
+    pending: { label: `⏳ ${t("adminStatusPending")}`, cls: "bg-yellow-500/15 text-yellow-600 border-0" },
+    failed: { label: `❌ ${t("adminStatusFailed")}`, cls: "bg-destructive/15 text-destructive border-0" },
   };
 
   return (
     <div className="space-y-6">
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={TrendingUp} label="MRR (янв)" value={`$${totalMRR}`} sub={`+${mrrGrowth}% vs дек`} trend="up" color="bg-success/10 text-success" />
-        <MetricCard icon={BarChart3} label="ARR (прогноз)" value={`$${arr.toLocaleString()}`} sub="× 12 от MRR" color="bg-primary/10 text-primary" />
-        <MetricCard icon={CreditCard} label="Получено всего" value={`$${totalPaid}`} sub="за все время" color="bg-violet-500/10 text-violet-600" />
-        <MetricCard icon={Receipt} label="Ожидают оплаты" value={String(pendingCount)} sub="требуют звонка" trend={pendingCount > 0 ? "down" : undefined} color="bg-yellow-500/10 text-yellow-600" />
+        <MetricCard icon={TrendingUp} label={t("adminMetricMRR")} value={`$${totalMRR}`} sub={`+${mrrGrowth}% vs ${lang === "ru" ? "дек" : "dek"}`} trend="up" color="bg-success/10 text-success" />
+        <MetricCard icon={BarChart3} label={t("adminMetricARR")} value={`$${arr.toLocaleString()}`} sub={`× 12 ${lang === "ru" ? "от" : "dan"} MRR`} color="bg-primary/10 text-primary" />
+        <MetricCard icon={CreditCard} label={t("adminMetricTotal")} value={`$${totalPaid}`} sub={lang === "ru" ? "за все время" : "barcha vaqt davomida"} color="bg-violet-500/10 text-violet-600" />
+        <MetricCard icon={Receipt} label={t("adminMetricPending")} value={String(pendingCount)} sub={lang === "ru" ? "требуют звонка" : "qo'ng'iroq kutilmoqda"} trend={pendingCount > 0 ? "down" : undefined} color="bg-yellow-500/10 text-yellow-600" />
       </div>
 
       {/* MRR Chart */}
@@ -818,7 +819,7 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="font-semibold text-foreground">MRR — Monthly Recurring Revenue</h3>
-            <p className="text-xs text-muted-foreground font-sans mt-0.5">Последние 6 месяцев</p>
+            <p className="text-xs text-muted-foreground font-sans mt-0.5">{t("adminChartSub")}</p>
           </div>
           <div className="flex items-center gap-2 bg-success/10 text-success px-3 py-1.5 rounded-full">
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -834,15 +835,15 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
         )}
         <div className="mt-4 pt-4 border-t border-border grid grid-cols-3 gap-4">
           <div>
-            <p className="text-xs text-muted-foreground font-sans">Новые клиенты</p>
+            <p className="text-xs text-muted-foreground font-sans">{t("adminNewClients")}</p>
             <p className="text-lg font-bold text-foreground">+3</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground font-sans">Churn rate</p>
+            <p className="text-xs text-muted-foreground font-sans">{t("adminChurnRate")}</p>
             <p className="text-lg font-bold text-foreground">2.4%</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground font-sans">LTV средний</p>
+            <p className="text-xs text-muted-foreground font-sans">{t("adminAvgLTV")}</p>
             <p className="text-lg font-bold text-foreground">$480</p>
           </div>
         </div>
@@ -851,7 +852,7 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
       {/* Payment history */}
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-          <h3 className="font-semibold text-foreground">История платежей</h3>
+          <h3 className="font-semibold text-foreground">{t("adminPaymentHistory")}</h3>
           <ExportMenu
             onCSV={() => exportPaymentsCSV(payments)}
             onPDF={() => exportPaymentsPDF(payments)}
@@ -861,7 +862,7 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                {["Организация", "Сумма", "Дата", "Метод", "Период", "Статус", ""].map(h => (
+                {[t("adminOrg"), t("adminAmount"), t("adminDate"), t("adminMethod"), t("adminPeriod"), t("adminStatus"), ""].map(h => (
                   <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider font-sans whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -876,7 +877,7 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
               ) : payments.length === 0 ? (
                 <tr>
                   <td colSpan={7}>
-                    <EmptyState icon={CreditCard} title="Нет платежей" description="История платежей пуста" />
+                    <EmptyState icon={CreditCard} title={t("adminNoPayments")} description={t("adminPaymentsEmpty")} />
                   </td>
                 </tr>
               ) : (
@@ -905,7 +906,7 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
                       <td className="px-5 py-4">
                         {p.status === "pending" && (
                           <Button variant="outline" size="sm" className="rounded-xl h-7 text-xs font-sans gap-1">
-                            <Receipt className="w-3 h-3" /> Счёт
+                            <Receipt className="w-3 h-3" /> {lang === "ru" ? "Счёт" : "Hisob"}
                           </Button>
                         )}
                       </td>
@@ -921,14 +922,14 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
       <div className="bg-card border border-border rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-yellow-500" />
-          <h3 className="font-semibold text-foreground">Требуют продления</h3>
-          <Badge className="bg-yellow-500/15 text-yellow-600 border-0 font-sans">2 организации</Badge>
+          <h3 className="font-semibold text-foreground">{t("adminRequiresRenewal")}</h3>
+          <Badge className="bg-yellow-500/15 text-yellow-600 border-0 font-sans">{orgs.filter(o => o.status !== "active").length} {lang === "ru" ? "организации" : "tashkilot"}</Badge>
         </div>
         <div className="space-y-3">
           {isLoading ? (
             <TableSkeleton rows={2} columns={1} />
           ) : orgs.filter(o => o.status !== "active").length === 0 ? (
-            <EmptyState icon={Building2} title="Нет организаций" description="Все организации активны" />
+            <EmptyState icon={Building2} title={t("adminNoData")} description={lang === "ru" ? "Все организации активны" : "Barcha tashkilotlar faol"} />
           ) : (
             orgs.filter(o => o.status !== "active").map(org => (
               <div key={org.id} className="flex items-center justify-between gap-4 p-3 rounded-xl bg-muted/50">
@@ -938,10 +939,10 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-sm font-bold font-sans ${org.status === "expired" ? "text-destructive" : "text-yellow-600"}`}>
-                    {new Date(org.expires).toLocaleDateString("ru-RU")}
+                    {new Date(org.expires).toLocaleDateString(lang === "ru" ? "ru-RU" : "uz-UZ")}
                   </span>
                   <Button size="sm" className="rounded-xl h-7 text-xs font-sans gap-1">
-                    <Calendar className="w-3 h-3" /> Продлить
+                    <Calendar className="w-3 h-3" /> {t("adminRenew")}
                   </Button>
                 </div>
               </div>
@@ -971,14 +972,14 @@ const SystemView = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Bell className="w-4 h-4 text-foreground" />
-          <h3 className="font-semibold text-foreground">Глобальное объявление</h3>
+          <h3 className="font-semibold text-foreground">{t("adminGlobalAlert")}</h3>
         </div>
         <button
           onClick={() => setAlertEnabled(!alertEnabled)}
           className={`flex items-center gap-2 text-sm font-sans font-medium transition-colors ${alertEnabled ? "text-success" : "text-muted-foreground"}`}
         >
           {alertEnabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-          {alertEnabled ? "Включено" : "Выключено"}
+          {alertEnabled ? t("adminAlertEnabled") : t("adminAlertDisabled")}
         </button>
       </div>
       <textarea
@@ -986,11 +987,11 @@ const SystemView = ({
         onChange={e => setSystemAlert(e.target.value)}
         rows={3}
         className="w-full bg-muted rounded-xl px-4 py-3 text-sm text-foreground font-sans resize-none border border-border focus:outline-none focus:ring-2 focus:ring-ring"
-        placeholder="Напишите объявление для всех учителей..."
+        placeholder={t("adminAlertPlaceholder")}
       />
-      <p className="text-xs text-muted-foreground font-sans mt-2">Это сообщение увидят все учителя в своих кабинетах.</p>
+      <p className="text-xs text-muted-foreground font-sans mt-2">{t("adminAlertDesc")}</p>
       <Button className="mt-3 rounded-xl font-sans gap-2">
-        <Bell className="w-4 h-4" /> Опубликовать
+        <Bell className="w-4 h-4" /> {t("adminPublish")}
       </Button>
     </div>
 
@@ -998,7 +999,7 @@ const SystemView = ({
     <div className="bg-card border border-border rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-4">
         <Key className="w-4 h-4 text-foreground" />
-        <h3 className="font-semibold text-foreground">API Ключи</h3>
+        <h3 className="font-semibold text-foreground">{t("adminApiKeys")}</h3>
       </div>
       <div className="space-y-3">
         {[
@@ -1012,7 +1013,7 @@ const SystemView = ({
             </div>
             <div className="flex gap-2">
               <Input type="password" placeholder={k.placeholder} className="rounded-xl font-mono text-sm" />
-              <Button variant="outline" className="rounded-xl font-sans px-4 flex-shrink-0">Сохранить</Button>
+              <Button variant="outline" className="rounded-xl font-sans px-4 flex-shrink-0">{t("save")}</Button>
             </div>
           </div>
         ))}
@@ -1023,7 +1024,7 @@ const SystemView = ({
     <div className="bg-card border border-border rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-4">
         <FileText className="w-4 h-4 text-foreground" />
-        <h3 className="font-semibold text-foreground">Журнал действий</h3>
+        <h3 className="font-semibold text-foreground">{t("adminAuditLog")}</h3>
       </div>
       <div className="space-y-0">
         {isLoading ? (
@@ -1031,7 +1032,7 @@ const SystemView = ({
             <TableSkeleton rows={5} columns={3} />
           </div>
         ) : auditLogs.length === 0 ? (
-          <EmptyState icon={Search} title="Нет данных" description="Журнал действий пуст" />
+          <EmptyState icon={Search} title={t("adminNoData")} description={t("adminLogEmpty")} />
         ) : (
           auditLogs.map((log, i) => {
             const colorMap: Record<string, string> = {
@@ -1058,10 +1059,12 @@ const SystemView = ({
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { useLang } from "@/context/LangContext";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AdminPanel = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [activeSection, setActiveSection] = useState<Section>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1187,7 +1190,7 @@ const AdminPanel = () => {
         </div>
         <div>
           <span className="text-base font-bold text-sidebar-foreground font-serif block">ClassPlay</span>
-          <span className="text-xs text-sidebar-foreground/50 font-sans">Super Admin</span>
+          <span className="text-xs text-sidebar-foreground/50 font-sans">{t("superAdmin")}</span>
         </div>
       </div>
 
@@ -1289,7 +1292,7 @@ const AdminPanel = () => {
               <Menu className="w-6 h-6 text-foreground" />
             </button>
             <div>
-              <Breadcrumbs items={[{ label: "Admin Panel", href: "/admin" }, { label: current.title }]} />
+              <Breadcrumbs items={[{ label: t("adminPanel"), href: "/admin" }, { label: current.title }]} />
               <h1 className="text-xl font-bold text-foreground">{current.title}</h1>
               <p className="text-xs text-muted-foreground font-sans">{current.sub}</p>
             </div>

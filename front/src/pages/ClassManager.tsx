@@ -10,19 +10,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useClass, ClassGroup, GradeLevel } from "@/context/ClassContext";
+import { useLang } from "@/context/LangContext";
 
-const GRADES: GradeLevel[] = ["1","2","3","4","5","6","7","8","9","10","11"];
+const GRADES: GradeLevel[] = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"];
 
 const GRADE_HINTS: Record<GradeLevel, string> = {
-  "1":  "Счёт до 100, сложение/вычитание в пределах 20",
-  "2":  "Сложение/вычитание до 1000, таблица умножения начинается",
-  "3":  "Таблица умножения, деление, дроби — начало",
-  "4":  "Дроби, порядок действий, геометрия — периметр",
-  "5":  "Десятичные дроби, проценты, площади фигур",
-  "6":  "Рациональные числа, уравнения, пропорции",
-  "7":  "Линейные функции, степени, алгебраические выражения",
-  "8":  "Квадратные уравнения, неравенства, геометрия",
-  "9":  "Тригонометрия, системы уравнений, статистика",
+  "1": "Счёт до 100, сложение/вычитание в пределах 20",
+  "2": "Сложение/вычитание до 1000, таблица умножения начинается",
+  "3": "Таблица умножения, деление, дроби — начало",
+  "4": "Дроби, порядок действий, геометрия — периметр",
+  "5": "Десятичные дроби, проценты, площади фигур",
+  "6": "Рациональные числа, уравнения, пропорции",
+  "7": "Линейные функции, степени, алгебраические выражения",
+  "8": "Квадратные уравнения, неравенства, геометрия",
+  "9": "Тригонометрия, системы уравнений, статистика",
   "10": "Производная, логарифмы, вероятность",
   "11": "Интегралы, комбинаторика, подготовка к ЕГЭ/SAT",
 };
@@ -38,6 +39,7 @@ const EMPTY_FORM: FormState = { name: "", grade: "3", studentCount: "", descript
 
 export default function ClassManager() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const { classes, activeClassId, setActiveClassId, addClass, updateClass, deleteClass } = useClass();
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -94,16 +96,16 @@ export default function ClassManager() {
             onClick={() => navigate("/teacher")}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground font-sans transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+            <ArrowLeft className="w-4 h-4" /> {t("backToDash")}
           </button>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-primary" />
             </div>
-            <span className="font-bold text-foreground font-serif">My Classes</span>
+            <span className="font-bold text-foreground font-serif">{t("myClasses")}</span>
           </div>
           <Button onClick={openAdd} size="sm" className="gap-2 rounded-xl">
-            <Plus className="w-4 h-4" /> Add Class
+            <Plus className="w-4 h-4" /> {t("addClass")}
           </Button>
         </div>
       </header>
@@ -114,9 +116,9 @@ export default function ClassManager() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-foreground font-serif mb-1">Class Groups</h1>
+          <h1 className="text-3xl font-bold text-foreground font-serif mb-1">{t("classGroups")}</h1>
           <p className="text-muted-foreground font-sans text-sm">
-            Manage your classes — AI uses grade & description to personalise all generated content.
+            {t("classGroupsDesc")}
           </p>
         </motion.div>
 
@@ -128,16 +130,15 @@ export default function ClassManager() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 * i }}
-              className={`relative rounded-2xl border-2 bg-card p-6 transition-all ${
-                activeClassId === cls.id
+              className={`relative rounded-2xl border-2 bg-card p-6 transition-all ${activeClassId === cls.id
                   ? "border-primary shadow-md"
                   : "border-border hover:border-primary/40"
-              }`}
+                }`}
             >
               {/* Active badge */}
               {activeClassId === cls.id && (
                 <span className="absolute top-4 right-4 text-xs font-semibold bg-primary text-primary-foreground px-2.5 py-1 rounded-full font-sans">
-                  Active
+                  {t("activeLabel")}
                 </span>
               )}
 
@@ -149,10 +150,10 @@ export default function ClassManager() {
                 <div>
                   <h3 className="text-lg font-bold text-foreground font-serif leading-tight">{cls.name}</h3>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-muted-foreground font-sans">Grade {cls.grade}</span>
+                    <span className="text-xs text-muted-foreground font-sans">{t("gradeLabel")} {cls.grade}</span>
                     <span className="text-muted-foreground">·</span>
                     <span className="text-xs text-muted-foreground font-sans flex items-center gap-1">
-                      <Users className="w-3 h-3" />{cls.studentCount} students
+                      <Users className="w-3 h-3" />{cls.studentCount} {t("studentsLabel")}
                     </span>
                   </div>
                 </div>
@@ -162,7 +163,7 @@ export default function ClassManager() {
               <div className="mb-3 rounded-lg bg-muted px-3 py-2">
                 <p className="text-xs text-muted-foreground font-sans flex items-center gap-1.5">
                   <Sparkles className="w-3 h-3 text-primary shrink-0" />
-                  <span className="font-semibold text-foreground">Grade {cls.grade} level:</span>&nbsp;{GRADE_HINTS[cls.grade]}
+                  <span className="font-semibold text-foreground">{t("gradeLabel")} {cls.grade} level:</span>&nbsp;{GRADE_HINTS[cls.grade]}
                 </p>
               </div>
 
@@ -182,7 +183,7 @@ export default function ClassManager() {
                     className="rounded-xl flex-1 gap-1"
                     onClick={() => setActiveClassId(cls.id)}
                   >
-                    <Check className="w-3.5 h-3.5" /> Select
+                    <Check className="w-3.5 h-3.5" /> {t("select")}
                   </Button>
                 )}
                 <Button
@@ -191,7 +192,7 @@ export default function ClassManager() {
                   className="rounded-xl gap-1"
                   onClick={() => openEdit(cls)}
                 >
-                  <Pencil className="w-3.5 h-3.5" /> Edit
+                  <Pencil className="w-3.5 h-3.5" /> {t("editClass")}
                 </Button>
                 {deleteConfirm === cls.id ? (
                   <div className="flex gap-1">
@@ -201,7 +202,7 @@ export default function ClassManager() {
                       className="rounded-xl gap-1 text-xs"
                       onClick={() => handleDelete(cls.id)}
                     >
-                      <Trash2 className="w-3 h-3" /> Confirm
+                      <Trash2 className="w-3 h-3" /> {t("confirm")}
                     </Button>
                     <Button
                       variant="ghost"
@@ -238,7 +239,7 @@ export default function ClassManager() {
               <Plus className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
             <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground font-sans transition-colors">
-              Add New Class / Group
+              {t("addNewClass")}
             </span>
           </motion.button>
         </div>
@@ -263,7 +264,7 @@ export default function ClassManager() {
             >
               <div className="p-6 border-b border-border flex items-center justify-between">
                 <h2 className="text-xl font-bold text-foreground font-serif">
-                  {editingId ? "Edit Class" : "New Class / Group"}
+                  {editingId ? t("editClassTitle") : t("newClassTitle")}
                 </h2>
                 <button onClick={closeForm} className="text-muted-foreground hover:text-foreground transition-colors">
                   <X className="w-5 h-5" />
@@ -273,7 +274,7 @@ export default function ClassManager() {
               <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
                 {/* Name */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Class Name</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("className")}</Label>
                   <Input
                     placeholder="e.g. 3B, 4A — Advanced, Morning Group..."
                     value={form.name}
@@ -284,17 +285,16 @@ export default function ClassManager() {
 
                 {/* Grade selector */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Grade Level</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("classGrade")}</Label>
                   <div className="flex flex-wrap gap-2">
                     {GRADES.map((g) => (
                       <button
                         key={g}
                         onClick={() => setForm({ ...form, grade: g })}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold font-sans border transition-all ${
-                          form.grade === g
+                        className={`px-4 py-2 rounded-xl text-sm font-semibold font-sans border transition-all ${form.grade === g
                             ? "bg-primary text-primary-foreground border-primary"
                             : "bg-background text-foreground border-border hover:border-primary/60"
-                        }`}
+                          }`}
                       >
                         {g}
                       </button>
@@ -303,14 +303,14 @@ export default function ClassManager() {
                   {form.grade && (
                     <p className="text-xs text-muted-foreground font-sans flex items-center gap-1.5 bg-muted rounded-lg px-3 py-2">
                       <Sparkles className="w-3 h-3 text-primary shrink-0" />
-                      <span className="font-semibold text-foreground">AI difficulty baseline:</span>&nbsp;{GRADE_HINTS[form.grade]}
+                      <span className="font-semibold text-foreground">{t("aiDifficultyBaseline")}</span>&nbsp;{GRADE_HINTS[form.grade]}
                     </p>
                   )}
                 </div>
 
                 {/* Student count */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Number of Students</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("classStudents")}</Label>
                   <Input
                     type="number"
                     min="1"
@@ -325,7 +325,7 @@ export default function ClassManager() {
                 {/* Description / Personalization */}
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Class Description & AI Personalization
+                    {t("classDesc")}
                   </Label>
                   <Textarea
                     placeholder={`Describe your class so AI generates better content:\n• Is the group advanced, average, or struggling?\n• What topics have they covered?\n• Interests (space, animals, sport…)\n• Any weak spots the AI should keep in mind?`}
@@ -340,14 +340,14 @@ export default function ClassManager() {
               </div>
 
               <div className="p-6 border-t border-border flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-xl" onClick={closeForm}>Cancel</Button>
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={closeForm}>{t("cancel")}</Button>
                 <Button
                   className="flex-1 rounded-xl gap-2"
                   onClick={handleSave}
                   disabled={!form.name.trim()}
                 >
                   <Check className="w-4 h-4" />
-                  {editingId ? "Save Changes" : "Create Class"}
+                  {editingId ? t("save") : t("save")}
                 </Button>
               </div>
             </motion.div>

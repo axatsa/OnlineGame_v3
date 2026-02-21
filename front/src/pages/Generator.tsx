@@ -441,172 +441,173 @@ const Generator = () => {
               ))}
             </div>
           </div>
+        </div> {/* This is the missing closing div */}
 
-          <div className="flex-1 p-6 overflow-y-auto">
-            <AnimatePresence mode="wait">
-              {genType === "math" && (
-                <motion.div
-                  key="math"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  className="space-y-5"
-                >
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
-                    <Input
-                      placeholder={t("genTopicPlaceholder")}
-                      value={mathTopic}
-                      onChange={(e) => setMathTopic(e.target.value)}
-                      className="h-11 rounded-xl font-sans"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="30"
-                      placeholder="10"
-                      value={questionCount}
-                      onChange={(e) => setQuestionCount(e.target.value)}
-                      className="h-11 rounded-xl font-sans"
-                    />
-                  </div>
-
-                  <SegmentedControl
-                    label={t("genDiff")}
-                    options={[t("genDiffEasy"), t("genDiffMed"), t("genDiffHard")]}
-                    value={difficulty === "Easy" ? t("genDiffEasy") : difficulty === "Hard" ? t("genDiffHard") : t("genDiffMed")}
-                    onChange={(v) => {
-                      const diffMap: any = { [t("genDiffEasy")]: "Easy", [t("genDiffMed")]: "Medium", [t("genDiffHard")]: "Hard" };
-                      setDifficulty(diffMap[v]);
-                    }}
-                    segId="difficulty"
+        <div className="flex-1 p-6 overflow-y-auto">
+          <AnimatePresence mode="wait">
+            {genType === "math" && (
+              <motion.div
+                key="math"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="space-y-5"
+              >
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
+                  <Input
+                    placeholder={t("genTopicPlaceholder")}
+                    value={mathTopic}
+                    onChange={(e) => setMathTopic(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
                   />
-                </motion.div>
-              )}
-              {genType === "crossword" && (
-                <motion.div
-                  key="crossword"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="space-y-5"
-                >
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
-                    <Input
-                      placeholder={t("genTopicPlaceholder")}
-                      value={crosswordTopic}
-                      onChange={(e) => setCrosswordTopic(e.target.value)}
-                      className="h-11 rounded-xl font-sans"
-                    />
-                  </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
-                    <Input
-                      type="number"
-                      min="5"
-                      max="20"
-                      placeholder="10"
-                      value={wordCount}
-                      onChange={(e) => setWordCount(e.target.value)}
-                      className="h-11 rounded-xl font-sans"
-                    />
-                  </div>
-                </motion.div>
-              )}
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="30"
+                    placeholder="10"
+                    value={questionCount}
+                    onChange={(e) => setQuestionCount(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
 
-              {genType === "quiz" && (
-                <motion.div
-                  key="quiz"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="space-y-5"
-                >
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
-                    <Input
-                      placeholder={t("genTopicPlaceholder")}
-                      value={quizTopic}
-                      onChange={(e) => setQuizTopic(e.target.value)}
-                      className="h-11 rounded-xl font-sans"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="15"
-                      placeholder="5"
-                      value={quizCount}
-                      onChange={(e) => setQuizCount(e.target.value)}
-                      className="h-11 rounded-xl font-sans"
-                    />
-                  </div>
-                </motion.div>
-              )}
+                <SegmentedControl
+                  label={t("genDiff")}
+                  options={[t("genDiffEasy"), t("genDiffMed"), t("genDiffHard")]}
+                  value={difficulty === "Easy" ? t("genDiffEasy") : difficulty === "Hard" ? t("genDiffHard") : t("genDiffMed")}
+                  onChange={(v) => {
+                    const diffMap: any = { [t("genDiffEasy")]: "Easy", [t("genDiffMed")]: "Medium", [t("genDiffHard")]: "Hard" };
+                    setDifficulty(diffMap[v]);
+                  }}
+                  segId="difficulty"
+                />
+              </motion.div>
+            )}
+            {genType === "crossword" && (
+              <motion.div
+                key="crossword"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="space-y-5"
+              >
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
+                  <Input
+                    placeholder={t("genTopicPlaceholder")}
+                    value={crosswordTopic}
+                    onChange={(e) => setCrosswordTopic(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
 
-              {genType === "assignment" && (
-                <motion.div
-                  key="assignment"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="space-y-5"
-                >
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
-                    <Input
-                      placeholder={t("genTopicPlaceholder")}
-                      value={assignTopic}
-                      onChange={(e) => setAssignTopic(e.target.value)}
-                      className="h-11 rounded-xl font-sans"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="10"
-                      placeholder="5"
-                      value={assignCount}
-                      onChange={(e) => setAssignCount(e.target.value)}
-                      className="h-11 rounded-xl font-sans"
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
+                  <Input
+                    type="number"
+                    min="5"
+                    max="20"
+                    placeholder="10"
+                    value={wordCount}
+                    onChange={(e) => setWordCount(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+              </motion.div>
+            )}
 
-          {/* Generate Button */}
-          <div className="p-6 border-t border-border">
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || (genType === "math" && !mathTopic) || (genType === "crossword" && !crosswordTopic) || (genType === "quiz" && !quizTopic) || (genType === "assignment" && !assignTopic)}
-              className="w-full h-14 text-base font-semibold rounded-xl font-sans gap-2"
-              size="lg"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  Generate {genType === "math" ? "Worksheet" : "Crossword"}
-                </>
-              )}
-            </Button>
-          </div>
+            {genType === "quiz" && (
+              <motion.div
+                key="quiz"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="space-y-5"
+              >
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
+                  <Input
+                    placeholder={t("genTopicPlaceholder")}
+                    value={quizTopic}
+                    onChange={(e) => setQuizTopic(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="15"
+                    placeholder="5"
+                    value={quizCount}
+                    onChange={(e) => setQuizCount(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {genType === "assignment" && (
+              <motion.div
+                key="assignment"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="space-y-5"
+              >
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
+                  <Input
+                    placeholder={t("genTopicPlaceholder")}
+                    value={assignTopic}
+                    onChange={(e) => setAssignTopic(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="10"
+                    placeholder="5"
+                    value={assignCount}
+                    onChange={(e) => setAssignCount(e.target.value)}
+                    className="h-11 rounded-xl font-sans"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Generate Button */}
+        <div className="p-6 border-t border-border">
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || (genType === "math" && !mathTopic) || (genType === "crossword" && !crosswordTopic) || (genType === "quiz" && !quizTopic) || (genType === "assignment" && !assignTopic)}
+            className="w-full h-14 text-base font-semibold rounded-xl font-sans gap-2"
+            size="lg"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                Generate {genType === "math" ? "Worksheet" : "Crossword"}
+              </>
+            )}
+          </Button>
+        </div>
       </motion.div>
 
       {/* Right Preview */}

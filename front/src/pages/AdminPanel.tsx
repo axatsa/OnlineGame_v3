@@ -347,7 +347,7 @@ const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { tea
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard icon={Users} label="Всего учителей" value={String(teachers.length)} sub="+12 за месяц" trend="up" color="bg-primary/10 text-primary" />
       <MetricCard icon={Building2} label="Организации" value={String(orgs.length)} sub={`${orgs.filter(o => o.status === "expiring").length} истекают`} color="bg-yellow-500/10 text-yellow-600" />
-      <MetricCard icon={Zap} label="Токенов сегодня" value={`${(teachers.reduce((acc, t) => acc + t.tokenUsage, 0) / 1000).toFixed(1)}K`} sub="+18% вчера" trend="up" color="bg-violet-500/10 text-violet-600" />
+      <MetricCard icon={Zap} label="Всего токенов ИИ" value={`${(teachers.reduce((acc, t) => acc + t.tokenUsage, 0) / 1000).toFixed(1)}K`} sub="суммарно" trend="up" color="bg-primary/10 text-primary" />
       <MetricCard icon={DollarSign} label="MRR" value={`$${payments.filter(p => p.status === 'paid').reduce((acc, p) => acc + p.amount, 0)}`} sub="+24% vs прошл." trend="up" color="bg-success/10 text-success" />
     </div>
 
@@ -955,13 +955,14 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
 
 // ─── System View ──────────────────────────────────────────────────────────────
 const SystemView = ({
-  aiProvider, systemAlert, setSystemAlert, alertEnabled, setAlertEnabled, isLoading
+  aiProvider, systemAlert, setSystemAlert, alertEnabled, setAlertEnabled, auditLogs, isLoading
 }: {
   aiProvider: "gemini" | "openai";
   systemAlert: string;
   setSystemAlert: (v: string) => void;
   alertEnabled: boolean;
   setAlertEnabled: (v: boolean) => void;
+  auditLogs: any[];
   isLoading: boolean;
 }) => (
   <div className="space-y-6 max-w-2xl">
@@ -1181,8 +1182,8 @@ const AdminPanel = () => {
   const SidebarContent = () => (
     <>
       <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center">
-          <Shield className="w-5 h-5 text-sidebar-primary-foreground" />
+        <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center overflow-hidden">
+          <img src="/favicon.webp" alt="Logo" className="w-full h-full object-cover" />
         </div>
         <div>
           <span className="text-base font-bold text-sidebar-foreground font-serif block">ClassPlay</span>
@@ -1217,7 +1218,11 @@ const AdminPanel = () => {
           <p className="text-sm font-semibold text-sidebar-primary font-sans">{aiProvider === "gemini" ? "🟣 Gemini" : "🟢 OpenAI"}</p>
         </div>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            navigate("/");
+          }}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-sans text-sidebar-foreground/60 hover:bg-sidebar-accent/50 transition-colors"
         >
           <LogOut className="w-4 h-4" />
@@ -1294,8 +1299,8 @@ const AdminPanel = () => {
               <Cpu className="w-3.5 h-3.5" />
               {aiProvider === "gemini" ? "Gemini" : "OpenAI"} • Онлайн
             </div>
-            <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors">
-              <Shield className="w-4 h-4 text-primary-foreground" />
+            <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors overflow-hidden">
+              <img src="/favicon.webp" alt="Logo" className="w-full h-full object-cover" />
             </button>
           </div>
         </header>
@@ -1341,6 +1346,7 @@ const AdminPanel = () => {
                   setSystemAlert={setSystemAlert}
                   alertEnabled={alertEnabled}
                   setAlertEnabled={setAlertEnabled}
+                  auditLogs={auditLogs}
                   isLoading={isLoading}
                 />
               )}

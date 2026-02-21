@@ -36,7 +36,24 @@ type Payment = {
 };
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
-// Mock data removed. Real data fetched from API.
+const DAILY_TOKENS = [
+  { day: "Mon", tokens: 2400 },
+  { day: "Tue", tokens: 1398 },
+  { day: "Wed", tokens: 9800 },
+  { day: "Thu", tokens: 3908 },
+  { day: "Fri", tokens: 4800 },
+  { day: "Sat", tokens: 3800 },
+  { day: "Sun", tokens: 4300 },
+];
+
+const MRR_DATA = [
+  { month: "Aug", mrr: 1200 },
+  { month: "Sep", mrr: 1900 },
+  { month: "Oct", mrr: 2100 },
+  { month: "Nov", mrr: 2400 },
+  { month: "Dec", mrr: 2800 },
+  { month: "Jan", mrr: 3400 },
+];
 
 // ─── Export Utilities ─────────────────────────────────────────────────────────
 const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {

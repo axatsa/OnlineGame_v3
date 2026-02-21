@@ -27,16 +27,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const navigate = useNavigate();
 
     useEffect(() => {
+        const handleUnauthorized = () => {
+            console.warn("Unauthorized event received - logging out");
+            logout();
+        };
+
+        window.addEventListener("auth:unauthorized", handleUnauthorized);
+
         const initAuth = async () => {
             const storedToken = localStorage.getItem("token");
             if (storedToken) {
                 try {
-                    // Verify token or decoding it
-                    // Ideally call /api/auth/me to get fresh user data
-                    // For now, we trust the stored token or decode if we stored user data separately
-                    // But better: let's rely on the login response we just implemented.
-                    // If we refresh, we lose "user" object if we don't store it.
-                    // Let's store user in localStorage for persistence or fetch it.
                     const storedUser = localStorage.getItem("user");
                     if (storedUser) {
                         setUser(JSON.parse(storedUser));
@@ -49,6 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsLoading(false);
         };
         initAuth();
+
+        return () => {
+            window.removeEventListener("auth:unauthorized", handleUnauthorized);
+        };
     }, []);
 
     const login = (newToken: string, newUser: User) => {

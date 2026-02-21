@@ -249,8 +249,6 @@ const Generator = () => {
       setEditContent(JSON.stringify(crosswordData, null, 2));
     } else if (genType === "quiz" && quizData) {
       setEditContent(JSON.stringify(quizData, null, 2));
-    } else if (genType === "jeopardy" && jeopardyData) {
-      setEditContent(JSON.stringify(jeopardyData, null, 2));
     } else if (genType === "assignment" && assignmentData) {
       setEditContent(JSON.stringify(assignmentData, null, 2));
     } else {
@@ -267,8 +265,6 @@ const Generator = () => {
         setCrosswordData(JSON.parse(editContent));
       } else if (genType === "quiz") {
         setQuizData(JSON.parse(editContent));
-      } else if (genType === "jeopardy") {
-        setJeopardyData(JSON.parse(editContent));
       } else if (genType === "assignment") {
         setAssignmentData(JSON.parse(editContent));
       }
@@ -290,7 +286,6 @@ const Generator = () => {
       if (genType === "math") content = JSON.stringify({ problems: generatedProblems });
       else if (genType === "crossword") content = JSON.stringify({ words: crosswordData?.words, grid: crosswordData?.grid, width: crosswordData?.width, height: crosswordData?.height });
       else if (genType === "quiz") content = JSON.stringify({ questions: quizData });
-      else if (genType === "jeopardy") content = JSON.stringify(jeopardyData);
       else if (genType === "assignment") content = JSON.stringify(assignmentData);
 
       await api.post("/resources/", {
@@ -598,12 +593,12 @@ const Generator = () => {
             {isGenerating ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Generating...
+                {t("generating")}
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                Generate {genType === "math" ? "Worksheet" : "Crossword"}
+                {t("genButton")}
               </>
             )}
           </Button>

@@ -1,98 +1,184 @@
-import google.generativeai as genai
-from config import GEMINI_API_KEY
-import logging
+"""
+Gemini Storybook Service
+========================
+Text  : gemini-2.0-flash  → high-quality story, 10 pages × 60-70 words
+Images: gemini-2.5-flash-image → native image generation, 1024px
+SDK   : google-genai  (pip install google-genai)
+"""
+
+from google import genai
+from google.genai import types as genai_types
+
+import base64
 import json
+import logging
 import re
 
 logger = logging.getLogger(__name__)
 
-genai.configure(api_key=GEMINI_API_KEY)
+# ─── Prompts ─────────────────────────────────────────────────────────────────
 
-STORYBOOK_SYSTEM = """You are a creative children's storybook author writing for classroom use.
-You write warm, engaging, educational stories suitable for the specified age group.
-Always output ONLY valid JSON, no extra text."""
+STORY_SYSTEM = (
+    "You are an award-winning children's storybook author. "
+    "You write warm, engaging, imaginative stories with a natural narrative arc. "
+    "Output ONLY valid JSON, no markdown fences, no extra text."
+)
 
-
-def generate_storybook(
-    title: str,
-    topic: str,
-    age_group: str = "7-10",
-    language: str = "Russian",
-    pages: int = 6,
-    genre: str = "fairy tale"
-) -> dict:
-    """
-    Generate a children's storybook with multiple pages.
-    Returns dict with title, description, pages (each with text + illustration_prompt).
-    """
-    prompt = f"""
-Create a children's {genre} storybook in {language} language.
+def _story_prompt(title, topic, age_group, language, genre):
+    return f"""Write a children's {genre} storybook in {language}.
 
 Title: "{title}"
-Topic/Theme: {topic}
+Topic / educational theme: {topic}
 Target age: {age_group} years old
-Number of pages: {pages}
-Genre: {genre}
+Number of story pages: 10
+Words per page: exactly 60–70 words (count carefully!)
 
-Requirements:
-- Each page has 3-5 sentences of story text appropriate for age {age_group}
-- Each page has a short illustration_prompt in English (for image generation)
-- The story must be educational and relate to the topic
-- Language for story text: {language}
-- Make it engaging, warm, and fun for children
+Narrative requirements:
+- Page 1: introduce characters and setting
+- Pages 2-8: story unfolds with a small challenge or adventure
+- Page 9: problem is resolved
+- Page 10: warm, hopeful ending that reinforces the topic/theme
+- Language: {language} (all story text must be in {language})
+- Style: simple sentences, vivid imagery, child-friendly vocabulary
 
-Return ONLY valid JSON in this exact format:
+For each page also include an illustration_prompt in English (max 25 words):
+  Format: "Children's storybook illustration, [scene description], watercolor style, soft warm colors, detailed."
+
+Return ONLY this JSON (no markdown, no extra text):
 {{
   "title": "{title}",
-  "description": "One sentence summary of the book",
+  "description": "One engaging summary sentence in {language}",
   "age_group": "{age_group}",
   "genre": "{genre}",
   "language": "{language}",
   "pages": [
     {{
       "page_number": 1,
-      "text": "Story text for this page in {language}...",
-      "illustration_prompt": "Cute cartoon illustration of [description], children's book style, colorful, warm"
+      "text": "Story text in {language}, exactly 60-70 words.",
+      "illustration_prompt": "Children's storybook illustration, [scene], watercolor style, soft warm colors, detailed."
     }}
   ]
-}}
-"""
-    try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
-                temperature=0.9,
-                max_output_tokens=4096,
-            )
-        )
-        content = response.text
+}}"""
 
-        # Robust JSON extraction
+
+def _image_prompt(illustration_prompt: str, age_group: str, title: str) -> str:
+    """Craft a high-quality image generation prompt for children's storybook."""
+    return (
+        f"{illustration_prompt} "
+        f"Children's storybook page, ages {age_group}. "
+        "Soft watercolor illustration, warm pastel palette, "
+        "professional children's book art, highly detailed, "
+        "no text, no words, no letters."
+    )
+
+
+# ─── Main generator ───────────────────────────────────────────────────────────
+
+def generate_storybook(
+    title: str,
+    topic: str,
+    age_group: str = "7-10",
+    language: str = "Russian",
+    genre: str = "fairy tale",
+    gemini_api_key: str = "",
+) -> dict | None:
+    """
+    Two-step generation:
+      1. Generate 10-page story text with gemini-2.0-flash
+      2. Generate 10 illustrations with gemini-2.5-flash-image
+    Returns dict with pages list, each page has image_base64.
+    """
+    if not gemini_api_key:
+        logger.error("GEMINI_API_KEY is not set")
+        return None
+
+    client = genai.Client(api_key=gemini_api_key)
+
+    # ── STEP 1: Generate story text ──────────────────────────────────────
+    logger.info("Generating story text with gemini-2.0-flash...")
+    try:
+        story_response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=_story_prompt(title, topic, age_group, language, genre),
+            config=genai_types.GenerateContentConfig(
+                system_instruction=STORY_SYSTEM,
+                temperature=0.9,
+                max_output_tokens=8192,
+            ),
+        )
+        raw = story_response.text.strip()
+    except Exception as e:
+        logger.error(f"Story generation failed: {e}")
+        return None
+
+    # Parse story JSON
+    story_data = _parse_json(raw)
+    if not story_data or "pages" not in story_data:
+        logger.error(f"Could not parse story JSON. Raw:\n{raw[:400]}")
+        return None
+
+    logger.info(f"Story parsed: {len(story_data['pages'])} pages")
+
+    # ── STEP 2: Generate illustrations ───────────────────────────────────
+    pages_with_images = []
+    for i, page in enumerate(story_data["pages"]):
+        prompt = _image_prompt(
+            page.get("illustration_prompt", f"Scene from page {page['page_number']}"),
+            age_group,
+            title,
+        )
+        logger.info(f"Generating image {i+1}/10...")
+        img_b64 = _generate_image(client, prompt)
+        page["image_base64"] = img_b64   # may be None if generation fails
+        pages_with_images.append(page)
+
+    story_data["pages"] = pages_with_images
+    return story_data
+
+
+def _generate_image(client: genai.Client, prompt: str) -> str | None:
+    """Generate a single image using gemini-2.5-flash-image. Returns base64 PNG or None."""
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-image",
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                response_modalities=["IMAGE", "TEXT"],
+                temperature=1.0,
+            ),
+        )
+        for part in response.parts:
+            if part.inline_data is not None:
+                raw_bytes = part.inline_data.data
+                # inline_data.data is already bytes (not b64 string)
+                if isinstance(raw_bytes, bytes):
+                    return base64.b64encode(raw_bytes).decode("utf-8")
+                # some SDK versions return base64 string directly
+                return raw_bytes if isinstance(raw_bytes, str) else None
+    except Exception as e:
+        logger.warning(f"Image generation failed (will skip): {e}")
+    return None
+
+
+def _parse_json(text: str) -> dict | None:
+    """Try multiple strategies to extract valid JSON from model output."""
+    # 1. Direct parse
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    # 2. Markdown code block
+    m = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
+    if m:
         try:
-            return json.loads(content)
+            return json.loads(m.group(1).strip())
         except json.JSONDecodeError:
             pass
-
-        # Try markdown code block
-        json_match = re.search(r"```(?:json)?\s*(.*?)```", content, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group(1).strip())
-            except json.JSONDecodeError:
-                pass
-
-        # Try raw JSON object
-        obj_match = re.search(r"(\{.*\})", content, re.DOTALL)
-        if obj_match:
-            try:
-                return json.loads(obj_match.group(1).strip())
-            except json.JSONDecodeError:
-                pass
-
-        logger.error(f"Could not parse Gemini response: {content[:500]}")
-        return None
-
-    except Exception as e:
-        logger.error(f"Gemini storybook generation failed: {e}")
-        return None
+    # 3. First JSON object in response
+    m = re.search(r"(\{.*\})", text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+    return None

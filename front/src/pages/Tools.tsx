@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLang } from "@/context/LangContext";
+import { useClass } from "@/context/ClassContext";
+import api from "@/lib/api";
+import { toast } from "sonner";
 
 // ──────────────── Roulette ────────────────
 const COLORS = [
@@ -101,7 +104,8 @@ const RouletteWheel = ({ names, spinning, winner }: { names: string[]; spinning:
 const BRUSH_COLORS = ["#1a1a1a", "#991B1B", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"];
 const BRUSH_SIZES = [2, 5, 10, 18];
 
-const DrawingBoard = () => {
+// FIX #1: t передаётся как пропс чтобы компонент имел доступ к переводам
+const DrawingBoard = ({ t }: { t: (key: string) => string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [color, setColor] = useState("#1a1a1a");
   const [size, setSize] = useState(5);
@@ -185,102 +189,14 @@ interface GeneratedAssignment {
   date: string;
 }
 
-function parsePrompt(prompt: string): GeneratedAssignment {
-  const lower = prompt.toLowerCase();
-  const numMatch = prompt.match(/(\d+)/);
-  const count = numMatch ? parseInt(numMatch[1]) : 10;
-
-  // Detect subject
-  let subject = "General";
-  if (lower.includes("геогр") || lower.includes("geograph")) subject = "География";
-  else if (lower.includes("матем") || lower.includes("math")) subject = "Математика";
-  else if (lower.includes("биол") || lower.includes("biol")) subject = "Биология";
-  else if (lower.includes("истор") || lower.includes("histor")) subject = "История";
-  else if (lower.includes("физик") || lower.includes("physic")) subject = "Физика";
-  else if (lower.includes("химия") || lower.includes("chemi")) subject = "Химия";
-  else if (lower.includes("англий") || lower.includes("english")) subject = "Английский язык";
-  else if (lower.includes("узб") || lower.includes("o'zbek")) subject = "Ўзбек тили";
-  else if (lower.includes("литер") || lower.includes("liter")) subject = "Литература";
-  else if (lower.includes("информ") || lower.includes("informat")) subject = "Информатика";
-
-  // Detect grade
-  const gradeMatch = prompt.match(/(\d+)\s*(класс|grade|синф)/i);
-  const grade = gradeMatch ? `${gradeMatch[1]}-синф` : "5-синф";
-
-  // Detect language
-  const isUzbek = lower.includes("узб") || lower.includes("o'zbek") || lower.includes("узбек");
-  const isRussian = lower.includes("рус") || lower.includes("russian") || lower.includes("русск");
-
-  // Generate questions based on subject and language
-  const questions = generateQuestions(subject, count, isUzbek, isRussian);
-
-  return {
-    title: `${subject} — Синов иши`,
-    subject,
-    grade,
-    questions,
-    date: new Date().toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" }),
-  };
-}
-
-function generateQuestions(subject: string, count: number, isUzbek: boolean, isRussian: boolean) {
-  const geoQuestionsUz = [
-    { text: "Ер юзидаги eng katta okean qaysi?", options: ["A) Atlantika", "B) Tinch", "C) Hind", "D) Shimoliy Muz"], answer: "B) Tinch" },
-    { text: "Dunyo qit'alarining soni nechta?", options: ["A) 5", "B) 6", "C) 7", "D) 8"], answer: "C) 7" },
-    { text: "O'zbekistonning poytaxti qaysi shahar?", options: ["A) Samarqand", "B) Buxoro", "C) Toshkent", "D) Namangan"], answer: "C) Toshkent" },
-    { text: "Dunyodagi eng uzun daryo qaysi?", options: ["A) Amazon", "B) Nil", "C) Yantszi", "D) Volga"], answer: "B) Nil" },
-    { text: "Eng baland tog' cho'qqisi qaysi?", options: ["A) K2", "B) Kangchenjunga", "C) Everest", "D) Lxotse"], answer: "C) Everest" },
-    { text: "Osiyoning maydoni qancha?", options: ["A) 34 mln km²", "B) 44 mln km²", "C) 54 mln km²", "D) 24 mln km²"], answer: "B) 44 mln km²" },
-    { text: "Qaysi davlat aholisi bo'yicha eng katta?", options: ["A) Hindiston", "B) Xitoy", "C) AQSH", "D) Rossiya"], answer: "A) Hindiston" },
-    { text: "Sahara cho'li qaysi qit'ada joylashgan?", options: ["A) Osiyo", "B) Amerika", "C) Afrika", "D) Avstraliya"], answer: "C) Afrika" },
-    { text: "Dunyo okeanlarining umumiy soni?", options: ["A) 3", "B) 4", "C) 5", "D) 6"], answer: "C) 5" },
-    { text: "Volga daryosi qaysi davlatdan oqadi?", options: ["A) Ukraina", "B) Belarusiya", "C) Rossiya", "D) Qozog'iston"], answer: "C) Rossiya" },
-    { text: "Antarktida — bu nima?", options: ["A) Okean", "B) Qit'a", "C) Orol", "D) Yarim orol"], answer: "B) Qit'a" },
-    { text: "Yer atrofida nechta tabiiy yo'ldosh bor?", options: ["A) 0", "B) 1", "C) 2", "D) 3"], answer: "B) 1" },
-    { text: "Qaysi qit'ada ko'p mamlakat bor?", options: ["A) Afrika", "B) Osiyo", "C) Amerika", "D) Yevropa"], answer: "A) Afrika" },
-    { text: "Amazonka daryosi qaysi qit'ada?", options: ["A) Shimoliy Amerika", "B) Afrika", "C) Janubiy Amerika", "D) Osiyo"], answer: "C) Janubiy Amerika" },
-    { text: "Kaspiy dengizi qayerda joylashgan?", options: ["A) Yevropa", "B) Osiyo-Yevropa chegarasida", "C) Osiyo", "D) Afrika"], answer: "B) Osiyo-Yevropa chegarasida" },
-  ];
-
-  const geoQuestionsRu = [
-    { text: "Какой самый большой океан на Земле?", options: ["A) Атлантический", "B) Тихий", "C) Индийский", "D) Северный Ледовитый"], answer: "B) Тихий" },
-    { text: "Сколько континентов на Земле?", options: ["A) 5", "B) 6", "C) 7", "D) 8"], answer: "C) 7" },
-    { text: "Столица Узбекистана?", options: ["A) Самарканд", "B) Бухара", "C) Ташкент", "D) Наманган"], answer: "C) Ташкент" },
-    { text: "Самая длинная река в мире?", options: ["A) Амазонка", "B) Нил", "C) Янцзы", "D) Волга"], answer: "B) Нил" },
-    { text: "Самая высокая горная вершина?", options: ["A) К2", "B) Канченджанга", "C) Эверест", "D) Лхоцзе"], answer: "C) Эверест" },
-    { text: "Площадь Азии составляет примерно?", options: ["A) 34 млн км²", "B) 44 млн км²", "C) 54 млн км²", "D) 24 млн км²"], answer: "B) 44 млн км²" },
-    { text: "Самая населённая страна мира?", options: ["A) Индия", "B) Китай", "C) США", "D) Россия"], answer: "A) Индия" },
-    { text: "На каком континенте пустыня Сахара?", options: ["A) Азия", "B) Америка", "C) Африка", "D) Австралия"], answer: "C) Африка" },
-    { text: "Сколько океанов на Земле?", options: ["A) 3", "B) 4", "C) 5", "D) 6"], answer: "C) 5" },
-    { text: "Через какую страну протекает Волга?", options: ["A) Украина", "B) Беларусь", "C) Россия", "D) Казахстан"], answer: "C) Россия" },
-  ];
-
-  const mathQuestionsUz = [
-    { text: "15 × 7 = ?", options: ["A) 95", "B) 100", "C) 105", "D) 110"], answer: "C) 105" },
-    { text: "144 ÷ 12 = ?", options: ["A) 10", "B) 11", "C) 12", "D) 13"], answer: "C) 12" },
-    { text: "2³ = ?", options: ["A) 6", "B) 8", "C) 9", "D) 12"], answer: "B) 8" },
-    { text: "√81 = ?", options: ["A) 7", "B) 8", "C) 9", "D) 10"], answer: "C) 9" },
-    { text: "Uchburchak perimetri: tomonlari 5, 7, 9 sm. P = ?", options: ["A) 19 sm", "B) 20 sm", "C) 21 sm", "D) 22 sm"], answer: "C) 21 sm" },
-    { text: "1 soat = necha daqiqa?", options: ["A) 50", "B) 60", "C) 100", "D) 120"], answer: "B) 60" },
-    { text: "0.5 × 0.5 = ?", options: ["A) 0.1", "B) 0.25", "C) 0.5", "D) 1"], answer: "B) 0.25" },
-    { text: "Agar x + 12 = 25, x = ?", options: ["A) 11", "B) 12", "C) 13", "D) 14"], answer: "C) 13" },
-    { text: "To'g'ri to'rtburchak yuzi: a=6, b=4. S = ?", options: ["A) 20", "B) 24", "C) 28", "D) 30"], answer: "B) 24" },
-    { text: "100 ning 30% i necha?", options: ["A) 20", "B) 25", "C) 30", "D) 35"], answer: "C) 30" },
-  ];
-
-  const defaultQuestions = isUzbek
-    ? (subject === "Математика" ? mathQuestionsUz : geoQuestionsUz)
-    : (subject === "Математика" ? mathQuestionsUz : geoQuestionsRu);
-
-  const result = [];
-  for (let i = 0; i < Math.min(count, 20); i++) {
-    const q = defaultQuestions[i % defaultQuestions.length];
-    result.push({ num: i + 1, ...q });
-  }
-  return result;
-}
-
-const AssignmentPrintView = ({ assignment }: { assignment: GeneratedAssignment }) => {
+// FIX #2: t и lang передаются как пропсы
+const AssignmentPrintView = ({
+  assignment, t, lang
+}: {
+  assignment: GeneratedAssignment;
+  t: (key: string) => string;
+  lang: string;
+}) => {
   const printRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
@@ -306,7 +222,6 @@ const AssignmentPrintView = ({ assignment }: { assignment: GeneratedAssignment }
         .answers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6pt; margin-top: 12pt; }
         .answer-item { border: 1px solid #333; padding: 6pt; text-align: center; font-size: 11pt; }
         .answer-num { font-size: 9pt; color: #555; }
-        .student-info { border-bottom: 1px solid #000; margin-bottom: 6pt; display: flex; justify-content: space-between; padding-bottom: 4pt; }
         .fill-line { border-bottom: 1px solid #000; display: inline-block; min-width: 120pt; }
       </style>
       </head><body>${printContent}</body></html>
@@ -315,60 +230,6 @@ const AssignmentPrintView = ({ assignment }: { assignment: GeneratedAssignment }
     win.focus();
     setTimeout(() => { win.print(); }, 500);
   };
-
-  const studentPage = (
-    <div className="page" style={{ pageBreakAfter: "always" }}>
-      <h1 style={{ fontSize: "16pt", textAlign: "center", marginBottom: "4pt" }}>{assignment.title}</h1>
-      <h2 style={{ fontSize: "13pt", textAlign: "center", marginBottom: "12pt", color: "#333" }}>{t("forStudent")}</h2>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10pt", marginBottom: "16pt", borderBottom: "1px solid #000", paddingBottom: "8pt" }}>
-        <span>{t("gradeLabel")}: <strong>{assignment.grade}</strong></span>
-        <span>{lang === "ru" ? "Ученик" : "O'quvchi"}: <span style={{ borderBottom: "1px solid #000", display: "inline-block", minWidth: "150pt" }}></span></span>
-        <span>{lang === "ru" ? "Дата" : "Sana"}: <strong>{assignment.date}</strong></span>
-      </div>
-      {assignment.questions.map((q) => (
-        <div key={q.num} style={{ marginBottom: "14pt" }}>
-          <div style={{ fontWeight: "bold", marginBottom: "4pt" }}>{q.num}. {q.text}</div>
-          {q.options && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2pt", paddingLeft: "12pt", fontSize: "11pt" }}>
-              {q.options.map((opt, i) => <div key={i}>{opt}</div>)}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-
-  const answerPage = (
-    <div className="page">
-      <h1 style={{ fontSize: "16pt", textAlign: "center", marginBottom: "4pt" }}>{t("answerKey")}</h1>
-      <h2 style={{ fontSize: "13pt", textAlign: "center", marginBottom: "12pt", color: "#333" }}>{assignment.title} — {t("forTeacher")}</h2>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10pt", marginBottom: "16pt", borderBottom: "1px solid #000", paddingBottom: "8pt" }}>
-        <span>{t("gradeLabel")}: <strong>{assignment.grade}</strong></span>
-        <span>{lang === "ru" ? "Дата" : "Sana"}: <strong>{assignment.date}</strong></span>
-        <span>{t("genCount")}: <strong>{assignment.questions.length}</strong></span>
-      </div>
-      <div style={{ background: "#f5f5f5", padding: "8pt", marginBottom: "16pt", border: "1px solid #ccc", fontSize: "11pt" }}>
-        {t("forTeacher")} ⚠️
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6pt", marginTop: "12pt" }}>
-        {assignment.questions.map((q) => (
-          <div key={q.num} style={{ border: "1px solid #333", padding: "6pt", textAlign: "center" }}>
-            <div style={{ fontSize: "9pt", color: "#555" }}>№{q.num}</div>
-            <div style={{ fontWeight: "bold", fontSize: "11pt" }}>{q.answer}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: "20pt", borderTop: "1px solid #000", paddingTop: "10pt", fontSize: "10pt" }}>
-        <strong>Баҳолаш жадвали:</strong>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "4pt", marginTop: "6pt" }}>
-          <div style={{ border: "1px solid #ccc", padding: "4pt", textAlign: "center" }}>90-100% → "5"</div>
-          <div style={{ border: "1px solid #ccc", padding: "4pt", textAlign: "center" }}>75-89% → "4"</div>
-          <div style={{ border: "1px solid #ccc", padding: "4pt", textAlign: "center" }}>55-74% → "3"</div>
-          <div style={{ border: "1px solid #ccc", padding: "4pt", textAlign: "center" }}>0-54% → "2"</div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -508,24 +369,9 @@ const AssignmentPrintView = ({ assignment }: { assignment: GeneratedAssignment }
   );
 };
 
-// ... imports
-import { useClass } from "@/context/ClassContext";
-import api from "@/lib/api";
-import { toast } from "sonner";
-
-// ... (Roulette and Board code remains same)
-
-// ──────────────── Assignment Generator ────────────────
-interface GeneratedAssignment {
-  title: string;
-  subject: string;
-  grade: string;
-  questions: { num: number; text: string; options?: string[]; answer: string }[];
-  date: string;
-}
-
+// ──────────────── Assignment Generator (inner component) ────────────────
 const AssignmentGenerator = () => {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GeneratedAssignment | null>(null);
@@ -533,14 +379,14 @@ const AssignmentGenerator = () => {
 
   const detectSubject = (p: string) => {
     const l = p.toLowerCase();
-    if (l.includes("geo")) return "Geography";
-    if (l.includes("mat") || l.includes("calc")) return "Mathematics";
-    if (l.includes("bio")) return "Biology";
-    if (l.includes("his") || l.includes("tar")) return "History";
-    if (l.includes("phy")) return "Physics";
-    if (l.includes("chem")) return "Chemistry";
-    if (l.includes("eng")) return "English";
-    return "General Knowledge"; // Fallback
+    if (l.includes("geo") || l.includes("геогр")) return "Geography";
+    if (l.includes("mat") || l.includes("матем") || l.includes("calc")) return "Mathematics";
+    if (l.includes("bio") || l.includes("биол")) return "Biology";
+    if (l.includes("his") || l.includes("tar") || l.includes("истор")) return "History";
+    if (l.includes("phy") || l.includes("физик")) return "Physics";
+    if (l.includes("chem") || l.includes("хим")) return "Chemistry";
+    if (l.includes("eng") || l.includes("англ")) return "English";
+    return "General Knowledge";
   };
 
   const generate = async () => {
@@ -549,21 +395,20 @@ const AssignmentGenerator = () => {
     setResult(null);
 
     const subject = detectSubject(prompt);
-    // Extract count if possible, else 10
     const countMatch = prompt.match(/(\d+)/);
     const count = countMatch ? parseInt(countMatch[1]) : 10;
+    // FIX #4: передаём язык в запрос
+    const langInstruction = lang === "uz" ? "in Uzbek language" : "in Russian language";
 
     try {
       const res = await api.post("/generate/assignment", {
         subject: subject,
-        topic: prompt, // Pass full prompt as topic so AI gets context
+        topic: `${prompt} (${langInstruction})`,
         count: Math.min(count, 20),
         class_id: activeClassId
       });
 
       const data = res.data.result;
-
-      // Ensure date exists
       const finalResult: GeneratedAssignment = {
         title: data.title || "Generated Assignment",
         subject: data.subject || subject,
@@ -573,10 +418,10 @@ const AssignmentGenerator = () => {
       };
 
       setResult(finalResult);
-      toast.success("Assignment generated successfully!");
+      toast.success(lang === "uz" ? "Topshiriq yaratildi!" : "Задание создано!");
     } catch (e) {
       console.error(e);
-      toast.error("Failed to generate. Please try again.");
+      toast.error(lang === "uz" ? "Xatolik. Qayta urinib ko'ring." : "Ошибка. Попробуйте ещё раз.");
     } finally {
       setLoading(false);
     }
@@ -584,14 +429,11 @@ const AssignmentGenerator = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* Prompt box */}
       <div className="bg-card border border-border rounded-2xl p-6 flex flex-col gap-4">
-        {/* ... UI Code same ... */}
-        {/* Just updating the generate button onclick */}
-        {/* ... */}
-
         <Textarea
-          placeholder="Example: 'Create a geography quiz about capitals for 5th grade' or '10 math problems about fractions'"
+          placeholder={lang === "uz"
+            ? "Masalan: '5-sinf uchun 10 ta matematika savoli' yoki 'Geografiya, Osiyo, 8 ta savol'"
+            : "Например: 'Создай 10 вопросов по математике для 5 класса' или 'География, Азия, 8 вопросов'"}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           className="min-h-[100px] font-sans text-sm resize-none rounded-xl"
@@ -599,7 +441,7 @@ const AssignmentGenerator = () => {
         />
 
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground font-sans">Ctrl+Enter — generate</p>
+          <p className="text-xs text-muted-foreground font-sans">Ctrl+Enter — {t("generating")}</p>
           <Button
             onClick={generate}
             disabled={!prompt.trim() || loading}
@@ -614,33 +456,37 @@ const AssignmentGenerator = () => {
         </div>
       </div>
 
-      {/* Loading */}
       {loading && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           className="bg-card border border-border rounded-2xl p-10 flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-muted-foreground font-sans text-sm">AI is establishing context and creating questions...</p>
+          <p className="text-muted-foreground font-sans text-sm">
+            {lang === "uz" ? "AI kontent yaratmoqda..." : "AI создаёт контент..."}
+          </p>
         </motion.div>
       )}
 
-      {/* Result */}
       {result && !loading && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <AssignmentPrintView assignment={result} />
+          {/* FIX #2: передаём t и lang как пропсы */}
+          <AssignmentPrintView assignment={result} t={t} lang={lang} />
         </motion.div>
       )}
 
-      {/* Empty state */}
       {!result && !loading && (
         <div className="bg-card border border-dashed border-border rounded-2xl p-12 flex flex-col items-center gap-3 text-center">
           <FileText className="w-12 h-12 text-muted-foreground/40" />
           <p className="text-muted-foreground font-sans text-sm">{t("describeAssignment")}</p>
           <div className="flex flex-wrap gap-2 justify-center mt-2">
-            {[
-              "10 Geography questions about Europe",
-              "Math test for 6th grade, 15 questions",
-              "Biology quiz about plants",
-            ].map((ex) => (
+            {(lang === "uz" ? [
+              "5-sinf uchun 10 ta matematika savoli",
+              "Geografiya bo'yicha 8 ta test",
+              "Biologiya, o'simliklar, 6 ta savol",
+            ] : [
+              "10 вопросов по математике для 5 класса",
+              "Тест по географии, 8 вопросов",
+              "Биология, растения, 6 вопросов",
+            ]).map((ex) => (
               <button key={ex} onClick={() => setPrompt(ex)}
                 className="text-xs font-sans bg-muted hover:bg-blue-50 hover:text-blue-700 text-muted-foreground px-3 py-1.5 rounded-lg border border-border transition-colors">
                 {ex}
@@ -692,15 +538,15 @@ const Tools = () => {
           <h1 className="text-xl font-bold text-foreground font-serif">{t("navTools")}</h1>
 
           <div className="ml-6 flex bg-muted rounded-full p-1">
-            {tabs.map((t) => (
-              <button key={t.id} onClick={() => setActiveTool(t.id)}
-                className={`relative px-5 py-2 text-sm font-medium font-sans rounded-full transition-colors ${activeTool === t.id ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                {activeTool === t.id && (
+            {tabs.map((tab) => (
+              <button key={tab.id} onClick={() => setActiveTool(tab.id)}
+                className={`relative px-5 py-2 text-sm font-medium font-sans rounded-full transition-colors ${activeTool === tab.id ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                {activeTool === tab.id && (
                   <motion.div layoutId="toolPill" className="absolute inset-0 bg-primary rounded-full"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }} />
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
-                  {t.icon} {t.label}
+                  {tab.icon} {tab.label}
                 </span>
               </button>
             ))}
@@ -756,7 +602,8 @@ const Tools = () => {
           )}
           {activeTool === "board" && (
             <motion.div key="board" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <DrawingBoard />
+              {/* FIX #1: передаём t в DrawingBoard */}
+              <DrawingBoard t={t} />
             </motion.div>
           )}
           {activeTool === "generator" && (

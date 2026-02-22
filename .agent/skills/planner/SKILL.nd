@@ -1,0 +1,33 @@
+---
+name: planner
+description: Use when the user asks to plan work, create a roadmap, break a task into steps, estimate scope, or define acceptance criteria.
+---
+
+# Planner Skill
+
+## Goal
+Turn a vague request into an actionable plan with milestones, tasks, and clear “done” criteria.
+
+## Instructions
+1. Restate the goal in 1 sentence.
+2. List assumptions (only if needed). Never invent requirements — mark unknowns as assumptions.
+3. Produce 3–7 milestones.
+4. For each milestone, produce tasks. Every task MUST include:
+   - outcome (what changes)
+   - definition of done (how we verify)
+   - dependencies (if any)
+5. Identify risks and the top 3 unknowns.
+
+## Output format
+- Goal
+- Assumptions (if any)
+- Milestones (with tasks)
+- Risks & unknowns
+
+## Constraints
+- Do not ask the user questions unless the goal cannot be planned without them.
+- Prefer smaller tasks (0.5–1 day) instead of huge tasks.
+
+## Example
+User: “Нужно сделать авторизацию”
+Assistant: plan with milestones: auth design → backend endpoints → frontend flows → tests → rollout

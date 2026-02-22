@@ -4,13 +4,13 @@ import GameShell from "./GameShell";
 import { Button } from "@/components/ui/button";
 
 const TOPICS: Record<string, { emoji: string; pairs: string[] }> = {
-  Fruits: { emoji: "🍎", pairs: ["🍎","🍌","🍇","🍊","🍓","🍉","🍑","🥭"] },
-  Animals: { emoji: "🐶", pairs: ["🐶","🐱","🐼","🦁","🐘","🦊","🐯","🐸"] },
-  Sports: { emoji: "⚽", pairs: ["⚽","🏀","🎾","🏐","⚾","🏉","🥊","🎯"] },
-  Pokemon: { emoji: "⚡", pairs: ["⚡","🌊","🔥","🌿","❄️","🌪️","⭐","💜"] },
+  Fruits: { emoji: "🍎", pairs: ["🍎", "🍌", "🍇", "🍊", "🍓", "🍉", "🍑", "🥭", "🍋", "🍒", "🥝", "🫐", "🍍", "🥥", "🍆", "🌽", "🫒", "🍅", "🥕", "🌶️"] },
+  Animals: { emoji: "🐶", pairs: ["🐶", "🐱", "🐼", "🦁", "🐘", "🦊", "🐯", "🐸", "🦋", "🐬", "🦅", "🐙", "🦁", "🦒", "🦓", "🐊", "🦀", "🦑", "🦚", "🦜"] },
+  Sports: { emoji: "⚽", pairs: ["⚽", "🏀", "🎾", "🏐", "⚾", "🏉", "🥊", "🎯", "🏊", "🚴", "🤸", "🏋️", "⛷️", "🏄", "🤺", "🎿", "🏇", "🥋", "🎳", "🏹"] },
+  Pokemon: { emoji: "⚡", pairs: ["⚡", "🌊", "🔥", "🌿", "❄️", "🌪️", "⭐", "💜", "🌙", "☀️", "🌈", "💫", "🌑", "🎆", "💎", "🎇", "🦠", "🌋", "🌫️", "🌀"] },
 };
 
-const GRID_SIZES: Record<string, number> = { Easy: 16, Medium: 24, Hard: 32 };
+const GRID_SIZES: Record<string, number> = { Easy: 16, Medium: 24, Hard: 32, XL: 40 };
 
 interface Card {
   id: number;
@@ -104,7 +104,7 @@ const MemoryMatrix = () => {
               <div>
                 <p className="text-gray-500 font-sans text-sm mb-2">Difficulty (Grid Size)</p>
                 <div className="flex gap-2">
-                  {["Easy", "Medium", "Hard"].map((d) => (
+                  {["Easy", "Medium", "Hard", "XL"].map((d) => (
                     <button key={d} onClick={() => setGridSize(d)}
                       className={`flex-1 py-2.5 rounded-xl font-sans font-medium text-sm transition-all border ${gridSize === d ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"}`}>
                       {d}
@@ -112,7 +112,7 @@ const MemoryMatrix = () => {
                   ))}
                 </div>
                 <p className="text-gray-400 text-xs font-sans mt-1 text-center">
-                  {gridSize === "Easy" ? "4×4" : gridSize === "Medium" ? "4×6" : "4×8"}
+                  {gridSize === "Easy" ? "4×4 (8 пар)" : gridSize === "Medium" ? "6×4 (12 пар)" : gridSize === "Hard" ? "8×4 (16 пар)" : "8×5 (20 пар)"}
                 </p>
               </div>
               <Button onClick={startGame} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold">

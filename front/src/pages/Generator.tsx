@@ -137,8 +137,10 @@ const Generator = () => {
         const res = await api.post("/generate/quiz", payload);
         setQuizData(res.data.questions);
       } else if (genType === "assignment") {
+        // Автоопределение предмета если не задан
+        const finalSubject = assignSubject.trim() || "General";
         const payload = {
-          subject: assignSubject,
+          subject: finalSubject,
           topic: `${assignTopic} (${langInstruction})`,
           count: parseInt(assignCount) || 5,
           class_id: activeClassId
@@ -178,7 +180,8 @@ const Generator = () => {
     (genType === "math" && mathTopic.trim().length > 0) ||
     (genType === "crossword" && crosswordTopic.trim().length > 0) ||
     (genType === "quiz" && quizTopic.trim().length > 0) ||
-    (genType === "assignment" && assignSubject.trim().length > 0 && assignTopic.trim().length > 0);
+    // Assignment: требуем только topic (subject автоопределяется)
+    (genType === "assignment" && assignTopic.trim().length > 0);
 
 
   // Edit & Save State
@@ -556,6 +559,24 @@ const Generator = () => {
                 exit={{ opacity: 0, x: -10 }}
                 className="space-y-5"
               >
+                {/* Subject — выбор или ввод */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Предмет</Label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {["Math", "Biology", "History", "Physics", "Chemistry", "English", "Geography", "Literature", "General"].map((s) => (
+                      <button key={s} onClick={() => setAssignSubject(s)}
+                        className={`py-2 px-2 text-xs font-sans rounded-lg border transition-all ${assignSubject === s ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"}`}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    placeholder="или введите свой предмет..."
+                    value={assignSubject}
+                    onChange={(e) => setAssignSubject(e.target.value)}
+                    className="h-10 rounded-xl font-sans mt-1"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
                   <Input
@@ -570,7 +591,7 @@ const Generator = () => {
                   <Input
                     type="number"
                     min="1"
-                    max="10"
+                    max="20"
                     placeholder="5"
                     value={assignCount}
                     onChange={(e) => setAssignCount(e.target.value)}
@@ -586,7 +607,7 @@ const Generator = () => {
         <div className="p-6 border-t border-border">
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || (genType === "math" && !mathTopic) || (genType === "crossword" && !crosswordTopic) || (genType === "quiz" && !quizTopic) || (genType === "assignment" && !assignTopic)}
+            disabled={isGenerating || !canGenerate}
             className="w-full h-14 text-base font-semibold rounded-xl font-sans gap-2"
             size="lg"
           >

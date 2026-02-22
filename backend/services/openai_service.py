@@ -1,7 +1,6 @@
 import json
 import re
 from openai import OpenAI
-from openai import OpenAI
 from config import OPENAI_API_KEY, OPENAI_MODEL
 import logging
 
@@ -72,15 +71,21 @@ def generate_math_problems(topic: str, count: int, difficulty: str, grade: str =
         {"role": "user", "content": user_prompt}
     ])
 
-def generate_crossword_words(topic: str, count: int, language: str, grade: str = "", context: str = "") -> Tuple[List[Dict[str, str]], int]:
+def generate_crossword_words(topic: str, count: int, language: str, grade: str = "", context: str = "") -> tuple:
     user_prompt = f"""
-    Generate {count} words and simple clues related to the topic "{topic}" in {language}.
+    Generate exactly {count} words and clues related to the topic "{topic}" in {language}.
     Grade Level: {grade}
     Class Context: {context}
     
-    Return ONLY a JSON array of objects with 'word' and 'clue' properties.
-    The 'word' should be in UPPERCASE.
-    Example: [{{"word": "APPLE", "clue": "A red fruit"}}]
+    RULES:
+    - Words must be single words only (no spaces, no hyphens)
+    - Words should be 4-12 characters long
+    - Clues should be short (max 8 words)
+    - The 'word' must be in UPPERCASE
+    - Language for words AND clues: {language}
+    
+    Return ONLY a JSON array (no extra text):
+    [{{"word": "APPLE", "clue": "A red or green fruit"}}]
     """
     return _get_completion([
         {"role": "system", "content": SYSTEM_PROMPT},

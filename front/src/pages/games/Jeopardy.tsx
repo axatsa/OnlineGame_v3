@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, X, Loader2, Sparkles } from "lucide-react";
 import { useClass } from "@/context/ClassContext";
+import { useLang } from "@/context/LangContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -13,8 +14,11 @@ const POINTS = [100, 200, 300, 400, 500];
 
 const Jeopardy = () => {
   const { activeClassId } = useClass();
+  // FIX #4: используем язык интерфейса для генерации
+  const { lang } = useLang();
   const [status, setStatus] = useState<"setup" | "loading" | "playing">("setup");
   const [topic, setTopic] = useState("");
+  const [selectedLang, setSelectedLang] = useState<"ru" | "uz">(lang);
   const [teams, setTeams] = useState<{ name: string; score: number }[]>([
     { name: "Team A", score: 0 },
     { name: "Team B", score: 0 },
@@ -47,8 +51,10 @@ const Jeopardy = () => {
 
     setStatus("loading");
     try {
+      // FIX #4: добавляем инструкцию по языку в тему
+      const langStr = selectedLang === "uz" ? "in Uzbek language" : "in Russian language";
       const res = await api.post("/generate/jeopardy", {
-        topic,
+        topic: `${topic} (${langStr})`,
         class_id: activeClassId
       });
 
@@ -115,6 +121,21 @@ const Jeopardy = () => {
                   placeholder="e.g. History, Math, Biology..."
                   className="font-sans" />
                 <p className="text-xs text-gray-400 font-sans">AI will generate {POINTS.length * 5} questions about this topic</p>
+              </div>
+
+              {/* Language selector */}
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-sans font-medium">Язык вопросов</Label>
+                <div className="flex gap-2">
+                  <button onClick={() => setSelectedLang("ru")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium font-sans border-2 transition-all ${selectedLang === "ru" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"}`}>
+                    🇷🇺 Русский
+                  </button>
+                  <button onClick={() => setSelectedLang("uz")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium font-sans border-2 transition-all ${selectedLang === "uz" ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-700 border-gray-200 hover:border-green-300"}`}>
+                    🇺🇿 O'zbekcha
+                  </button>
+                </div>
               </div>
 
               <div className="border-t border-gray-100" />

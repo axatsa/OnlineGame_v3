@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import GameShell from "./GameShell";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import tugOfWarImg from "@/assets/tug-of-war-characters.png";
 import { useClass } from "@/context/ClassContext";
+import { useLang } from "@/context/LangContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -14,29 +15,65 @@ type GameStatus = "setup" | "loading" | "playing" | "finished";
 
 const LABELS = ["A", "B", "C", "D"];
 
+// FIX #3: форматирование секундомера
+const formatStopwatch = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+};
+
+// FIX #3: перемешать массив (Fisher-Yates)
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 const TugOfWar = () => {
   const { activeClassId } = useClass();
+  const { lang } = useLang();
   const [status, setStatus] = useState<GameStatus>("setup");
   const [topic, setTopic] = useState("");
-  const [questions, setQuestions] = useState<{ q: string; options: string[]; a: string }[]>([]);
-  const [currentQ, setCurrentQ] = useState(0);
-  const [position, setPosition] = useState(0); // -5 to +5, negative = blue (team1) wins
+  // FIX #4: выбор языка вопросов
+  const [selectedLang, setSelectedLang] = useState<"ru" | "uz">(lang);
+  // FIX #3: два разных вопроса для двух команд из одного пула
+  const [blueQuestions, setBlueQuestions] = useState<{ q: string; options: string[]; a: string }[]>([]);
+  const [redQuestions, setRedQuestions] = useState<{ q: string; options: string[]; a: string }[]>([]);
+  const [blueCurrentQ, setBlueCurrentQ] = useState(0);
+  const [redCurrentQ, setRedCurrentQ] = useState(0);
+  const [position, setPosition] = useState(0); // -5 to +5
   const [blueScore, setBlueScore] = useState(0);
   const [redScore, setRedScore] = useState(0);
   const [feedback, setFeedback] = useState<{ team: "blue" | "red" | "time"; correct: boolean } | null>(null);
   const [team1Name, setTeam1Name] = useState("Team 1");
   const [team2Name, setTeam2Name] = useState("Team 2");
-  const [timeLeft, setTimeLeft] = useState(15);
-  const [blockedTeams, setBlockedTeams] = useState<{ blue: boolean, red: boolean }>({ blue: false, red: false });
+  // FIX #3: секундомер вместо таймера обратного отсчёта
+  const [elapsed, setElapsed] = useState(0);
+  const stopwatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Запуск секундомера при начале игры
+  useEffect(() => {
+    if (status === "playing") {
+      stopwatchRef.current = setInterval(() => {
+        setElapsed(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (stopwatchRef.current) clearInterval(stopwatchRef.current);
+    }
+    return () => { if (stopwatchRef.current) clearInterval(stopwatchRef.current); };
+  }, [status]);
 
   const startGame = async () => {
-    const searchTopic = topic.trim() || "General Knowledge";
-
+    const langStr = selectedLang === "uz" ? "in Uzbek language" : "in Russian language";
+    const searchTopic = topic.trim() ? `${topic} (${langStr})` : `General Knowledge (${langStr})`;
     setStatus("loading");
     try {
       const res = await api.post("/generate/quiz", {
         topic: searchTopic,
-        count: 20, // Enough for a long game
+        count: 40, // Генерируем много, чтобы разделить на два пула
         class_id: activeClassId
       });
 
@@ -44,15 +81,22 @@ const TugOfWar = () => {
         throw new Error("No questions generated");
       }
 
-      setQuestions(res.data.questions);
+      const allQuestions: { q: string; options: string[]; a: string }[] = res.data.questions;
+      // FIX #3: делим вопросы на два независимых пула — каждая команда видит свои вопросы
+      const half = Math.floor(allQuestions.length / 2);
+      const shuffled = shuffleArray(allQuestions);
+      const pool1 = shuffled.slice(0, half);
+      const pool2 = shuffled.slice(half);
 
-      setCurrentQ(0);
+      setBlueQuestions(pool1.length > 0 ? pool1 : allQuestions);
+      setRedQuestions(pool2.length > 0 ? pool2 : shuffleArray(allQuestions));
+      setBlueCurrentQ(0);
+      setRedCurrentQ(0);
       setPosition(0);
       setBlueScore(0);
       setRedScore(0);
       setFeedback(null);
-      setBlockedTeams({ blue: false, red: false });
-      setTimeLeft(15);
+      setElapsed(0);
       setStatus("playing");
       toast.success("Battle prepared!");
     } catch (e) {
@@ -62,32 +106,12 @@ const TugOfWar = () => {
     }
   };
 
-  useEffect(() => {
-    if (status !== "playing" || feedback) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setFeedback({ team: "time", correct: false });
-          setTimeout(() => {
-            setFeedback(null);
-            setBlockedTeams({ blue: false, red: false });
-            setCurrentQ((q) => (q + 1) % questions.length);
-            setTimeLeft(15);
-          }, 1500);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [status, feedback, currentQ, questions.length]);
-
   const selectAnswer = (team: "blue" | "red", option: string) => {
-    if (feedback || blockedTeams[team] || status !== "playing") return;
-    const correct = option === questions[currentQ]?.a;
+    if (feedback || status !== "playing") return;
+    const currentQ = team === "blue"
+      ? blueQuestions[blueCurrentQ % blueQuestions.length]
+      : redQuestions[redCurrentQ % redQuestions.length];
+    const correct = option === currentQ?.a;
 
     if (correct) {
       setFeedback({ team, correct: true });
@@ -103,34 +127,26 @@ const TugOfWar = () => {
 
       setTimeout(() => {
         setFeedback(null);
-        setBlockedTeams({ blue: false, red: false });
-        setCurrentQ((q) => (q + 1) % questions.length);
-        setTimeLeft(15);
+        if (team === "blue") setBlueCurrentQ(q => q + 1);
+        else setRedCurrentQ(q => q + 1);
       }, 1500);
     } else {
-      // Wrong answer
-      const newBlocked = { ...blockedTeams, [team]: true };
-      setBlockedTeams(newBlocked);
-
-      if (newBlocked.blue && newBlocked.red) {
-        // Both teams got it wrong
-        setFeedback({ team, correct: false }); // Show final wrong feedback
-        setTimeout(() => {
-          setFeedback(null);
-          setBlockedTeams({ blue: false, red: false });
-          setCurrentQ((q) => (q + 1) % questions.length);
-          setTimeLeft(15);
-        }, 1500);
-      }
+      setFeedback({ team, correct: false });
+      setTimeout(() => {
+        setFeedback(null);
+        // При неправильном ответе тоже переходим к следующему вопросу
+        if (team === "blue") setBlueCurrentQ(q => q + 1);
+        else setRedCurrentQ(q => q + 1);
+      }, 1500);
     }
   };
 
   const winner = position <= -4 ? team1Name : position >= 4 ? team2Name : null;
-  const howToPlay = "Две команды соревнуются, отвечая на вопросы. Каждый правильный ответ тянет канат в свою сторону. Первая команда, перетянувшая канат 4 шага, побеждает!";
+  const howToPlay = "Две команды соревнуются, отвечая на вопросы независимо друг от друга. У каждой команды свои вопросы — подсматривать невозможно! Каждый правильный ответ тянет канат в свою сторону. Первая команда, перетянувшая канат 4 шага, побеждает!";
 
-  const q = questions[currentQ];
-  // rope offset: position ranges -4..+4, map to percentage
-  const ropePercent = 50 + position * 10; // center 50%, shift 10% per step
+  const blueQ = blueQuestions[blueCurrentQ % (blueQuestions.length || 1)];
+  const redQ = redQuestions[redCurrentQ % (redQuestions.length || 1)];
+  const ropePercent = 50 + position * 10;
 
   return (
     <GameShell title="Tug of War" onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
@@ -162,6 +178,26 @@ const TugOfWar = () => {
                   value={topic} onChange={(e) => setTopic(e.target.value)}
                   className="font-sans" />
               </div>
+              {/* FIX #4: выбор языка вопросов */}
+              <div className="space-y-1.5">
+                <Label className="text-gray-700 font-sans text-sm">Язык вопросов</Label>
+                <div className="flex gap-2">
+                  <button onClick={() => setSelectedLang("ru")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-sans border-2 transition-all ${selectedLang === "ru" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                    🇷🇺 Русский
+                  </button>
+                  <button onClick={() => setSelectedLang("uz")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-sans border-2 transition-all ${selectedLang === "uz" ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-600 border-gray-200 hover:border-green-300"}`}>
+                    🇺🇿 O'zbekcha
+                  </button>
+                </div>
+              </div>
+              {/* FIX #3: информация о разных вопросах */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                <p className="text-xs text-blue-700 font-sans">
+                  🔀 У каждой команды будут <strong>разные вопросы</strong> — подсматривать не получится!
+                </p>
+              </div>
               <Button onClick={startGame} className="w-full h-12 font-semibold font-sans bg-blue-600 hover:bg-blue-700 text-white">
                 Начать битву!
               </Button>
@@ -178,30 +214,32 @@ const TugOfWar = () => {
           </motion.div>
         )}
 
-        {status === "playing" && q && (
+        {status === "playing" && blueQ && redQ && (
           <motion.div key="playing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="flex h-full bg-gray-50"
           >
             {/* Blue team panel */}
             <div className="w-72 flex-shrink-0 bg-white rounded-r-2xl shadow-lg border-r border-gray-100 flex flex-col p-4 gap-3">
-              {/* Team header */}
               <div className="flex items-center justify-between bg-blue-500 rounded-xl px-4 py-2.5">
                 <span className="text-white font-bold font-sans text-base">{team1Name}</span>
                 <span className="bg-white text-blue-600 font-bold rounded-full w-8 h-8 flex items-center justify-center text-sm">{blueScore}</span>
               </div>
-              {/* Blue question */}
-              <div className={`flex-1 flex flex-col gap-3 transition-opacity ${blockedTeams.blue ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
-                <p className="text-blue-700 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{q.q}</p>
+              {/* FIX #3: у синей команды свой вопрос */}
+              <div className={`flex-1 flex flex-col gap-3 transition-opacity ${feedback?.team === "blue" ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5">
+                  <p className="text-xs text-blue-500 font-sans font-medium">Вопрос #{blueCurrentQ + 1}</p>
+                </div>
+                <p className="text-blue-700 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{blueQ.q}</p>
                 <div className="flex flex-col gap-2 mt-1">
-                  {q.options.map((opt, i) => {
-                    const isCorrect = opt === q.a;
+                  {blueQ.options.map((opt, i) => {
+                    const isCorrect = opt === blueQ.a;
                     const isFeedback = feedback && feedback.team === "blue";
                     return (
                       <motion.button key={opt}
                         onClick={() => selectAnswer("blue", opt)}
-                        disabled={!!feedback || blockedTeams.blue}
-                        whileHover={!feedback && !blockedTeams.blue ? { scale: 1.02 } : {}}
-                        whileTap={!feedback && !blockedTeams.blue ? { scale: 0.98 } : {}}
+                        disabled={!!feedback}
+                        whileHover={!feedback ? { scale: 1.02 } : {}}
+                        whileTap={!feedback ? { scale: 0.98 } : {}}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
                           isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
                             "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 text-gray-700"
@@ -221,15 +259,17 @@ const TugOfWar = () => {
 
             {/* Center arena */}
             <div className="flex-1 flex flex-col items-center justify-between py-4 px-2">
-              {/* Scoreboard */}
+              {/* Scoreboard с секундомером */}
               <div className="flex items-center gap-8 bg-white rounded-2xl px-8 py-3 shadow-sm border border-gray-100 w-full max-w-md">
                 <div className="flex-1 text-center">
                   <p className="text-xs text-gray-500 font-sans">{team1Name}</p>
                   <p className="text-3xl font-bold text-gray-800 font-serif">{blueScore}</p>
                 </div>
+                {/* FIX #3: секундомер — считает вверх */}
                 <div className="text-center">
-                  <p className={`font-mono font-bold text-lg ${timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-blue-500"}`}>
-                    ⏱ 00:{timeLeft.toString().padStart(2, "0")}
+                  <p className="text-xs text-gray-400 font-sans mb-0.5">секундомер</p>
+                  <p className="font-mono font-bold text-xl text-gray-700">
+                    ⏱ {formatStopwatch(elapsed)}
                   </p>
                 </div>
                 <div className="flex-1 text-center">
@@ -240,11 +280,8 @@ const TugOfWar = () => {
 
               {/* Rope & characters */}
               <div className="relative w-full max-w-lg h-52 flex items-center justify-center">
-                {/* Rope line */}
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 bg-amber-800/30 rounded-full" />
-                {/* Dashed center line */}
                 <div className="absolute top-0 bottom-0 left-1/2 border-l-2 border-dashed border-gray-300" />
-                {/* Characters image - animates horizontally */}
                 <motion.div
                   animate={{ x: position * 18 }}
                   transition={{ type: "spring", stiffness: 180, damping: 22 }}
@@ -252,7 +289,6 @@ const TugOfWar = () => {
                 >
                   <img src={tugOfWarImg} alt="Tug of War" className="h-40 w-auto object-contain drop-shadow-md" />
                 </motion.div>
-                {/* Red flag on rope */}
                 <motion.div
                   animate={{ left: `${ropePercent}%` }}
                   transition={{ type: "spring", stiffness: 180, damping: 22 }}
@@ -269,18 +305,15 @@ const TugOfWar = () => {
               <AnimatePresence>
                 {feedback && (
                   <motion.div key="fb" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
-                    className={`text-3xl font-bold px-6 py-3 rounded-2xl bg-white shadow-xl border-2 z-50 absolute ${feedback.team === "time" ? "border-gray-400 text-gray-600" :
-                        feedback.correct ? "border-green-500 text-green-600" : "border-red-500 text-red-500"
-                      }`}
+                    className={`text-3xl font-bold px-6 py-3 rounded-2xl bg-white shadow-xl border-2 z-50 absolute ${feedback.correct ? "border-green-500 text-green-600" : "border-red-500 text-red-500"}`}
                   >
-                    {feedback.team === "time" ? "⏰ Время вышло!" : feedback.correct ? "✅ Верно!" : "❌ Ошибка!"}
+                    {feedback.correct ? "✅ Верно!" : "❌ Ошибка!"}
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Status indicator */}
               <div className="px-5 py-2 rounded-full text-sm font-semibold font-sans shadow-sm bg-gray-100 text-gray-700">
-                Кто ответит быстрее?
+                🔀 У каждой команды свои вопросы!
               </div>
             </div>
 
@@ -290,18 +323,22 @@ const TugOfWar = () => {
                 <span className="text-white font-bold font-sans text-base">{team2Name}</span>
                 <span className="bg-white text-red-600 font-bold rounded-full w-8 h-8 flex items-center justify-center text-sm">{redScore}</span>
               </div>
-              <div className={`flex-1 flex flex-col gap-3 transition-opacity ${blockedTeams.red ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
-                <p className="text-red-600 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{q.q}</p>
+              {/* FIX #3: у красной команды свой вопрос */}
+              <div className={`flex-1 flex flex-col gap-3 transition-opacity ${feedback?.team === "red" ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+                <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-1.5">
+                  <p className="text-xs text-red-500 font-sans font-medium">Вопрос #{redCurrentQ + 1}</p>
+                </div>
+                <p className="text-red-600 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{redQ.q}</p>
                 <div className="flex flex-col gap-2 mt-1">
-                  {q.options.map((opt, i) => {
-                    const isCorrect = opt === q.a;
+                  {redQ.options.map((opt, i) => {
+                    const isCorrect = opt === redQ.a;
                     const isFeedback = feedback && feedback.team === "red";
                     return (
                       <motion.button key={opt}
                         onClick={() => selectAnswer("red", opt)}
-                        disabled={!!feedback || blockedTeams.red}
-                        whileHover={!feedback && !blockedTeams.red ? { scale: 1.02 } : {}}
-                        whileTap={!feedback && !blockedTeams.red ? { scale: 0.98 } : {}}
+                        disabled={!!feedback}
+                        whileHover={!feedback ? { scale: 1.02 } : {}}
+                        whileTap={!feedback ? { scale: 0.98 } : {}}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
                           isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
                             "border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 text-gray-700"
@@ -328,6 +365,7 @@ const TugOfWar = () => {
             <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.8 }} className="text-8xl">🏆</motion.div>
             <h2 className="text-5xl font-bold text-gray-800 font-serif">{winner} победила!</h2>
             <p className="text-gray-500 font-sans">{team1Name}: {blueScore} | {team2Name}: {redScore}</p>
+            <p className="text-gray-400 font-sans text-sm">Время игры: {formatStopwatch(elapsed)}</p>
             <Button onClick={startGame} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 text-lg rounded-2xl">
               Играть снова
             </Button>

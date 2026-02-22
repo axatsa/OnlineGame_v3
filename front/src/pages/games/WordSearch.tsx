@@ -84,11 +84,12 @@ const WordSearch = () => {
     try {
       const isRu = language === "ru";
       const topicPrompt = `${topicInput} (${isRu ? "Russian" : "Uzbek"})`;
-      const count = difficulty === "Легко" || difficulty === "Easy" ? 6 : difficulty === "Средне" || difficulty === "Medium" ? 10 : 12;
-
+      const wordCount = difficulty === "Легко" || difficulty === "Easy" ? 6 : difficulty === "Средне" || difficulty === "Medium" ? 10 : 12;
+      // FIX #6: бэкенд ожидает word_count и language, а не count
       const res = await api.post("/generate/crossword", {
         topic: topicPrompt,
-        count: count,
+        word_count: wordCount,
+        language: isRu ? "Русский" : "O'zbekcha",
         class_id: activeClassId
       });
 
@@ -245,8 +246,8 @@ const WordSearch = () => {
                             onMouseUp={endSelect}
                             whileHover={{ scale: 1.05 }}
                             className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold font-mono cursor-pointer select-none transition-colors ${hiClass ? `${hiClass} text-white shadow-sm` :
-                                sel ? "bg-yellow-300 text-yellow-900 shadow-sm" :
-                                  "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-200"
+                              sel ? "bg-yellow-300 text-yellow-900 shadow-sm" :
+                                "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-200"
                               }`}
                           >
                             {letter}
@@ -283,8 +284,8 @@ const WordSearch = () => {
                   return (
                     <div key={word}
                       className={`px-3 py-2 rounded-xl text-sm font-mono font-bold border transition-all ${isFound
-                          ? `line-through text-gray-400 bg-gray-50 border-gray-100`
-                          : "text-gray-700 bg-white border-gray-200"
+                        ? `line-through text-gray-400 bg-gray-50 border-gray-100`
+                        : "text-gray-700 bg-white border-gray-200"
                         }`}
                     >
                       {word}

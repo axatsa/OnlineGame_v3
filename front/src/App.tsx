@@ -21,6 +21,7 @@ import MemoryMatrix from "./pages/games/MemoryMatrix";
 import BalanceScales from "./pages/games/BalanceScales";
 import WordSearch from "./pages/games/WordSearch";
 import Profile from "./pages/Profile";
+import Library from "./pages/Library";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -86,6 +87,11 @@ const App = () => (
                 <Route path="/profile" element={
                   <ProtectedRoute allowedRoles={["teacher", "super_admin"]}>
                     <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/library" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <Library />
                   </ProtectedRoute>
                 } />
 

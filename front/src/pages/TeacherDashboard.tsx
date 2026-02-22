@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Dices, Gamepad2, GraduationCap, User, BookOpen,
-  ChevronDown, Plus, Check, Settings2, Globe,
+  ChevronDown, Plus, Check, Settings2, Globe, BookMarked,
 } from "lucide-react";
 import { useClass } from "@/context/ClassContext";
 import { useLang } from "@/context/LangContext";
@@ -22,6 +22,7 @@ const TeacherDashboard = () => {
     { key: "Generators", label: t("navGenerators"), route: "/generator" },
     { key: "Tools", label: t("navTools"), route: "/tools" },
     { key: "Games", label: t("navGames"), route: "/games" },
+    { key: "Library", label: t("navLibrary"), route: "/library" },
   ] as const;
 
   const [activeNav, setActiveNav] = useState<typeof navPills[number]["key"]>("Generators");
@@ -53,6 +54,15 @@ const TeacherDashboard = () => {
       iconBg: "bg-emerald-500/15",
       iconColor: "text-emerald-600",
       route: "/games",
+    },
+    {
+      title: t("cardLibraryTitle"),
+      description: t("cardLibraryDesc"),
+      icon: BookMarked,
+      gradient: "from-violet-500/10 to-purple-500/5",
+      iconBg: "bg-violet-500/15",
+      iconColor: "text-violet-600",
+      route: "/library",
     },
   ];
 

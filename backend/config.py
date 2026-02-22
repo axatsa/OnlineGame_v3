@@ -13,3 +13,4 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 10080))  # 7 дней
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")

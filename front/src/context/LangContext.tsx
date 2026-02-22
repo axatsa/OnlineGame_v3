@@ -30,6 +30,7 @@ export const translations = {
     navGenerators: "Генераторы",
     navTools: "Инструменты",
     navGames: "Игры",
+    navLibrary: "Библиотека",
 
     cardAiTitle: "AI Генераторы",
     cardAiDesc: "Создавайте задания и кроссворды мгновенно",
@@ -37,6 +38,8 @@ export const translations = {
     cardToolsDesc: "Рулетка, доска и интерактивные инструменты",
     cardGamesTitle: "Библиотека игр",
     cardGamesDesc: "Интерактивные игры для Smartboard",
+    cardLibraryTitle: "Детская библиотека",
+    cardLibraryDesc: "Создавайте книги и сказки с Gemini AI",
 
     activeClass: "Активный класс",
     manageClasses: "Управление классами",
@@ -234,6 +237,7 @@ export const translations = {
     navGenerators: "Generatorlar",
     navTools: "Vositalar",
     navGames: "O'yinlar",
+    navLibrary: "Kutubxona",
 
     cardAiTitle: "AI Generatorlar",
     cardAiDesc: "Topshiriqlar va krossvordlarni darhol yarating",
@@ -241,6 +245,8 @@ export const translations = {
     cardToolsDesc: "Ruletka, doskа va interaktiv vositalar",
     cardGamesTitle: "O'yinlar kutubxonasi",
     cardGamesDesc: "Smartboard uchun interaktiv o'yinlar",
+    cardLibraryTitle: "Bolalar kutubxonasi",
+    cardLibraryDesc: "Gemini AI yordamida kitoblar va ertaklar yarating",
 
     activeClass: "Faol sinf",
     manageClasses: "Sinflarni boshqarish",

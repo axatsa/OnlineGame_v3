@@ -474,14 +474,17 @@ const Generator = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")} (10–30)</Label>
                   <Input
                     type="number"
-                    min="1"
+                    min="10"
                     max="30"
-                    placeholder="10"
+                    placeholder="15"
                     value={questionCount}
-                    onChange={(e) => setQuestionCount(e.target.value)}
+                    onChange={(e) => {
+                      const v = Math.min(30, Math.max(10, parseInt(e.target.value) || 10));
+                      setQuestionCount(String(v));
+                    }}
                     className="h-11 rounded-xl font-sans"
                   />
                 </div>
@@ -678,85 +681,88 @@ const Generator = () => {
                 <Button variant="outline" size="sm" onClick={downloadPDF} className="gap-2 bg-white/80 backdrop-blur">
                   <Printer className="w-4 h-4" /> Print / PDF
                 </Button>
-                <Button size="sm" onClick={() => setShowSaveDialog(true)} className="gap-2">
-                  <Download className="w-4 h-4" /> Save
-                </Button>
               </div>
 
-              {genType === "math" && generatedProblems.length > 0 && (() => {
-                const PER_PAGE = 15;
-                const pages = Array.from(
-                  { length: Math.ceil(generatedProblems.length / PER_PAGE) },
-                  (_, pi) => generatedProblems.slice(pi * PER_PAGE, (pi + 1) * PER_PAGE)
+              {genType === "quiz" && quizData.length > 0 && (() => {
+                const QUIZ_PER_PAGE = 10;
+                const questionPages = Array.from(
+                  { length: Math.ceil(quizData.length / QUIZ_PER_PAGE) },
+                  (_, pi) => quizData.slice(pi * QUIZ_PER_PAGE, (pi + 1) * QUIZ_PER_PAGE)
                 );
                 return (
                   <>
-                    {/* Answer Key — скрытый для PDF */}
+                    {/* Answer key — скрытый, рендерится только для PDF */}
                     <div className="fixed left-[-9999px] top-0">
-                      <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-8 flex flex-col">
-                        <div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-200">
+                      <div ref={answerRef} className="w-[210mm] bg-white p-8 flex flex-col">
+                        <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-200">
                           <div className="flex items-center gap-2">
-                            <img src="/logo-t.png" alt="Logo" className="w-7 h-7 rounded object-contain" />
-                            <span className="text-xs font-bold font-serif text-gray-800">Thompson International</span>
+                            <img src="/logo-t.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                            <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">Thompson International</span>
                           </div>
-                          <span className="text-xs text-gray-500 font-sans">Answer Key • {mathTopic}</span>
+                          <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">Answer Key • {quizTopic}</span>
                         </div>
-                        <h2 className="text-lg font-bold font-serif mb-4 text-center">Math Answers</h2>
-                        <div className="grid grid-cols-5 gap-1 mb-4">
-                          {generatedProblems.map((p, i) => (
-                            <div key={i} className="border border-gray-300 rounded text-center p-1">
+                        <h2 style={{ fontSize: "14px" }} className="font-bold font-serif mb-4 text-center">Quiz Answer Key</h2>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {quizData.map((q, i) => (
+                            <div key={i} className="border border-gray-300 rounded text-center p-1.5">
                               <div className="text-gray-400" style={{ fontSize: "8px" }}>№{i + 1}</div>
-                              <div className="font-bold" style={{ fontSize: "10px" }}>{p.a}</div>
+                              <div className="font-bold text-green-700" style={{ fontSize: "10px" }}>{q.a}</div>
                             </div>
                           ))}
                         </div>
                       </div>
                     </div>
 
-                    {/* Worksheet — многостраничный */}
+                    {/* Quiz worksheet — многостраничный */}
                     <motion.div
                       ref={puzzleRef}
-                      key="math-paper"
+                      key="quiz-paper"
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="w-full max-w-lg bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block print:overflow-visible"
+                      className="w-full max-w-xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block print:overflow-visible"
                       style={{ maxHeight: "80vh" }}
                     >
-                      {pages.map((pageProblems, pi) => (
+                      {/* Question pages — 10 вопросов на страницу */}
+                      {questionPages.map((pageQs, pi) => (
                         <div
                           key={pi}
-                          className="p-8 flex flex-col print:p-6"
-                          style={{ pageBreakAfter: pi < pages.length - 1 ? "always" : "auto" }}
+                          className="p-6 flex flex-col print:p-5"
+                          style={{ pageBreakAfter: "always" }}
                         >
-                          {/* Шапка — только на первой странице */}
+                          {/* Header */}
                           {pi === 0 ? (
                             <>
-                              <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                                <div className="flex items-center gap-2">
-                                  <img src="/logo-t.png" alt="Logo" className="w-7 h-7 rounded object-contain" />
-                                  <span style={{ fontSize: "12px" }} className="font-bold font-serif text-gray-800">Thompson International</span>
+                              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
+                                <div className="flex items-center gap-1.5">
+                                  <img src="/logo-t.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                                  <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">Thompson International</span>
                                 </div>
-                                <span style={{ fontSize: "10px" }} className="text-gray-500 font-sans">{difficulty} • {mathTopic}</span>
+                                <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">{quizTopic}</span>
                               </div>
-                              <h3 style={{ fontSize: "16px" }} className="font-bold text-gray-900 text-center mb-4 font-serif">Mathematics Worksheet</h3>
+                              <h3 style={{ fontSize: "15px" }} className="font-bold text-gray-900 text-center mb-4 font-serif">Quiz Worksheet</h3>
                             </>
                           ) : (
-                            <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200">
-                              <span style={{ fontSize: "10px" }} className="text-gray-500 font-sans font-semibold">Thompson International — {mathTopic}</span>
-                              <span style={{ fontSize: "10px" }} className="text-gray-400 font-sans">Стр. {pi + 1}</span>
+                            <div className="flex items-center justify-end mb-3 pb-2 border-b border-gray-200">
+                              <span style={{ fontSize: "9px" }} className="text-gray-400 font-sans">Стр. {pi + 1}</span>
                             </div>
                           )}
 
-                          {/* Вопросы — 2 колонки, 15 на страницу */}
-                          <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                            {pageProblems.map((p, qi) => {
-                              const globalIdx = pi * PER_PAGE + qi;
-                              const rawText = p.q.replace(/^[A-Za-zА-Яа-яЁё\s]+:\s*/, '');
+                          {/* Questions — компактный layout */}
+                          <div className="space-y-3">
+                            {pageQs.map((q, qi) => {
+                              const globalIdx = pi * QUIZ_PER_PAGE + qi;
                               return (
-                                <div key={qi} className="flex gap-2 border-b border-gray-100 pb-2">
-                                  <span style={{ fontSize: "11px" }} className="font-bold text-gray-400 shrink-0 w-6 text-right">{globalIdx + 1}.</span>
-                                  <div style={{ fontSize: "11px" }} className="flex-1 font-mono text-gray-800 flex flex-wrap items-baseline gap-0">
-                                    {formatMathText(rawText)}
+                                <div key={qi} className="pb-2 border-b border-gray-100 last:border-0">
+                                  <p style={{ fontSize: "11px" }} className="font-semibold text-gray-800 mb-1.5 leading-snug">
+                                    {globalIdx + 1}. {q.q}
+                                  </p>
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 pl-3">
+                                    {q.options?.map((opt: string, idx: number) => (
+                                      <div key={idx} style={{ fontSize: "10px" }} className="flex items-start gap-1 text-gray-700">
+                                        <span className="shrink-0 w-3 h-3 mt-0.5 rounded-full border border-gray-400 inline-block" />
+                                        <span className="leading-tight">{opt}</span>
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
                               );
@@ -764,141 +770,33 @@ const Generator = () => {
                           </div>
                         </div>
                       ))}
+
+                      {/* Answer Key — последняя страница */}
+                      <div className="p-6 flex flex-col print:p-5 border-t-4 border-dashed border-gray-300" style={{ pageBreakBefore: "always" }}>
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
+                          <div className="flex items-center gap-1.5">
+                            <img src="/logo-t.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                            <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">Thompson International</span>
+                          </div>
+                          <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">Answer Key • {quizTopic}</span>
+                        </div>
+                        <h3 style={{ fontSize: "14px" }} className="font-bold text-gray-900 text-center mb-4 font-serif">✅ Answer Key (Teacher Copy)</h3>
+                        <div className="grid grid-cols-5 gap-2">
+                          {quizData.map((q, i) => (
+                            <div key={i} className="border border-gray-300 rounded-lg text-center p-2">
+                              <div style={{ fontSize: "8px" }} className="text-gray-400 font-sans">№{i + 1}</div>
+                              <div style={{ fontSize: "11px" }} className="font-bold text-green-700 font-sans">{q.a}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <p style={{ fontSize: "9px" }} className="text-gray-400 font-sans italic text-center mt-3">
+                          Этот лист только для учителя — не раздавать ученикам.
+                        </p>
+                      </div>
                     </motion.div>
                   </>
                 );
               })()}
-
-              {genType === "crossword" && crosswordData && (
-                <>
-                  <div className="fixed left-[-9999px] top-0">
-                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-cover" />
-                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
-                        </div>
-                        <span className="text-xs text-gray-500 font-sans">Answer Key • {crosswordTopic}</span>
-                      </div>
-                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Answer Key</h2>
-                      <div className="grid grid-cols-3 gap-4 text-xs font-mono">
-                        {crosswordData.words.map((w, i) => (
-                          <div key={i}><span className="font-bold">{w.number}.</span> {w.word}</div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <motion.div
-                    ref={puzzleRef}
-                    key="crossword-paper"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-2xl bg-white rounded-lg shadow-2xl border border-border overflow-hidden relative"
-                  >
-                    <div className="p-8 flex flex-col items-center">
-                      <h2 className="text-2xl font-bold text-center font-serif mb-2 text-foreground">{crosswordTopic}</h2>
-                      <p className="text-center text-sm text-muted-foreground mb-6">Crossword Puzzle</p>
-
-                      <div className="flex justify-center mb-8 w-full overflow-x-auto">
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: `repeat(${crosswordData.width}, 20px)`,
-                          gap: '0',
-                        }}>
-                          {crosswordData.grid.map((row, r) =>
-                            row.map((cell, c) => {
-                              const isBlack = cell === "";
-                              const wordInfo = crosswordData.words.find(w => w.row === r && w.col === c);
-                              return (
-                                <div key={`${r}-${c}`}
-                                  className={`w-5 h-5 relative flex items-center justify-center text-[10px] font-bold ${!isBlack ? 'bg-white border border-gray-800' : 'bg-transparent'}`}
-                                >
-                                  {wordInfo && !isBlack && (
-                                    <span className="absolute top-0.5 left-0.5 text-[6px] font-bold leading-none">{wordInfo.number}</span>
-                                  )}
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs w-full">
-                        <div>
-                          <h3 className="font-bold border-b border-gray-800 mb-2 pb-1">Across</h3>
-                          <ul className="space-y-1">
-                            {crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                              <li key={`a-${w.number}`}><b>{w.number}</b>. {w.clue}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h3 className="font-bold border-b border-gray-800 mb-2 pb-1">Down</h3>
-                          <ul className="space-y-1">
-                            {crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number).map(w => (
-                              <li key={`d-${w.number}`}><b>{w.number}</b>. {w.clue}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </>
-              )}
-
-              {genType === "quiz" && quizData.length > 0 && (
-                <>
-                  <div className="fixed left-[-9999px] top-0">
-                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
-                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
-                        </div>
-                        <span className="text-xs text-gray-500 font-sans">Answer Key • {quizTopic}</span>
-                      </div>
-                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Quiz Answers</h2>
-                      <div className="space-y-2 text-sm">
-                        {quizData.map((q, i) => (
-                          <div key={i} className="flex gap-2">
-                            <span className="font-bold">{i + 1}.</span>
-                            <span className="text-gray-600">{q.q.substring(0, 50)}...</span>
-                            <span className="font-bold text-green-700 ml-auto">{q.a}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <motion.div
-                    ref={puzzleRef}
-                    key="quiz-paper"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
-                    style={{ maxHeight: "80vh" }}
-                  >
-                    <div className="p-10 h-full flex flex-col print:p-2 print:h-auto">
-                      <h3 className="text-xl font-bold text-gray-900 mb-6 font-serif border-b pb-2 print:mb-4">{quizTopic || "Quiz"}</h3>
-                      <div className="space-y-4 flex-1 text-sm print:space-y-3">
-                        {quizData.map((q, i) => (
-                          <div key={i} className="space-y-1 pb-2">
-                            <p className="font-semibold text-gray-800">{i + 1}. {q.q}</p>
-                            <div className="grid grid-cols-2 gap-2 pl-4 print:gap-1">
-                              {q.options?.map((opt: string, idx: number) => (
-                                <div key={idx} className={`p-1.5 rounded border text-xs print:p-1 ${opt === q.a ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
-                                  {opt}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                </>
-              )}
 
               {genType === "assignment" && assignmentData && (
                 <>
@@ -985,7 +883,7 @@ const Generator = () => {
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+      < Dialog open={showEdit} onOpenChange={setShowEdit} >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-serif">Edit Content</DialogTitle>
@@ -1002,10 +900,10 @@ const Generator = () => {
             <Button onClick={saveEdit}>Apply Changes</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Save Dialog */}
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+      < Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog} >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-serif">Save to Profile</DialogTitle>
@@ -1029,8 +927,8 @@ const Generator = () => {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </div>
+      </Dialog >
+    </div >
   );
 };
 

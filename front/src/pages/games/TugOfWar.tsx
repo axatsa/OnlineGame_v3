@@ -50,6 +50,7 @@ const TugOfWar = () => {
   const [feedback, setFeedback] = useState<{ team: "blue" | "red" | "time"; correct: boolean } | null>(null);
   const [team1Name, setTeam1Name] = useState("Team 1");
   const [team2Name, setTeam2Name] = useState("Team 2");
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const stopwatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -66,17 +67,30 @@ const TugOfWar = () => {
     };
   }, []);
 
-  // Управление музыкой в зависимости от статуса
+  // Управление музыкой: начинаем при старте игры
   useEffect(() => {
     if (!audioRef.current) return;
 
-    if (status === "playing") {
+    if (status === "playing" && isAudioEnabled) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(err => console.error("Audio play failed:", err));
+      // В современных браузерах play() должен вызываться СРАЗУ в обработчике клика.
+      // Но если мы меняем статус через async startGame, браузер может заблокировать.
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn("Autoplay blocked, waiting for user interaction:", err);
+          // Если заблокировано, попробуем еще раз при любом клике
+          const playOnInteract = () => {
+            audioRef.current?.play();
+            window.removeEventListener("click", playOnInteract);
+          };
+          window.addEventListener("click", playOnInteract);
+        });
+      }
     } else {
       audioRef.current.pause();
     }
-  }, [status]);
+  }, [status, isAudioEnabled]);
 
   // Запуск секундомера при начале игры
   useEffect(() => {
@@ -201,6 +215,15 @@ const TugOfWar = () => {
                 <Input placeholder="напр. Математика, Русский язык..."
                   value={topic} onChange={(e) => setTopic(e.target.value)}
                   className="font-sans" />
+              </div>
+              <div className="flex items-center justify-between py-2 px-1">
+                <Label className="text-gray-700 font-sans text-sm">Музыка в игре</Label>
+                <button
+                  onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isAudioEnabled ? "bg-blue-600" : "bg-gray-200"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAudioEnabled ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
               </div>
               {/* FIX #4: выбор языка вопросов */}
               <div className="space-y-1.5">

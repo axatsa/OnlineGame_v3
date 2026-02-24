@@ -860,6 +860,213 @@ const Generator = () => {
                   </motion.div>
                 </>
               )}
+
+              {genType === "math" && generatedProblems.length > 0 && (
+                <>
+                  <div className="fixed left-[-9999px] top-0">
+                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-sans">Answer Key • {mathTopic}</span>
+                      </div>
+                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Teacher's Answer Key</h2>
+                      <div className="grid grid-cols-4 gap-4">
+                        {generatedProblems.map((p, i) => (
+                          <div key={i} className="border border-gray-100 p-2 text-sm">
+                            <span className="text-gray-400 mr-2">#{i + 1}</span>
+                            <span className="font-mono font-bold text-primary">{p.a}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <motion.div
+                    ref={puzzleRef}
+                    key="math-paper"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
+                    style={{ maxHeight: "80vh" }}
+                  >
+                    <div className="p-10 h-full flex flex-col print:p-2">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 font-sans uppercase tracking-widest">{mathTopic}</p>
+                          <p className="text-[10px] text-gray-400 font-sans">{difficulty}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-x-12 gap-y-8 flex-1">
+                        {generatedProblems.map((p, i) => (
+                          <div key={i} className="flex gap-4 items-start">
+                            <span className="text-xs text-gray-300 font-mono mt-1 w-5">{i + 1})</span>
+                            <div className="text-lg font-mono text-gray-800 tracking-wider">
+                              {formatMathText(p.q)} = _______
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-12 pt-6 border-t border-gray-100 flex justify-between items-end">
+                        <div className="space-y-1">
+                          <div className="flex gap-2">
+                            <div className="w-40 border-b border-gray-300 h-6"></div>
+                            <span className="text-[10px] text-gray-400 uppercase font-sans">Name</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="w-40 border-b border-gray-300 h-6"></div>
+                            <span className="text-[10px] text-gray-400 uppercase font-sans">Date</span>
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center min-w-[120px]">
+                          <p className="text-[10px] text-gray-400 uppercase mb-1 font-sans">Score</p>
+                          <p className="text-2xl font-bold font-serif text-gray-300">/ {generatedProblems.length}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+
+              {genType === "crossword" && crosswordData && (
+                <>
+                  <div className="fixed left-[-9999px] top-0">
+                    <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <span className="text-xs text-gray-500 font-sans">Answer Key • {crosswordTopic}</span>
+                      </div>
+                      <h2 className="text-xl font-bold font-serif mb-6 text-center">Crossword Answer Key</h2>
+                      <div className="flex-1 flex items-center justify-center p-10">
+                        <div
+                          className="grid gap-0 border-2 border-gray-800 bg-gray-800"
+                          style={{
+                            gridTemplateColumns: `repeat(${crosswordData.width}, 1fr)`,
+                            width: "fit-content"
+                          }}
+                        >
+                          {crosswordData.grid.map((row, r) =>
+                            row.map((cell, c) => (
+                              <div
+                                key={`${r}-${c}`}
+                                className={`w-8 h-8 flex items-center justify-center text-sm font-bold ${cell ? "bg-white text-gray-900" : "bg-gray-800"
+                                  }`}
+                              >
+                                {cell}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <motion.div
+                    ref={puzzleRef}
+                    key="crossword-paper"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-2xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
+                    style={{ maxHeight: "80vh" }}
+                  >
+                    <div className="p-8 flex flex-col min-h-full print:p-2">
+                      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 font-sans uppercase tracking-widest">{crosswordTopic}</p>
+                          <p className="text-[10px] text-gray-400 font-sans">Crossword Puzzle</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-8 items-start mb-8 print:block">
+                        <div
+                          className="grid gap-0 border-2 border-gray-800 bg-gray-800 shrink-0 mx-auto"
+                          style={{
+                            gridTemplateColumns: `repeat(${crosswordData.width}, 1fr)`,
+                            width: "fit-content"
+                          }}
+                        >
+                          {crosswordData.grid.map((row, r) =>
+                            row.map((cell, c) => {
+                              const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
+                              return (
+                                <div
+                                  key={`${r}-${c}`}
+                                  className={`relative w-8 h-8 border-[0.5px] border-gray-300 flex items-center justify-center ${cell ? "bg-white" : "bg-gray-800 border-gray-800"
+                                    }`}
+                                >
+                                  {wordStart && (
+                                    <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-gray-500 leading-none">
+                                      {wordStart.number}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-4 font-sans">
+                          {['Across', 'Down'].map((dir) => {
+                            const isAcross = dir === 'Across';
+                            const dirWords = crosswordData.words
+                              .filter(w => w.isAcross === isAcross)
+                              .sort((a, b) => a.number - b.number);
+
+                            if (dirWords.length === 0) return null;
+
+                            return (
+                              <div key={dir}>
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-2 border-b border-primary/20 pb-1">
+                                  {dir}
+                                </h3>
+                                <div className="space-y-1.5">
+                                  {dirWords.map(w => (
+                                    <div key={w.number} className="text-[11px] leading-relaxed flex gap-2">
+                                      <span className="font-bold text-primary shrink-0 w-4">{w.number}.</span>
+                                      <span className="text-gray-700">{w.clue}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="mt-auto pt-6 border-t border-gray-100 flex justify-between items-end">
+                        <div className="space-y-1">
+                          <div className="flex gap-2">
+                            <div className="w-40 border-b border-gray-300 h-6"></div>
+                            <span className="text-[10px] text-gray-400 uppercase font-sans">Name</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="w-40 border-b border-gray-300 h-6"></div>
+                            <span className="text-[10px] text-gray-400 uppercase font-sans">Date</span>
+                          </div>
+                        </div>
+                        <p className="text-[8px] text-gray-300 italic font-sans max-w-[200px] text-right">
+                          Crossword generated with AI assistance. Keep practicing and keep learning!
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
             </>
           )}
 

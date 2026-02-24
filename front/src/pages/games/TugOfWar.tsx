@@ -57,7 +57,7 @@ const TugOfWar = () => {
 
   // Инициализация аудио
   useEffect(() => {
-    const audio = new Audio("/shou-Benni.mp3");
+    const audio = new Audio("/music.mp3");
     audio.loop = true;
     audioRef.current = audio;
 

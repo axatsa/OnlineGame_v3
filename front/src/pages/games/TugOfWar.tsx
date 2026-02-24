@@ -50,9 +50,33 @@ const TugOfWar = () => {
   const [feedback, setFeedback] = useState<{ team: "blue" | "red" | "time"; correct: boolean } | null>(null);
   const [team1Name, setTeam1Name] = useState("Team 1");
   const [team2Name, setTeam2Name] = useState("Team 2");
-  // FIX #3: секундомер вместо таймера обратного отсчёта
   const [elapsed, setElapsed] = useState(0);
   const stopwatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Инициализация аудио
+  useEffect(() => {
+    const audio = new Audio("/shou-Benni.mp3");
+    audio.loop = true;
+    audioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
+
+  // Управление музыкой в зависимости от статуса
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    if (status === "playing") {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(err => console.error("Audio play failed:", err));
+    } else {
+      audioRef.current.pause();
+    }
+  }, [status]);
 
   // Запуск секундомера при начале игры
   useEffect(() => {

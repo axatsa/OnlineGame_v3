@@ -193,8 +193,8 @@ const BookReader = ({ book, onClose }: { book: Book; onClose: () => void }) => {
                             {cur === 0
                                 ? "Обложка"
                                 : slides[cur].kind === "text"
-                                    ? `Текст ${(slides[cur] as any).page.page_number}/10`
-                                    : `Картинка ${(slides[cur] as any).page.page_number}/10`
+                                    ? `Аи помощник который сгенерирует вам интресные StoryBook`
+                                    : ``
                             }
                         </span>
                         <div className="flex gap-0.5">
@@ -240,14 +240,14 @@ const GenerateForm = ({
     const [loading, setLoading] = useState(false);
 
     const handleGenerate = async () => {
-        if (!title.trim() || !topic.trim()) {
-            toast.error("Заполните название и тему книги");
+        if (!topic.trim()) {
+            toast.error("Заполните тему книги");
             return;
         }
         setLoading(true);
         try {
             const res = await api.post("/library/generate", {
-                title: title.trim(), topic: topic.trim(),
+                topic: topic.trim(),
                 age_group: ageGroup, language, genre,
             });
             const data = res.data.book;
@@ -295,24 +295,17 @@ const GenerateForm = ({
                 </div>
 
                 <div className="space-y-4">
-                    {/* Title */}
-                    <div>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
-                            Название книги *
-                        </label>
-                        <input value={title} onChange={e => setTitle(e.target.value)}
-                            placeholder='"Приключения Тимура в лесу"'
-                            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                    </div>
-
                     {/* Topic */}
                     <div>
                         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
-                            Тема / образовательная цель *
+                            Про что будет книга? *
                         </label>
-                        <input value={topic} onChange={e => setTopic(e.target.value)}
-                            placeholder='"дружба, честность, числа от 1 до 10"'
-                            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        <textarea
+                            value={topic}
+                            onChange={e => setTopic(e.target.value)}
+                            placeholder='Например: "Приключения львенка в Африке, который учился дружить и считать до десяти"'
+                            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[100px] resize-none"
+                        />
                     </div>
 
                     {/* Language + Age */}
@@ -366,7 +359,7 @@ const GenerateForm = ({
                 </div>
 
                 <button onClick={handleGenerate}
-                    disabled={loading || !title.trim() || !topic.trim()}
+                    disabled={loading || !topic.trim()}
                     className="w-full mt-5 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold font-sans flex items-center justify-center gap-2 hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md">
                     {loading
                         ? <><Loader2 className="w-4 h-4 animate-spin" /> Генерация (~30-60 сек)...</>
@@ -437,7 +430,7 @@ const Library = () => {
                         </div>
                         <h2 className="text-xl font-bold font-serif text-foreground mb-2">Библиотека пуста</h2>
                         <p className="text-muted-foreground font-sans mb-2 max-w-sm text-sm">
-                            Нажмите «Новая книга» — Gemini AI напишет уникальную историю
+                            Нажмите «Новая книга» —  и AI напишет уникальную историю
                         </p>
                         <p className="text-xs text-muted-foreground/60 font-sans mb-6">
                             10 страниц · 60–70 слов каждая · 10 иллюстраций

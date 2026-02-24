@@ -34,9 +34,10 @@ STORY_SYSTEM = (
 
 
 def _story_prompt(title, topic, age_group, language, genre):
+    title_instruction = f'Title: "{title}"' if title else 'Generate a creative and catchy title for this story.'
     return f"""Write a children's {genre} storybook in {language}.
 
-Title: "{title}"
+{title_instruction}
 Topic / educational theme: {topic}
 Target age: {age_group} years old
 Number of story pages: 10
@@ -55,7 +56,7 @@ For each page also include an illustration_prompt in English (max 25 words):
 
 Return ONLY this JSON (no markdown, no extra text):
 {{
-  "title": "{title}",
+  "title": "{title if title else 'Generated Title'}",
   "description": "One engaging summary sentence in {language}",
   "age_group": "{age_group}",
   "genre": "{genre}",
@@ -84,8 +85,8 @@ def _image_prompt(illustration_prompt: str, age_group: str) -> str:
 # ─── Main generator ───────────────────────────────────────────────────────────
 
 def generate_storybook(
-    title: str,
-    topic: str,
+    title: Optional[str] = "",
+    topic: str = "",
     age_group: str = "7-10",
     language: str = "Russian",
     genre: str = "fairy tale",

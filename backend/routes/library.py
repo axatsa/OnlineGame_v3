@@ -11,8 +11,10 @@ from typing import Optional
 router = APIRouter(prefix="/api/library", tags=["library"])
 
 
+import traceback
+
 class StorybookRequest(BaseModel):
-    title: str
+    title: Optional[str] = ""
     topic: str
     age_group: Optional[str] = "7-10"
     language: Optional[str] = "Russian"
@@ -27,29 +29,36 @@ def gen_storybook(
 ):
     """
     Generate a 10-page children's storybook.
-    Text:   gemini-2.0-flash (60-70 words per page)
-    Images: gemini-2.5-flash-image (1024px watercolor illustrations)
-    Returns: JSON with pages, each containing text + image_base64
     """
     if not GEMINI_API_KEY:
         raise HTTPException(
             status_code=503,
-            detail="GEMINI_API_KEY is not configured on the server.",
+            detail="GEMINI_API_KEY is not configured on the server. Please add it to your .env file.",
         )
 
-    result = generate_storybook(
-        title=req.title,
-        topic=req.topic,
-        age_group=req.age_group,
-        language=req.language,
-        genre=req.genre,
-        gemini_api_key=GEMINI_API_KEY,
-    )
+    try:
+        result = generate_storybook(
+            title=req.title,
+            topic=req.topic,
+            age_group=req.age_group,
+            language=req.language,
+            genre=req.genre,
+            gemini_api_key=GEMINI_API_KEY,
+        )
 
-    if result is None:
+        if result is None:
+            # result is None means gemini_service caught an exception and logged it
+            raise HTTPException(
+                status_code=500,
+                detail="Storybook generation failed on service level.",
+            )
+
+        return {"book": result}
+
+    except Exception as e:
+        print(f"CRITICAL ERROR in gen_storybook: {e}")
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
-            detail="Storybook generation failed. Check server logs for details.",
+            detail=f"Storybook generation failed: {str(e)}",
         )
-
-    return {"book": result}

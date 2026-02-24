@@ -39,7 +39,7 @@ export const translations = {
     cardGamesTitle: "Библиотека игр",
     cardGamesDesc: "Интерактивные игры для Smartboard",
     cardLibraryTitle: "Детская библиотека",
-    cardLibraryDesc: "Создавайте книги и сказки с Gemini AI",
+    cardLibraryDesc: "Создавайте книги и сказки вместе с AI",
 
     activeClass: "Активный класс",
     manageClasses: "Управление классами",
@@ -246,7 +246,7 @@ export const translations = {
     cardGamesTitle: "O'yinlar kutubxonasi",
     cardGamesDesc: "Smartboard uchun interaktiv o'yinlar",
     cardLibraryTitle: "Bolalar kutubxonasi",
-    cardLibraryDesc: "Gemini AI yordamida kitoblar va ertaklar yarating",
+    cardLibraryDesc: "AI yordamida kitoblar va ertaklar yarating",
 
     activeClass: "Faol sinf",
     manageClasses: "Sinflarni boshqarish",

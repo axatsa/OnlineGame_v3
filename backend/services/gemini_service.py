@@ -13,6 +13,7 @@ import base64
 import json
 import logging
 import re
+import traceback
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,9 @@ def generate_storybook(
     # Parse story JSON
     story_data = _parse_json(raw)
     if not story_data or "pages" not in story_data:
-        logger.error(f"Could not parse story JSON. Raw:\n{raw[:500]}")
+        logger.error(f"Could not parse story JSON. Raw output was likely not JSON.")
+        # Fallback: if it failed to parse as JSON, maybe it returned text with markdown
+        # The _parse_json already tries to extract JSON, but if it's still missing 'pages'...
         return None
 
     logger.info(f"Story parsed: {len(story_data['pages'])} pages")
@@ -149,25 +152,33 @@ def _generate_image(client: genai.Client, prompt: str) -> Optional[str]:
     """Try each image model in order. Returns base64 PNG string or None."""
     for model_name in IMAGE_MODELS:
         try:
+            logger.info(f"Attempting image generation with {model_name}...")
             response = client.models.generate_content(
                 model=model_name,
                 contents=prompt,
                 config=genai_types.GenerateContentConfig(
-                    response_modalities=["IMAGE", "TEXT"],
+                    response_modalities=["IMAGE"],
                     temperature=1.0,
                 ),
             )
-            for part in response.parts:
-                if part.inline_data is not None:
+            
+            # Use candidates to be safe with the newer SDK
+            if not response.candidates:
+                logger.warning(f"No candidates returned from {model_name}")
+                continue
+                
+            for part in response.candidates[0].content.parts:
+                if part.inline_data:
                     raw = part.inline_data.data
+                    mime = part.inline_data.mime_type
+                    logger.info(f"Image generated with {model_name} (MIME: {mime})")
                     if isinstance(raw, bytes):
-                        logger.info(f"Image generated with {model_name}")
                         return base64.b64encode(raw).decode("utf-8")
-                    if isinstance(raw, str):
-                        logger.info(f"Image generated with {model_name}")
-                        return raw          # already base64 string
+                    return str(raw) # already base64
         except Exception as e:
-            logger.warning(f"Model {model_name} failed: {e}. Trying next...")
+            logger.warning(f"Model {model_name} failed: {str(e)}")
+            # Log full traceback for deep debugging
+            traceback.print_exc()
 
     logger.error("All image models failed — returning None")
     return None

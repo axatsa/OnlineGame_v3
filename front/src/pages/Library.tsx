@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     BookOpen, Plus, ArrowLeft, Sparkles, ChevronLeft, ChevronRight,
-    X, Loader2, BookMarked, Globe, Users, Wand2, Trash2, BookText,
+    X, Loader2, BookMarked, Globe, Users, Wand2, Trash2, BookText, Info
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -232,6 +233,7 @@ const BookReader = ({ book, onClose }: { book: Book; onClose: () => void }) => {
 const GenerateForm = ({
     onClose, onGenerated, nextId,
 }: { onClose: () => void; onGenerated: (b: Book) => void; nextId: number }) => {
+    const { user } = useAuth();
     const [title, setTitle] = useState("");
     const [topic, setTopic] = useState("");
     const [ageGroup, setAgeGroup] = useState("7-10");
@@ -283,9 +285,11 @@ const GenerateForm = ({
                         </div>
                         <div>
                             <h3 className="text-lg font-bold font-serif text-foreground">Создать книгу</h3>
-                            <p className="text-xs text-muted-foreground font-sans">
-                                Text: gemini-2.0-flash · Images: gemini-2.5-flash-image · 10 стр · 10 иллюстраций
-                            </p>
+                            {user?.role === "super_admin" && (
+                                <p className="text-xs text-muted-foreground font-sans">
+                                    Text: gemini-2.0-flash · Images: gemini-2.5-flash-image · 10 стр · 10 иллюстраций
+                                </p>
+                            )}
                         </div>
                     </div>
                     <button onClick={onClose}
@@ -374,6 +378,7 @@ const GenerateForm = ({
 // ─── Main Library Page ──────────────────────────────────────────────────────
 const Library = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [books, setBooks] = useState<Book[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [openBook, setOpenBook] = useState<Book | null>(null);
@@ -416,9 +421,11 @@ const Library = () => {
             <main className="max-w-5xl mx-auto px-6 py-10">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
                     <h1 className="text-3xl font-bold font-serif text-foreground mb-1">Детская библиотека</h1>
-                    <p className="text-muted-foreground font-sans text-sm">
-                        Текст: <span className="text-violet-600 font-semibold">gemini-2.0-flash</span> · Картинки: <span className="text-violet-600 font-semibold">gemini-2.5-flash-image</span> · 10 стр · 10 иллюстраций
-                    </p>
+                    {user?.role === "super_admin" && (
+                        <p className="text-muted-foreground font-sans text-sm">
+                            Текст: <span className="text-violet-600 font-semibold">gemini-2.0-flash</span> · Картинки: <span className="text-violet-600 font-semibold">gemini-2.5-flash-image</span> · 10 стр · 10 иллюстраций
+                        </p>
+                    )}
                 </motion.div>
 
                 {/* Empty state */}

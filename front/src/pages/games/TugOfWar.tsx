@@ -67,28 +67,29 @@ const TugOfWar = () => {
     };
   }, []);
 
-  // Управление музыкой: начинаем при старте игры
+  // Управление музыкой
   useEffect(() => {
     if (!audioRef.current) return;
 
     if (status === "playing" && isAudioEnabled) {
-      audioRef.current.currentTime = 0;
-      // В современных браузерах play() должен вызываться СРАЗУ в обработчике клика.
-      // Но если мы меняем статус через async startGame, браузер может заблокировать.
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {
-          console.warn("Autoplay blocked, waiting for user interaction:", err);
-          // Если заблокировано, попробуем еще раз при любом клике
-          const playOnInteract = () => {
-            audioRef.current?.play();
-            window.removeEventListener("click", playOnInteract);
-          };
-          window.addEventListener("click", playOnInteract);
-        });
+      // Если музыка уже играет, не сбрасываем время на 0
+      if (audioRef.current.paused) {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn("Autoplay blocked:", err);
+            const playOnInteract = () => {
+              if (isAudioEnabled && status === "playing") audioRef.current?.play();
+              window.removeEventListener("click", playOnInteract);
+            };
+            window.addEventListener("click", playOnInteract);
+          });
+        }
       }
     } else {
       audioRef.current.pause();
+      // Если мы в фазе игры, но выключили звук — просто пауза. 
+      // Если игра закончилась (status != playing) — тоже пауза.
     }
   }, [status, isAudioEnabled]);
 

@@ -18,6 +18,8 @@ FROM nginx:alpine
 
 # Copy built assets from the previous stage
 COPY --from=build /app/dist /usr/share/nginx/html
+# Explicitly copy public folder as a safety measure for large files
+COPY --from=build /app/public /usr/share/nginx/html
 
 # Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf

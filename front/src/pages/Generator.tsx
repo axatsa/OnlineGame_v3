@@ -210,7 +210,7 @@ const Generator = () => {
       toast.info("Generating DOCX... Please wait.");
       const docx = await import("docx");
       const { saveAs } = await import("file-saver");
-      
+
       const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } = docx;
 
       let sections: any[] = [];
@@ -225,12 +225,12 @@ const Generator = () => {
             ...generatedProblems.map((p, i) => new Paragraph({
               children: [
                 new TextRun({ text: `${i + 1}) `, bold: true }),
-                new TextRun({ text: `${p.q} = _______` })
+                new TextRun({ text: `${p.q}` })
               ],
               spacing: { after: 200 }
             })),
             new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
-             ...generatedProblems.map((p, i) => new Paragraph({
+            ...generatedProblems.map((p, i) => new Paragraph({
               text: `${i + 1}) ${p.a}`
             }))
           ]
@@ -245,8 +245,8 @@ const Generator = () => {
             ...quizData.flatMap((q: any, i: number) => [
               new Paragraph({
                 children: [
-                   new TextRun({ text: `${i + 1}. `, bold: true }),
-                   new TextRun({ text: q.q })
+                  new TextRun({ text: `${i + 1}. `, bold: true }),
+                  new TextRun({ text: q.q })
                 ],
                 spacing: { before: 200, after: 100 }
               }),
@@ -273,8 +273,8 @@ const Generator = () => {
             ...assignmentData.questions.flatMap((q: any) => [
               new Paragraph({
                 children: [
-                   new TextRun({ text: `${q.num}. `, bold: true }),
-                   new TextRun({ text: q.text })
+                  new TextRun({ text: `${q.num}. `, bold: true }),
+                  new TextRun({ text: q.text })
                 ],
                 spacing: { before: 200, after: 100 }
               }),
@@ -285,63 +285,63 @@ const Generator = () => {
             ]),
             new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
             ...assignmentData.questions.map((q: any) => new Paragraph({
-               text: `${q.num}) ${q.answer?.split(")")[0] || q.answer}`
+              text: `${q.num}) ${q.answer?.split(")")[0] || q.answer}`
             }))
           ]
         });
       } else if (genType === "crossword" && crosswordData) {
-         const rows = crosswordData.grid.map((rowArr, r) => {
-            return new TableRow({
-                children: rowArr.map((cell, c) => {
-                    const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
-                    return new TableCell({
-                        borders: {
-                            top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
-                            bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
-                            left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
-                            right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" }
-                        },
-                        width: { size: 500, type: WidthType.DXA },
-                        children: [
-                            new Paragraph({
-                                children: [
-                                    new TextRun({ text: wordStart ? `${wordStart.number}` : " ", size: 12, color: cell ? "000000" : "FFFFFF" })
-                                ],
-                                alignment: AlignmentType.CENTER
-                            })
-                        ],
-                        shading: {
-                            fill: cell ? "FFFFFF" : "000000"
-                        }
-                    });
-                })
-            });
-         });
+        const rows = crosswordData.grid.map((rowArr, r) => {
+          return new TableRow({
+            children: rowArr.map((cell, c) => {
+              const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
+              return new TableCell({
+                borders: {
+                  top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
+                  bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
+                  left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
+                  right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" }
+                },
+                width: { size: 500, type: WidthType.DXA },
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: wordStart ? `${wordStart.number}` : " ", size: 12, color: cell ? "000000" : "FFFFFF" })
+                    ],
+                    alignment: AlignmentType.CENTER
+                  })
+                ],
+                shading: {
+                  fill: cell ? "FFFFFF" : "000000"
+                }
+              });
+            })
+          });
+        });
 
-         const acrossWords = crosswordData.words.filter(w => w.isAcross).sort((a,b)=>a.number - b.number);
-         const downWords = crosswordData.words.filter(w => !w.isAcross).sort((a,b)=>a.number - b.number);
+        const acrossWords = crosswordData.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number);
+        const downWords = crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number);
 
-         sections.push({
-             properties: {},
-             children: [
-                new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
-                new Paragraph({ text: `${crosswordTopic} - Crossword`, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
-                new Table({
-                    rows: rows,
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                }),
-                new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3, spacing: { before: 400 } }),
-                ...acrossWords.map(w => new Paragraph({ text: `${w.number}. ${w.clue}` })),
-                new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3, spacing: { before: 400 } }),
-                ...downWords.map(w => new Paragraph({ text: `${w.number}. ${w.clue}` })),
-                
-                new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
-                new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3 }),
-                ...acrossWords.map(w => new Paragraph({ text: `${w.number}. ${w.word}` })),
-                new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3 }),
-                ...downWords.map(w => new Paragraph({ text: `${w.number}. ${w.word}` }))
-             ]
-         });
+        sections.push({
+          properties: {},
+          children: [
+            new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: `${crosswordTopic} - Crossword`, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+            new Table({
+              rows: rows,
+              width: { size: 100, type: WidthType.PERCENTAGE },
+            }),
+            new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3, spacing: { before: 400 } }),
+            ...acrossWords.map(w => new Paragraph({ text: `${w.number}. ${w.clue}` })),
+            new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3, spacing: { before: 400 } }),
+            ...downWords.map(w => new Paragraph({ text: `${w.number}. ${w.clue}` })),
+
+            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
+            new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3 }),
+            ...acrossWords.map(w => new Paragraph({ text: `${w.number}. ${w.word}` })),
+            new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3 }),
+            ...downWords.map(w => new Paragraph({ text: `${w.number}. ${w.word}` }))
+          ]
+        });
       } else {
         toast.info("Nothing to export.");
         return;
@@ -1025,7 +1025,7 @@ const Generator = () => {
                           <div key={i} className="flex gap-4 items-start">
                             <span className="text-xs text-gray-300 font-mono mt-1 w-5">{i + 1})</span>
                             <div className="text-lg font-mono text-gray-800 tracking-wider">
-                              {formatMathText(p.q)} = _______
+                              {formatMathText(p.q)}
                             </div>
                           </div>
                         ))}

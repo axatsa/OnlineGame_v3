@@ -1,5 +1,4 @@
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+
 import React, { useRef, RefObject, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -206,45 +205,162 @@ const Generator = () => {
   const puzzleRef = useRef<HTMLDivElement>(null);
   const answerRef = useRef<HTMLDivElement>(null);
 
-  const downloadPDF = async () => {
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const width = pdf.internal.pageSize.getWidth();
-    const height = pdf.internal.pageSize.getHeight();
-
-    // Helper to add a page
-    const addPage = async (element: HTMLElement | null, isFirstPage: boolean) => {
-      if (!element) return;
-
-      // Temporarily make visible for capture if needed, though they should be rendered
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher scale for better quality
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff"
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = width;
-      const imgHeight = (canvas.height * width) / canvas.width;
-
-      if (!isFirstPage) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    };
-
+  const downloadDOCX = async () => {
     try {
-      toast.info("Generating PDF... Please wait.");
-      // Page 1: Puzzle
-      await addPage(puzzleRef.current, true);
+      toast.info("Generating DOCX... Please wait.");
+      const docx = await import("docx");
+      const { saveAs } = await import("file-saver");
+      
+      const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } = docx;
 
-      // Page 2: Answers
-      if (answerRef.current) {
-        await addPage(answerRef.current, false);
+      let sections: any[] = [];
+
+      if (genType === "math" && generatedProblems.length > 0) {
+        sections.push({
+          properties: {},
+          children: [
+            new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: `${mathTopic} - ${difficulty}`, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: "Name: _______________________ Date: ______________", spacing: { before: 400, after: 400 } }),
+            ...generatedProblems.map((p, i) => new Paragraph({
+              children: [
+                new TextRun({ text: `${i + 1}) `, bold: true }),
+                new TextRun({ text: `${p.q} = _______` })
+              ],
+              spacing: { after: 200 }
+            })),
+            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
+             ...generatedProblems.map((p, i) => new Paragraph({
+              text: `${i + 1}) ${p.a}`
+            }))
+          ]
+        });
+      } else if (genType === "quiz" && quizData.length > 0) {
+        sections.push({
+          properties: {},
+          children: [
+            new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: `Quiz: ${quizTopic}`, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: "Name: _______________________ Date: ______________", spacing: { before: 400, after: 400 } }),
+            ...quizData.flatMap((q: any, i: number) => [
+              new Paragraph({
+                children: [
+                   new TextRun({ text: `${i + 1}. `, bold: true }),
+                   new TextRun({ text: q.q })
+                ],
+                spacing: { before: 200, after: 100 }
+              }),
+              ...(q.options || []).map((opt: string) => new Paragraph({
+                text: `[  ] ${opt}`,
+                indent: { left: 720 }
+              }))
+            ]),
+            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
+            ...quizData.map((q: any, i: number) => new Paragraph({
+              text: `${i + 1}) ${q.a}`
+            }))
+          ]
+        });
+      } else if (genType === "assignment" && assignmentData) {
+        sections.push({
+          properties: {},
+          children: [
+            new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: `${assignmentData.title}`, heading: HeadingLevel.HEADING_2, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: `${assignmentData.subject} • ${assignmentData.grade}`, alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+            ...(assignmentData.intro ? [new Paragraph({ text: assignmentData.intro, italics: true, spacing: { after: 400 } })] : []),
+            new Paragraph({ text: "Name: _______________________ Date: ______________", spacing: { before: 200, after: 400 } }),
+            ...assignmentData.questions.flatMap((q: any) => [
+              new Paragraph({
+                children: [
+                   new TextRun({ text: `${q.num}. `, bold: true }),
+                   new TextRun({ text: q.text })
+                ],
+                spacing: { before: 200, after: 100 }
+              }),
+              ...(q.options || []).map((opt: string) => new Paragraph({
+                text: `[  ] ${opt}`,
+                indent: { left: 720 }
+              }))
+            ]),
+            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
+            ...assignmentData.questions.map((q: any) => new Paragraph({
+               text: `${q.num}) ${q.answer?.split(")")[0] || q.answer}`
+            }))
+          ]
+        });
+      } else if (genType === "crossword" && crosswordData) {
+         const rows = crosswordData.grid.map((rowArr, r) => {
+            return new TableRow({
+                children: rowArr.map((cell, c) => {
+                    const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
+                    return new TableCell({
+                        borders: {
+                            top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
+                            bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
+                            left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
+                            right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" }
+                        },
+                        width: { size: 500, type: WidthType.DXA },
+                        children: [
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: wordStart ? `${wordStart.number}` : " ", size: 12, color: cell ? "000000" : "FFFFFF" })
+                                ],
+                                alignment: AlignmentType.CENTER
+                            })
+                        ],
+                        shading: {
+                            fill: cell ? "FFFFFF" : "000000"
+                        }
+                    });
+                })
+            });
+         });
+
+         const acrossWords = crosswordData.words.filter(w => w.isAcross).sort((a,b)=>a.number - b.number);
+         const downWords = crosswordData.words.filter(w => !w.isAcross).sort((a,b)=>a.number - b.number);
+
+         sections.push({
+             properties: {},
+             children: [
+                new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
+                new Paragraph({ text: `${crosswordTopic} - Crossword`, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+                new Table({
+                    rows: rows,
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                }),
+                new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3, spacing: { before: 400 } }),
+                ...acrossWords.map(w => new Paragraph({ text: `${w.number}. ${w.clue}` })),
+                new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3, spacing: { before: 400 } }),
+                ...downWords.map(w => new Paragraph({ text: `${w.number}. ${w.clue}` })),
+                
+                new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
+                new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3 }),
+                ...acrossWords.map(w => new Paragraph({ text: `${w.number}. ${w.word}` })),
+                new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3 }),
+                ...downWords.map(w => new Paragraph({ text: `${w.number}. ${w.word}` }))
+             ]
+         });
+      } else {
+        toast.info("Nothing to export.");
+        return;
       }
 
-      pdf.save('generated-content.pdf');
-      toast.success("PDF downloaded successfully!");
+      const doc = new Document({
+        creator: "Thompson International",
+        title: "Generated Content",
+        description: "AI Generated Educational Material",
+        sections: sections
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, "generated-content.docx");
+
+      toast.success("DOCX downloaded successfully!");
     } catch (e) {
-      console.error("PDF Generation failed", e);
-      toast.error("Failed to generate PDF");
+      console.error("DOCX Generation failed", e);
+      toast.error("Failed to generate DOCX");
     }
   };
 
@@ -678,8 +794,8 @@ const Generator = () => {
                     <Sparkles className="w-4 h-4" /> Rewrite Layout
                   </Button>
                 )}
-                <Button variant="outline" size="sm" onClick={downloadPDF} className="gap-2 bg-white/80 backdrop-blur">
-                  <Printer className="w-4 h-4" /> Print / PDF
+                <Button variant="outline" size="sm" onClick={downloadDOCX} className="gap-2 bg-white/80 backdrop-blur">
+                  <Printer className="w-4 h-4" /> Print / DOCX
                 </Button>
               </div>
 

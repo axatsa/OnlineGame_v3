@@ -211,54 +211,152 @@ const Generator = () => {
       const docx = await import("docx");
       const { saveAs } = await import("file-saver");
 
-      const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } = docx;
+      const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, TableBorders, VerticalAlign } = docx;
 
       let sections: any[] = [];
 
       if (genType === "math" && generatedProblems.length > 0) {
         sections.push({
-          properties: {},
+          properties: {
+            page: { margin: { top: 720, right: 720, bottom: 720, left: 720 } }
+          },
           children: [
             new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
-            new Paragraph({ text: `${mathTopic} - ${difficulty}`, alignment: AlignmentType.CENTER }),
-            new Paragraph({ text: "Name: _______________________ Date: ______________", spacing: { before: 400, after: 400 } }),
-            ...generatedProblems.map((p, i) => new Paragraph({
-              children: [
-                new TextRun({ text: `${i + 1}) `, bold: true }),
-                new TextRun({ text: `${p.q}` })
-              ],
-              spacing: { after: 200 }
-            })),
-            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
-            ...generatedProblems.map((p, i) => new Paragraph({
-              text: `${i + 1}) ${p.a}`
-            }))
+            new Paragraph({ text: `${mathTopic} - ${difficulty}`, alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+            new Paragraph({ text: "Name: _______________________ Date: ______________", spacing: { before: 200, after: 600 } }),
+
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              borders: TableBorders.NONE,
+              rows: Array.from({ length: Math.ceil(generatedProblems.length / 2) }, (_, i) => {
+                const p1 = generatedProblems[i * 2];
+                const p2 = generatedProblems[i * 2 + 1];
+                return new TableRow({
+                  children: [
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [
+                            new TextRun({ text: `${i * 2 + 1}) `, bold: true }),
+                            new TextRun({ text: `${p1.q}` })
+                          ],
+                          spacing: { before: 200, after: 400 }
+                        })
+                      ]
+                    }),
+                    new TableCell({
+                      children: p2 ? [
+                        new Paragraph({
+                          children: [
+                            new TextRun({ text: `${i * 2 + 2}) `, bold: true }),
+                            new TextRun({ text: `${p2.q}` })
+                          ],
+                          spacing: { before: 200, after: 400 }
+                        })
+                      ] : []
+                    })
+                  ]
+                });
+              })
+            }),
+
+            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true, alignment: AlignmentType.CENTER, spacing: { before: 400, after: 400 } }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: Array.from({ length: Math.ceil(generatedProblems.length / 4) }, (_, i) => {
+                return new TableRow({
+                  children: Array.from({ length: 4 }, (_, j) => {
+                    const idx = i * 4 + j;
+                    const p = generatedProblems[idx];
+                    return new TableCell({
+                      children: p ? [
+                        new Paragraph({
+                          children: [
+                            new TextRun({ text: `${idx + 1}) `, bold: true, color: "666666" }),
+                            new TextRun({ text: `${p.a}`, bold: true })
+                          ]
+                        })
+                      ] : []
+                    });
+                  })
+                });
+              })
+            })
           ]
         });
       } else if (genType === "quiz" && quizData.length > 0) {
         sections.push({
-          properties: {},
+          properties: {
+            page: { margin: { top: 720, right: 720, bottom: 720, left: 720 } }
+          },
           children: [
             new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
-            new Paragraph({ text: `Quiz: ${quizTopic}`, alignment: AlignmentType.CENTER }),
-            new Paragraph({ text: "Name: _______________________ Date: ______________", spacing: { before: 400, after: 400 } }),
-            ...quizData.flatMap((q: any, i: number) => [
-              new Paragraph({
-                children: [
-                  new TextRun({ text: `${i + 1}. `, bold: true }),
-                  new TextRun({ text: q.q })
-                ],
-                spacing: { before: 200, after: 100 }
-              }),
-              ...(q.options || []).map((opt: string) => new Paragraph({
-                text: `[  ] ${opt}`,
-                indent: { left: 720 }
-              }))
-            ]),
-            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
-            ...quizData.map((q: any, i: number) => new Paragraph({
-              text: `${i + 1}) ${q.a}`
-            }))
+            new Paragraph({ text: `Quiz: ${quizTopic}`, alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+            new Paragraph({ text: "Name: _______________________ Date: ______________", spacing: { before: 200, after: 600 } }),
+
+            ...quizData.flatMap((q: any, i: number) => {
+              const options = q.options || [];
+              const optionTable = new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: TableBorders.NONE,
+                rows: Array.from({ length: Math.ceil(options.length / 2) }, (_, rowIdx) => {
+                  return new TableRow({
+                    children: [
+                      new TableCell({
+                        children: [new Paragraph({ text: `[  ] ${options[rowIdx * 2]}`, indent: { left: 360 } })]
+                      }),
+                      new TableCell({
+                        children: options[rowIdx * 2 + 1]
+                          ? [new Paragraph({ text: `[  ] ${options[rowIdx * 2 + 1]}`, indent: { left: 360 } })]
+                          : []
+                      })
+                    ]
+                  });
+                })
+              });
+
+              return [
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: `${i + 1}. `, bold: true }),
+                    new TextRun({ text: q.q })
+                  ],
+                  spacing: { before: 200, after: 100 }
+                }),
+                optionTable
+              ];
+            }),
+
+            new Paragraph({
+              text: "✅ Answer Key (Teacher Copy)",
+              heading: HeadingLevel.HEADING_2,
+              pageBreakBefore: true,
+              alignment: AlignmentType.CENTER,
+              spacing: { before: 400, after: 400 }
+            }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: Array.from({ length: Math.ceil(quizData.length / 5) }, (_, i) => {
+                return new TableRow({
+                  children: Array.from({ length: 5 }, (_, j) => {
+                    const idx = i * 5 + j;
+                    const q = quizData[idx];
+                    return new TableCell({
+                      children: q ? [
+                        new Paragraph({
+                          children: [
+                            new TextRun({ text: `${idx + 1}) `, bold: true, color: "666666" }),
+                            new TextRun({ text: `${q.a}`, bold: true, color: "15803d" }) // green-700
+                          ],
+                          alignment: AlignmentType.CENTER
+                        })
+                      ] : [],
+                      shading: { fill: "f3f4f6" }
+                    });
+                  })
+                });
+              })
+            })
           ]
         });
       } else if (genType === "assignment" && assignmentData) {
@@ -296,23 +394,30 @@ const Generator = () => {
               const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
               return new TableCell({
                 borders: {
-                  top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
-                  bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
-                  left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" },
-                  right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: 1, color: "000000" }
+                  top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
+                  bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
+                  left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
+                  right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" }
                 },
-                width: { size: 500, type: WidthType.DXA },
+                width: { size: 450, type: WidthType.DXA },
                 children: [
                   new Paragraph({
                     children: [
-                      new TextRun({ text: wordStart ? `${wordStart.number}` : " ", size: 12, color: cell ? "000000" : "FFFFFF" })
+                      new TextRun({
+                        text: wordStart ? `${wordStart.number}` : "",
+                        size: 14,
+                        bold: true,
+                        color: "666666"
+                      })
                     ],
-                    alignment: AlignmentType.CENTER
+                    alignment: AlignmentType.LEFT,
+                    spacing: { before: 0, after: 0 }
                   })
                 ],
                 shading: {
-                  fill: cell ? "FFFFFF" : "000000"
-                }
+                  fill: cell ? "FFFFFF" : "333333"
+                },
+                verticalAlign: VerticalAlign.TOP
               });
             })
           });
@@ -322,24 +427,98 @@ const Generator = () => {
         const downWords = crosswordData.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number);
 
         sections.push({
-          properties: {},
+          properties: {
+            page: { margin: { top: 720, right: 720, bottom: 720, left: 720 } }
+          },
           children: [
-            new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
-            new Paragraph({ text: `${crosswordTopic} - Crossword`, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+            new Paragraph({
+              text: "Thompson International",
+              heading: HeadingLevel.HEADING_1,
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 200 }
+            }),
+            new Paragraph({
+              text: `${crosswordTopic}`,
+              heading: HeadingLevel.HEADING_2,
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 600 }
+            }),
             new Table({
               rows: rows,
-              width: { size: 100, type: WidthType.PERCENTAGE },
+              alignment: AlignmentType.CENTER,
+              width: { size: 100, type: WidthType.AUTO },
             }),
-            new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3, spacing: { before: 400 } }),
-            ...acrossWords.map(w => new Paragraph({ text: `${w.number}. ${w.clue}` })),
-            new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3, spacing: { before: 400 } }),
-            ...downWords.map(w => new Paragraph({ text: `${w.number}. ${w.clue}` })),
+            new Paragraph({ text: "", spacing: { before: 400 } }),
 
-            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true }),
-            new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3 }),
-            ...acrossWords.map(w => new Paragraph({ text: `${w.number}. ${w.word}` })),
-            new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3 }),
-            ...downWords.map(w => new Paragraph({ text: `${w.number}. ${w.word}` }))
+            // Two-column clues using a borderless table
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              borders: TableBorders.NONE,
+              rows: [
+                new TableRow({
+                  children: [
+                    new TableCell({
+                      children: [
+                        new Paragraph({ text: "Across", heading: HeadingLevel.HEADING_3, spacing: { after: 100 } }),
+                        ...acrossWords.map(w => new Paragraph({
+                          children: [
+                            new TextRun({ text: `${w.number}. `, bold: true, color: "000000" }),
+                            new TextRun({ text: w.clue })
+                          ],
+                          spacing: { after: 80 }
+                        }))
+                      ]
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({ text: "Down", heading: HeadingLevel.HEADING_3, spacing: { after: 100 } }),
+                        ...downWords.map(w => new Paragraph({
+                          children: [
+                            new TextRun({ text: `${w.number}. `, bold: true, color: "000000" }),
+                            new TextRun({ text: w.clue })
+                          ],
+                          spacing: { after: 80 }
+                        }))
+                      ]
+                    })
+                  ]
+                })
+              ]
+            }),
+
+            // Answer Key
+            new Paragraph({
+              text: "Answer Key",
+              heading: HeadingLevel.HEADING_2,
+              alignment: AlignmentType.CENTER,
+              pageBreakBefore: true,
+              spacing: { before: 400, after: 400 }
+            }),
+            new Table({
+              alignment: AlignmentType.CENTER,
+              rows: crosswordData.grid.map((rowArr, r) => new TableRow({
+                children: rowArr.map((cell, c) => {
+                  return new TableCell({
+                    borders: {
+                      top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
+                      bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
+                      left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
+                      right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" }
+                    },
+                    width: { size: 450, type: WidthType.DXA },
+                    children: [
+                      new Paragraph({
+                        children: [
+                          new TextRun({ text: cell || "", bold: true, size: 24 })
+                        ],
+                        alignment: AlignmentType.CENTER
+                      })
+                    ],
+                    shading: { fill: cell ? "FFFFFF" : "333333" }
+                  });
+                })
+              }))
+            })
           ]
         });
       } else {
@@ -795,7 +974,7 @@ const Generator = () => {
                   </Button>
                 )}
                 <Button variant="outline" size="sm" onClick={downloadDOCX} className="gap-2 bg-white/80 backdrop-blur">
-                  <Printer className="w-4 h-4" /> Print / DOCX
+                  <Download className="w-4 h-4" /> Download DOCX
                 </Button>
               </div>
 

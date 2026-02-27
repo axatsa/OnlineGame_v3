@@ -9,6 +9,8 @@ import { useLang } from "@/context/LangContext";
 import { useClass } from "@/context/ClassContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import * as docx from "docx";
+import { saveAs } from "file-saver";
 
 // ──────────────── Roulette ────────────────
 const COLORS = [
@@ -199,36 +201,47 @@ const AssignmentPrintView = ({
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
 
-  const handlePrint = () => {
-    const printContent = printRef.current?.innerHTML;
-    if (!printContent) return;
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html><html><head>
-      <title>${assignment.title}</title>
-      <style>
-        @page { size: A4; margin: 20mm; }
-        body { font-family: 'Times New Roman', serif; font-size: 12pt; color: #000; margin: 0; }
-        .page { width: 100%; page-break-after: always; }
-        .page:last-child { page-break-after: avoid; }
-        h1 { font-size: 16pt; text-align: center; margin-bottom: 4pt; }
-        h2 { font-size: 13pt; text-align: center; margin-bottom: 12pt; color: #333; }
-        .meta { display: flex; justify-content: space-between; font-size: 10pt; margin-bottom: 16pt; border-bottom: 1px solid #000; padding-bottom: 8pt; }
-        .question { margin-bottom: 14pt; }
-        .question-text { font-weight: bold; margin-bottom: 4pt; }
-        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 2pt; padding-left: 12pt; font-size: 11pt; }
-        .answer-key { background: #f5f5f5; padding: 8pt; margin-bottom: 8pt; border: 1px solid #ccc; }
-        .answers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6pt; margin-top: 12pt; }
-        .answer-item { border: 1px solid #333; padding: 6pt; text-align: center; font-size: 11pt; }
-        .answer-num { font-size: 9pt; color: #555; }
-        .fill-line { border-bottom: 1px solid #000; display: inline-block; min-width: 120pt; }
-      </style>
-      </head><body>${printContent}</body></html>
-    `);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); }, 500);
+  const downloadDOCX = async () => {
+    try {
+      const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = docx;
+
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: assignment.title, heading: HeadingLevel.HEADING_2, alignment: AlignmentType.CENTER }),
+            new Paragraph({ text: `${assignment.subject} • ${assignment.grade}`, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+            new Paragraph({ text: `Date: ${assignment.date}`, alignment: AlignmentType.RIGHT, spacing: { after: 400 } }),
+            new Paragraph({ text: "Name: _______________________", spacing: { after: 400 } }),
+            ...assignment.questions.flatMap((q) => [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `${q.num}. `, bold: true }),
+                  new TextRun({ text: q.text })
+                ],
+                spacing: { before: 200, after: 100 }
+              }),
+              ...(q.options || []).map((opt) => new Paragraph({
+                text: `[  ] ${opt}`,
+                indent: { left: 720 }
+              }))
+            ]),
+            new Paragraph({ text: "Answer Key", heading: HeadingLevel.HEADING_2, pageBreakBefore: true, alignment: AlignmentType.CENTER, spacing: { before: 400, after: 400 } }),
+            ...assignment.questions.map((q) => new Paragraph({
+              text: `${q.num}) ${q.answer}`
+            }))
+          ]
+        }]
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `${assignment.title.replace(/\s+/g, "_")}.docx`);
+      toast.success("DOCX downloaded successfully!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to generate DOCX");
+    }
   };
 
   return (
@@ -238,8 +251,8 @@ const AssignmentPrintView = ({
         <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
           <Printer className="w-4 h-4" /> {t("print")}
         </Button>
-        <Button onClick={handlePrint} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> PDF
+        <Button onClick={downloadDOCX} variant="outline" className="gap-2">
+          <Download className="w-4 h-4" /> DOCX
         </Button>
       </div>
 

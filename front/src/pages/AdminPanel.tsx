@@ -14,6 +14,8 @@ import {
   CreditCard, Receipt, BarChart3, Loader2, Globe
 } from "lucide-react";
 import { useLang } from "@/context/LangContext";
+import * as docx from "docx";
+import { saveAs } from "file-saver";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -106,121 +108,171 @@ const exportPaymentsCSV = (payments: Payment[]) => {
 };
 
 // HTML-to-PDF export via print dialog
-const exportPDF = (title: string, htmlContent: string) => {
-  const win = window.open("", "_blank");
-  if (!win) return;
-  win.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8" />
-      <title>${title}</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 24px; }
-        h1 { font-size: 18px; margin-bottom: 4px; }
-        p.meta { color: #666; font-size: 11px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f3f4f6; text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e5e7eb; }
-        td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; }
-        tr:last-child td { border-bottom: none; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; }
-        .active   { background: #dcfce7; color: #166534; }
-        .expiring { background: #fef9c3; color: #854d0e; }
-        .expired  { background: #fee2e2; color: #991b1b; }
-        .blocked  { background: #f3f4f6; color: #6b7280; }
-        .paid     { background: #dcfce7; color: #166534; }
-        .pending  { background: #fef9c3; color: #854d0e; }
-        .failed   { background: #fee2e2; color: #991b1b; }
-        @media print { body { padding: 12px; } }
-      </style>
-    </head>
-    <body>
-      <h1>${title}</h1>
-      <p class="meta">Экспорт: ClassPlay Super Admin • ${new Date().toLocaleString("ru-RU")}</p>
-      ${htmlContent}
-    </body>
-    </html>
-  `);
-  win.document.close();
-  win.focus();
-  setTimeout(() => { win.print(); }, 300);
+// structured DOCX export
+const exportTeachersDOCX = async (teachers: Teacher[]) => {
+  try {
+    const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } = docx;
+
+    const doc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({ text: "Super Admin Report: Teachers List", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: ["ФИО / Логин", "Школа", "Последний вход", "Токены", "Статус", "Тариф"].map(h => new TableCell({
+                  children: [new Paragraph({ text: h, bold: true })],
+                  shading: { fill: "f3f4f6" }
+                }))
+              }),
+              ...teachers.map(t => new TableRow({
+                children: [
+                  `${t.name} (@${t.login})`,
+                  t.school,
+                  t.lastLogin,
+                  t.tokenUsage.toLocaleString(),
+                  t.status,
+                  t.plan
+                ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
+              }))
+            ]
+          })
+        ]
+      }]
+    });
+
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `teachers_report_${new Date().toISOString().slice(0, 10)}.docx`);
+    toast.success("Teachers report DOCX downloaded!");
+  } catch (e) { console.error(e); toast.error("DOCX failed"); }
 };
 
-const exportTeachersPDF = (teachers: Teacher[]) => {
-  const rows = teachers.map(t => `
-    <tr>
-      <td>${t.name}<br/><small style="color:#6b7280">@${t.login}</small></td>
-      <td>${t.school}</td>
-      <td>${t.lastLogin}</td>
-      <td>${t.tokenUsage.toLocaleString()}</td>
-      <td><span class="badge ${t.status}">${t.status}</span></td>
-      <td>${t.plan}</td>
-    </tr>
-  `).join("");
-  exportPDF("Список учителей", `
-    <table>
-      <thead><tr><th>ФИО / Логин</th><th>Школа</th><th>Посл. вход</th><th>Токены</th><th>Статус</th><th>Тариф</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `);
+const exportOrgsDOCX = async (orgs: Org[]) => {
+  try {
+    const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
+    const doc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({ text: "Organizations Report", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: ["Название", "Контакт", "Лицензии", "Истекает", "Статус"].map(h => new TableCell({
+                  children: [new Paragraph({ text: h, bold: true })],
+                  shading: { fill: "f3f4f6" }
+                }))
+              }),
+              ...orgs.map(o => new TableRow({
+                children: [
+                  o.name, o.contact, `${o.used}/${o.seats}`, new Date(o.expires).toLocaleDateString("ru-RU"), o.status
+                ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
+              }))
+            ]
+          })
+        ]
+      }]
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `organizations_report_${new Date().toISOString().slice(0, 10)}.docx`);
+    toast.success("Orgs report DOCX downloaded!");
+  } catch (e) { console.error(e); }
 };
 
-const exportOrgsPDF = (orgs: Org[]) => {
-  const rows = orgs.map(o => `
-    <tr>
-      <td>${o.name}</td>
-      <td>${o.contact}</td>
-      <td>${o.used}/${o.seats}</td>
-      <td>${new Date(o.expires).toLocaleDateString("ru-RU")}</td>
-      <td><span class="badge ${o.status}">${o.status}</span></td>
-    </tr>
-  `).join("");
-  exportPDF("Организации", `
-    <table>
-      <thead><tr><th>Название</th><th>Контакт</th><th>Лицензии</th><th>Истекает</th><th>Статус</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `);
+const exportAiUsageDOCX = async (teachers: Teacher[]) => {
+  try {
+    const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
+    const sorted = [...teachers].sort((a, b) => b.tokenUsage - a.tokenUsage);
+    const doc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({ text: "AI Usage Report", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: ["#", "Учитель", "Школа", "IP", "Токены", "Статус"].map(h => new TableCell({
+                  children: [new Paragraph({ text: h, bold: true })],
+                  shading: { fill: "f3f4f6" }
+                }))
+              }),
+              ...sorted.map((t, i) => new TableRow({
+                children: [
+                  String(i + 1), t.name, t.school, t.ip, t.tokenUsage.toLocaleString(), t.status
+                ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
+              }))
+            ]
+          })
+        ]
+      }]
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `ai_usage_report_${new Date().toISOString().slice(0, 10)}.docx`);
+    toast.success("AI Usage report DOCX downloaded!");
+  } catch (e) { console.error(e); }
 };
 
-const exportAiUsagePDF = (teachers: Teacher[]) => {
-  const sorted = [...teachers].sort((a, b) => b.tokenUsage - a.tokenUsage);
-  const rows = sorted.map((t, i) => `
-    <tr style="${t.tokenUsage > 5000 ? "background:#fff7ed" : ""}">
-      <td>#${i + 1}</td>
-      <td>${t.name}</td>
-      <td>${t.school}</td>
-      <td style="font-family:monospace">${t.ip}</td>
-      <td style="${t.tokenUsage > 5000 ? "color:#b91c1c;font-weight:bold" : ""}">${t.tokenUsage.toLocaleString()}</td>
-      <td><span class="badge ${t.status}">${t.status}</span></td>
-    </tr>
-  `).join("");
-  exportPDF("AI Usage — Топ пользователей", `
-    <table>
-      <thead><tr><th>#</th><th>Учитель</th><th>Школа</th><th>IP</th><th>Токены</th><th>Статус</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `);
+const exportPaymentsDOCX = async (payments: Payment[]) => {
+  try {
+    const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
+    const doc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({ text: "Payments History Report", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: ["Организация", "Сумма", "Дата", "Метод", "Статус", "Период"].map(h => new TableCell({
+                  children: [new Paragraph({ text: h, bold: true })],
+                  shading: { fill: "f3f4f6" }
+                }))
+              }),
+              ...payments.map(p => new TableRow({
+                children: [
+                  p.org, `$${p.amount}`, new Date(p.date).toLocaleDateString("ru-RU"), p.method, p.status, p.period
+                ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
+              }))
+            ]
+          })
+        ]
+      }]
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `payments_report_${new Date().toISOString().slice(0, 10)}.docx`);
+    toast.success("Payments report DOCX downloaded!");
+  } catch (e) { console.error(e); }
 };
 
-const exportPaymentsPDF = (payments: Payment[]) => {
-  const rows = payments.map(p => `
-    <tr>
-      <td>${p.org}</td>
-      <td><b>$${p.amount}</b></td>
-      <td>${new Date(p.date).toLocaleDateString("ru-RU")}</td>
-      <td>${p.method}</td>
-      <td><span class="badge ${p.status}">${p.status}</span></td>
-      <td>${p.period}</td>
-    </tr>
-  `).join("");
-  exportPDF("История платежей", `
-    <table>
-      <thead><tr><th>Организация</th><th>Сумма</th><th>Дата</th><th>Метод</th><th>Статус</th><th>Период</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `);
+const exportAuditLogDOCX = async (logs: any[]) => {
+  try {
+    const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
+    const doc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({ text: "Audit Log Report", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: ["Действие", "Объект", "Время"].map(h => new TableCell({
+                  children: [new Paragraph({ text: h, bold: true })],
+                  shading: { fill: "f3f4f6" }
+                }))
+              }),
+              ...logs.map(l => new TableRow({
+                children: [l.action, l.target, l.time].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
+              }))
+            ]
+          })
+        ]
+      }]
+    });
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `audit_log_${new Date().toISOString().slice(0, 10)}.docx`);
+    toast.success("Audit Log DOCX downloaded!");
+  } catch (e) { console.error(e); }
 };
 
 // ─── Reusable Sub-components ──────────────────────────────────────────────────
@@ -333,7 +385,7 @@ const ExportMenu = ({
               onClick={() => { onPDF(); setOpen(false); }}
               className="w-full text-left px-3 py-2 rounded-lg text-sm font-sans hover:bg-muted transition-colors flex items-center gap-2"
             >
-              <FileText className="w-3.5 h-3.5 text-destructive" /> Печать / PDF
+              <FileText className="w-3.5 h-3.5 text-destructive" /> Скачать DOCX
             </button>
           </motion.div>
         )}
@@ -392,10 +444,7 @@ const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { tea
             ["Действие", "Объект", "Время", "Тип"],
             auditLogs.map(l => [l.action, l.target, l.time, l.type])
           )}
-          onPDF={() => {
-            const rows = auditLogs.map(l => `<tr><td>${l.action}</td><td>${l.target}</td><td>${l.time}</td></tr>`).join("");
-            exportPDF("Журнал действий", `<table><thead><tr><th>Действие</th><th>Объект</th><th>Время</th></tr></thead><tbody>${rows}</tbody></table>`);
-          }}
+          onPDF={() => exportAuditLogDOCX(auditLogs)}
         />
       </div>
       <div className="space-y-0">
@@ -464,7 +513,7 @@ const TeachersView = ({
         </Button>
         <ExportMenu
           onCSV={() => exportTeachersCSV(teachers)}
-          onPDF={() => exportTeachersPDF(teachers)}
+          onPDF={() => exportTeachersDOCX(teachers)}
         />
         <Button className="gap-2 rounded-xl font-sans">
           <Plus className="w-4 h-4" /> Добавить учителя
@@ -591,7 +640,7 @@ const OrgsView = ({ orgs, isLoading }: { orgs: Org[]; isLoading: boolean }) => (
     <div className="flex justify-end gap-2">
       <ExportMenu
         onCSV={() => exportOrgsCSV(orgs)}
-        onPDF={() => exportOrgsPDF(orgs)}
+        onPDF={() => exportOrgsDOCX(orgs)}
       />
       <Button className="gap-2 rounded-xl font-sans"><Plus className="w-4 h-4" /> Новая организация</Button>
     </div>
@@ -724,7 +773,7 @@ const AiMonitorView = ({
           </div>
           <ExportMenu
             onCSV={() => exportAiUsageCSV(teachers)}
-            onPDF={() => exportAiUsagePDF(teachers)}
+            onPDF={() => exportAiUsageDOCX(teachers)}
           />
         </div>
         <div className="overflow-x-auto">
@@ -855,7 +904,7 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
           <h3 className="font-semibold text-foreground">{t("adminPaymentHistory")}</h3>
           <ExportMenu
             onCSV={() => exportPaymentsCSV(payments)}
-            onPDF={() => exportPaymentsPDF(payments)}
+            onPDF={() => exportPaymentsDOCX(payments)}
           />
         </div>
         <div className="overflow-x-auto">

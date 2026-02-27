@@ -13,6 +13,8 @@ import { useLang } from "@/context/LangContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { generateCrosswordLayout, CrosswordGrid } from "@/lib/crossword";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
+import { EmptyState } from "@/components/common/EmptyState";
 
 type GeneratorType = "math" | "crossword" | "quiz" | "assignment";
 
@@ -392,14 +394,15 @@ const Generator = () => {
           return new TableRow({
             children: rowArr.map((cell, c) => {
               const wordStart = crosswordData.words.find(w => w.row === r && w.col === c);
+              const cellPct = Math.floor(100 / crosswordData.width);
               return new TableCell({
                 borders: {
-                  top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
-                  bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
-                  left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
-                  right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" }
+                  top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 0, color: "000000" },
+                  bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 0, color: "000000" },
+                  left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 0, color: "000000" },
+                  right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 0, color: "000000" }
                 },
-                width: { size: 450, type: WidthType.DXA },
+                width: { size: cellPct, type: WidthType.PERCENTAGE },
                 children: [
                   new Paragraph({
                     children: [
@@ -415,7 +418,7 @@ const Generator = () => {
                   })
                 ],
                 shading: {
-                  fill: cell ? "FFFFFF" : "333333"
+                  fill: "FFFFFF"
                 },
                 verticalAlign: VerticalAlign.TOP
               });
@@ -446,7 +449,7 @@ const Generator = () => {
             new Table({
               rows: rows,
               alignment: AlignmentType.CENTER,
-              width: { size: 100, type: WidthType.AUTO },
+              width: { size: 100, type: WidthType.PERCENTAGE },
             }),
             new Paragraph({ text: "", spacing: { before: 400 } }),
 
@@ -496,16 +499,18 @@ const Generator = () => {
             }),
             new Table({
               alignment: AlignmentType.CENTER,
+              width: { size: 100, type: WidthType.PERCENTAGE },
               rows: crosswordData.grid.map((rowArr, r) => new TableRow({
                 children: rowArr.map((cell, c) => {
+                  const answerCellPct = Math.floor(100 / crosswordData.width);
                   return new TableCell({
                     borders: {
-                      top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
-                      bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
-                      left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" },
-                      right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 1, color: "000000" }
+                      top: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 0, color: "000000" },
+                      bottom: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 0, color: "000000" },
+                      left: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 0, color: "000000" },
+                      right: { style: cell ? BorderStyle.SINGLE : BorderStyle.NONE, size: cell ? 4 : 0, color: "000000" }
                     },
-                    width: { size: 450, type: WidthType.DXA },
+                    width: { size: answerCellPct, type: WidthType.PERCENTAGE },
                     children: [
                       new Paragraph({
                         children: [
@@ -514,7 +519,7 @@ const Generator = () => {
                         alignment: AlignmentType.CENTER
                       })
                     ],
-                    shading: { fill: cell ? "FFFFFF" : "333333" }
+                    shading: { fill: "FFFFFF" }
                   });
                 })
               }))
@@ -1243,19 +1248,20 @@ const Generator = () => {
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {crosswordTopic}</span>
                       </div>
                       <h2 className="text-xl font-bold font-serif mb-6 text-center">Crossword Answer Key</h2>
-                      <div className="flex-1 flex items-center justify-center p-10">
+                      <div className="flex-1 flex items-center justify-center px-4 py-6">
                         <div
-                          className="grid gap-0 border-2 border-gray-800 bg-gray-800"
+                          className="grid gap-0 w-full"
                           style={{
                             gridTemplateColumns: `repeat(${crosswordData.width}, 1fr)`,
-                            width: "fit-content"
                           }}
                         >
                           {crosswordData.grid.map((row, r) =>
                             row.map((cell, c) => (
                               <div
                                 key={`${r}-${c}`}
-                                className={`w-8 h-8 flex items-center justify-center text-sm font-bold ${cell ? "bg-white text-gray-900" : "bg-gray-800"
+                                className={`aspect-square flex items-center justify-center text-sm font-bold ${cell
+                                  ? "bg-white text-gray-900 border border-gray-400"
+                                  : "bg-transparent"
                                   }`}
                               >
                                 {cell}
@@ -1287,12 +1293,11 @@ const Generator = () => {
                         </div>
                       </div>
 
-                      <div className="flex gap-8 items-start mb-8 print:block">
+                      <div className="flex flex-col gap-6 items-stretch mb-8">
                         <div
-                          className="grid gap-0 border-2 border-gray-800 bg-gray-800 shrink-0 mx-auto"
+                          className="grid gap-0 shrink-0 w-full px-1"
                           style={{
                             gridTemplateColumns: `repeat(${crosswordData.width}, 1fr)`,
-                            width: "fit-content"
                           }}
                         >
                           {crosswordData.grid.map((row, r) =>
@@ -1301,10 +1306,12 @@ const Generator = () => {
                               return (
                                 <div
                                   key={`${r}-${c}`}
-                                  className={`relative w-8 h-8 border-[0.5px] border-gray-300 flex items-center justify-center ${cell ? "bg-white" : "bg-gray-800 border-gray-800"
+                                  className={`relative flex items-center justify-center aspect-square ${cell
+                                    ? "bg-white border border-gray-400"
+                                    : "bg-transparent"
                                     }`}
                                 >
-                                  {wordStart && (
+                                  {wordStart && cell && (
                                     <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-gray-500 leading-none">
                                       {wordStart.number}
                                     </span>

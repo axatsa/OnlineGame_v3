@@ -13,12 +13,18 @@ import {
   ArrowUpRight, ArrowDownRight, WifiOff, Wifi,
   CreditCard, Receipt, BarChart3, Loader2, Globe
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useClass } from "@/context/ClassContext";
 import { useLang } from "@/context/LangContext";
 import * as docx from "docx";
 import { saveAs } from "file-saver";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
+import { EmptyState } from "@/components/common/EmptyState";
+import { Breadcrumbs } from "@/components/common/Breadcrumbs";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Section = "dashboard" | "teachers" | "organizations" | "ai-monitor" | "finances" | "system";
@@ -1104,11 +1110,6 @@ const SystemView = ({
   </div>
 );
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-import { TableSkeleton } from "@/components/TableSkeleton";
-import { EmptyState } from "@/components/EmptyState";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { useLang } from "@/context/LangContext";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AdminPanel = () => {

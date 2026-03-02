@@ -130,21 +130,23 @@ const Generator = () => {
     setAssignmentData(null);
 
     try {
-      const langInstruction = lang === "uz" ? "in Uzbek language" : "in Russian language";
+      const langLabel = lang === "uz" ? "Uzbek" : "Russian";
 
       if (genType === "math") {
         const payload = {
-          topic: `${mathTopic} (${langInstruction})`,
+          topic: mathTopic,
           count: parseInt(questionCount) || 10,
           difficulty: difficulty,
+          language: langLabel,
           class_id: activeClassId
         };
         const res = await api.post("/generate/math", payload);
         setGeneratedProblems(res.data.problems);
       } else if (genType === "quiz") {
         const payload = {
-          topic: `${quizTopic} (${langInstruction})`,
+          topic: quizTopic,
           count: parseInt(quizCount) || 5,
+          language: langLabel,
           class_id: activeClassId
         };
         const res = await api.post("/generate/quiz", payload);
@@ -154,8 +156,9 @@ const Generator = () => {
         const finalSubject = assignSubject.trim() || "General";
         const payload = {
           subject: finalSubject,
-          topic: `${assignTopic} (${langInstruction})`,
+          topic: assignTopic,
           count: parseInt(assignCount) || 5,
+          language: langLabel,
           class_id: activeClassId
         };
         const res = await api.post("/generate/assignment", payload);

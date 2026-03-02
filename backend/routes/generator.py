@@ -13,12 +13,14 @@ router = APIRouter(prefix="/api/generate", tags=["generator"])
 class QuizRequest(BaseModel):
     topic: str
     count: int
+    language: str = "Russian"
     class_id: Optional[int] = None
 
 class AssignmentRequest(BaseModel):
     subject: str
     topic: str
     count: int
+    language: str = "Russian"
     class_id: Optional[int] = None
 
 def log_usage(db: Session, user_id: int, feature: str, tokens: int):
@@ -38,7 +40,7 @@ def get_class_context(db: Session, class_id: Optional[int]):
 def gen_math(req: MathRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     grade, context = get_class_context(db, req.class_id)
     
-    problems, tokens = generate_math_problems(req.topic, req.count, req.difficulty, grade, context)
+    problems, tokens = generate_math_problems(req.topic, req.count, req.difficulty, grade, context, req.language)
     
     if problems is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -66,7 +68,7 @@ def gen_crossword(req: CrosswordRequest, db: Session = Depends(get_db), user: Us
 def gen_quiz(req: QuizRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     grade, context = get_class_context(db, req.class_id)
     
-    questions, tokens = generate_quiz(req.topic, req.count, grade, context)
+    questions, tokens = generate_quiz(req.topic, req.count, grade, context, req.language)
     
     if questions is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -78,13 +80,14 @@ def gen_quiz(req: QuizRequest, db: Session = Depends(get_db), user: User = Depen
 
 class JeopardyRequest(BaseModel):
     topic: str
+    language: str = "Russian"
     class_id: Optional[int] = None
 
 @router.post("/jeopardy")
 def gen_jeopardy(req: JeopardyRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     grade, context = get_class_context(db, req.class_id)
     
-    data, tokens = generate_jeopardy(req.topic, grade, context)
+    data, tokens = generate_jeopardy(req.topic, grade, context, req.language)
     
     if data is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -98,7 +101,7 @@ def gen_jeopardy(req: JeopardyRequest, db: Session = Depends(get_db), user: User
 def gen_assignment(req: AssignmentRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     grade, context = get_class_context(db, req.class_id)
     
-    assignment, tokens = generate_assignment(req.subject, req.topic, req.count, grade, context)
+    assignment, tokens = generate_assignment(req.subject, req.topic, req.count, grade, context, req.language)
     
     if assignment is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")

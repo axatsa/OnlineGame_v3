@@ -22,7 +22,7 @@ class StorybookRequest(BaseModel):
 
 
 @router.post("/generate")
-def gen_storybook(
+async def gen_storybook(
     req: StorybookRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -37,7 +37,7 @@ def gen_storybook(
         )
 
     try:
-        result = generate_storybook(
+        result = await generate_storybook(
             title=req.title,
             topic=req.topic,
             age_group=req.age_group,

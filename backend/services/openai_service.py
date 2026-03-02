@@ -3,15 +3,18 @@ import re
 from openai import OpenAI
 from config import OPENAI_API_KEY, OPENAI_MODEL
 import logging
-
 logger = logging.getLogger(__name__)
 from typing import List, Dict, Any, Tuple
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-SYSTEM_PROMPT = "You are a helpful education assistant. Output valid JSON only."
-
-
+def get_system_prompt(language: str) -> str:
+    """Returns a system prompt that enforces content in the target language."""
+    return (
+        f"You are a helpful education assistant. All content MUST be in {language}. "
+        "Header keys (q, a, title, word, clue, options, answer, categories, name, questions, points) are reserved, "
+        "but their values must be translated. Output valid JSON only."
+    )
 
 def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple[Any, int]:
     """Helper to call OpenAI and return (content, total_tokens)"""
@@ -26,38 +29,33 @@ def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple
         
         # Robust JSON extraction
         try:
-            # 1. Try parsing directly
             return json.loads(content), usage
         except json.JSONDecodeError:
             pass
-
-        # 2. Try extracting from markdown code blocks
+            
         json_match = re.search(r"```(?:json)?\s*(.*?)```", content, re.DOTALL)
         if json_match:
             try:
                 return json.loads(json_match.group(1).strip()), usage
             except json.JSONDecodeError:
                 pass
-
-        # 3. Try finding the first structure (array or object)
-        # Look for [ ... ] or { ... }
+                
         structure_match = re.search(r"(\{.*\}|\[.*\])", content, re.DOTALL)
         if structure_match:
             try:
                 return json.loads(structure_match.group(1).strip()), usage
             except json.JSONDecodeError:
                 pass
-        
+                
         logger.error(f"Failed to parse JSON from content: {content[:100]}...")
         return None, usage
-
     except Exception as e:
         logger.error(f"OpenAI Error: {e}")
         return None, 0
 
-def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "") -> Tuple[List[Dict[str, str]], int]:
+def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[List[Dict[str, str]], int]:
     user_prompt = f"""
-    Generate {count} math problems.
+    Generate {count} math problems in {language}.
     Topic: {topic}
     Difficulty: {difficulty}
     Grade Level: {grade}
@@ -67,11 +65,11 @@ def generate_math_problems(topic: str, count: int, difficulty: str, grade: str =
     Example: [{{"q": "2 + 2 = ?", "a": "4"}}, {{"q": "Solve for x: 2x = 10", "a": "x = 5"}}]
     """
     return _get_completion([
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
 
-def generate_crossword_words(topic: str, count: int, language: str, grade: str = "", context: str = "") -> tuple:
+def generate_crossword_words(topic: str, count: int, language: str = "Russian", grade: str = "", context: str = "") -> tuple:
     user_prompt = f"""
     Generate exactly {count} words and clues related to the topic "{topic}" in {language}.
     Grade Level: {grade}
@@ -88,14 +86,13 @@ def generate_crossword_words(topic: str, count: int, language: str, grade: str =
     [{{"word": "APPLE", "clue": "A red or green fruit"}}]
     """
     return _get_completion([
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
 
-def generate_quiz(topic: str, count: int, grade: str = "", context: str = "") -> Tuple[List[Dict], int]:
-    """For Tug of War and Jeopardy"""
+def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[List[Dict], int]:
     user_prompt = f"""
-    Generate {count} multiple-choice quiz questions.
+    Generate {count} multiple-choice quiz questions in {language}.
     Topic: {topic}
     Grade: {grade}
     Context: {context}
@@ -110,14 +107,13 @@ def generate_quiz(topic: str, count: int, grade: str = "", context: str = "") ->
     }}
     """
     return _get_completion([
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
 
-def generate_assignment(subject: str, topic: str, count: int, grade: str = "", context: str = "") -> Tuple[Dict, int]:
-    """Generates a full structured assignment"""
+def generate_assignment(subject: str, topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[Dict, int]:
     user_prompt = f"""
-    Create a detailed school assignment/worksheet.
+    Create a detailed school assignment/worksheet in {language}.
     Subject: {subject}
     Topic: {topic}
     Grade: {grade}
@@ -144,13 +140,13 @@ def generate_assignment(subject: str, topic: str, count: int, grade: str = "", c
     Make sure to provide 4 options for each question and the correct answer.
     """
     return _get_completion([
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
-def generate_jeopardy(topic: str, grade: str = "", context: str = "") -> Tuple[Dict, int]:
-    """Generates a full Jeopardy game board"""
+
+def generate_jeopardy(topic: str, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[Dict, int]:
     user_prompt = f"""
-    Create a Jeopardy game board.
+    Create a Jeopardy game board in {language}.
     Topic: {topic}
     Grade: {grade}
     Context: {context}
@@ -177,6 +173,6 @@ def generate_jeopardy(topic: str, grade: str = "", context: str = "") -> Tuple[D
     }}
     """
     return _get_completion([
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])

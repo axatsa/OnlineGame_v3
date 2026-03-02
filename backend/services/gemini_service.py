@@ -9,6 +9,7 @@ SDK   : google-genai (pip install google-genai)
 from google import genai
 from google.genai import types as genai_types
 
+import asyncio
 import base64
 import json
 import logging
@@ -85,7 +86,7 @@ def _image_prompt(illustration_prompt: str, age_group: str) -> str:
 
 # ─── Main generator ───────────────────────────────────────────────────────────
 
-def generate_storybook(
+async def generate_storybook(
     title: Optional[str] = "",
     topic: str = "",
     age_group: str = "7-10",
@@ -96,7 +97,7 @@ def generate_storybook(
     """
     Two-step generation:
       1. Generate 10-page story text with gemini-2.0-flash
-      2. Generate 10 illustrations (tries gemini-2.0-flash-exp first)
+      2. Generate 10 illustrations in parallel (tries gemini-2.0-flash-exp first)
     Returns dict with pages list, each page has image_base64 (or None).
     """
     if not gemini_api_key:
@@ -108,7 +109,11 @@ def generate_storybook(
     # ── STEP 1: Generate story text ──────────────────────────────────────
     logger.info("Generating story text with gemini-2.0-flash...")
     try:
-        story_response = client.models.generate_content(
+        # NOTE: Model.generate_content is synchronous in some GenAI versions, 
+        # but calling it in an executor ensures it doesn't block the loop.
+        # Alternatively, use generate_content_async if using the async client.
+        story_response = await asyncio.to_thread(
+            client.models.generate_content,
             model="gemini-2.0-flash",
             contents=_story_prompt(title, topic, age_group, language, genre),
             config=genai_types.GenerateContentConfig(
@@ -132,28 +137,33 @@ def generate_storybook(
 
     logger.info(f"Story parsed: {len(story_data['pages'])} pages")
 
-    # ── STEP 2: Generate illustrations ───────────────────────────────────
-    pages_with_images = []
+    # ── STEP 2: Generate illustrations in parallel ───────────────────────
+    logger.info(f"Generating 10 images in parallel...")
+    tasks = []
     for i, page in enumerate(story_data["pages"]):
         prompt = _image_prompt(
             page.get("illustration_prompt", f"Scene from page {page['page_number']}"),
             age_group,
         )
-        logger.info(f"Generating image {i+1}/10...")
-        img_b64 = _generate_image(client, prompt)
-        page["image_base64"] = img_b64   # None if all models failed
-        pages_with_images.append(page)
+        tasks.append(_generate_image(client, prompt))
 
-    story_data["pages"] = pages_with_images
+    # Run all image generations concurrently
+    image_results = await asyncio.gather(*tasks)
+
+    for i, img_b64 in enumerate(image_results):
+        story_data["pages"][i]["image_base64"] = img_b64
+
     return story_data
 
 
-def _generate_image(client: genai.Client, prompt: str) -> Optional[str]:
+async def _generate_image(client: genai.Client, prompt: str) -> Optional[str]:
     """Try each image model in order. Returns base64 PNG string or None."""
     for model_name in IMAGE_MODELS:
         try:
             logger.info(f"Attempting image generation with {model_name}...")
-            response = client.models.generate_content(
+            # Use to_thread for the synchronous SDK calls
+            response = await asyncio.to_thread(
+                client.models.generate_content,
                 model=model_name,
                 contents=prompt,
                 config=genai_types.GenerateContentConfig(

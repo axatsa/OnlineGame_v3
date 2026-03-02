@@ -47,6 +47,7 @@ class MathRequest(BaseModel):
     topic: str
     count: int
     difficulty: str
+    language: str = "Russian"
     class_id: Optional[int] = None
 
 class CrosswordRequest(BaseModel):

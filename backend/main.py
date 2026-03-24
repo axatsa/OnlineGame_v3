@@ -10,11 +10,11 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Online Game API")
 
 # CORS Configuration
+# В будущем можно добавить IP адрес сервера сюда или в переменную окружения
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://bekhruzabdullaev.uz",
-    "http://bekhruzabdullaev.uz:8090",
+    "*", # Разрешаем все для временного запуска "на цифрах"
 ]
 
 app.add_middleware(

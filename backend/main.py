@@ -1,5 +1,9 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from rate_limiter import limiter
 from config import DATABASE_URL
 from database import engine, Base
 from routes import auth, classes, generator, admin, resources, library
@@ -7,14 +11,27 @@ from routes import auth, classes, generator, admin, resources, library
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Online Game API")
+app = FastAPI(title="ClassPlay API")
+
+# Rate limit exceeded handler — возвращает 429 с понятным сообщением
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "rate_limit_exceeded",
+            "message": "Too many requests. Please slow down and try again in a minute.",
+            "detail": str(exc.detail),
+        }
+    )
 
 # CORS Configuration
-# В будущем можно добавить IP адрес сервера сюда или в переменную окружения
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "*", # Разрешаем все для временного запуска "на цифрах"
+    "*",  # Разрешаем все для временного запуска
 ]
 
 app.add_middleware(

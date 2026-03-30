@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -11,8 +11,14 @@ class User(Base):
     hashed_password = Column(String)
     full_name = Column(String, nullable=True)
     role = Column(String, default="teacher")  # 'super_admin' or 'teacher'
-    
+
+    # Token quota tracking
+    tokens_used_this_month = Column(Integer, default=0)
+    tokens_limit = Column(Integer, default=100000)  # -1 = unlimited
+    tokens_reset_at = Column(DateTime, nullable=True)  # when quota was last reset
+
     token_usage = relationship("TokenUsage", back_populates="user")
+
 
 class TokenUsage(Base):
     __tablename__ = "token_usage"

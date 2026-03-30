@@ -14,3 +14,9 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 10080))  # 7 дней
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+# Rate limiting (requests per hour per user for AI endpoints)
+RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", 60))
+
+# Token quota (default monthly limit per user, -1 = unlimited)
+DEFAULT_TOKEN_LIMIT = int(os.getenv("DEFAULT_TOKEN_LIMIT", 100000))

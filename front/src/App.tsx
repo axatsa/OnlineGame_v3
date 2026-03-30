@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ClassProvider } from "./context/ClassContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import { LangProvider } from "./context/LangContext";
 import Login from "./pages/auth/Login";
 import AdminPanel from "./pages/dashboard/AdminPanel";
@@ -23,6 +24,7 @@ import WordSearch from "./pages/games/WordSearch";
 import Crossword from "./pages/games/Crossword";
 import Profile from "./pages/dashboard/Profile";
 import Library from "./pages/library/Library";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +33,7 @@ const AuthListener = () => {
   const navigate = useNavigate();
   useEffect(() => {
     const handleAuthError = () => {
-      navigate("/");
+      navigate("/login");
     };
     window.addEventListener("auth:unauthorized", handleAuthError);
     return () => window.removeEventListener("auth:unauthorized", handleAuthError);
@@ -50,7 +52,8 @@ const App = () => (
           <LangProvider>
             <ClassProvider>
               <Routes>
-                <Route path="/" element={<Login />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
 
                 {/* Admin Routes */}
                 <Route path="/admin" element={
@@ -72,12 +75,16 @@ const App = () => (
                 } />
                 <Route path="/generator" element={
                   <ProtectedRoute allowedRoles={["teacher"]}>
-                    <Generator />
+                    <ErrorBoundary fallbackTitle="Generator error">
+                      <Generator />
+                    </ErrorBoundary>
                   </ProtectedRoute>
                 } />
                 <Route path="/games" element={
                   <ProtectedRoute allowedRoles={["teacher"]}>
-                    <GamesLibrary />
+                    <ErrorBoundary fallbackTitle="Games library error">
+                      <GamesLibrary />
+                    </ErrorBoundary>
                   </ProtectedRoute>
                 } />
                 <Route path="/tools" element={
@@ -97,12 +104,12 @@ const App = () => (
                 } />
 
                 {/* Game Routes - Also Protected for Teacher */}
-                <Route path="/games/tug-of-war" element={<ProtectedRoute allowedRoles={["teacher"]}><TugOfWar /></ProtectedRoute>} />
-                <Route path="/games/jeopardy" element={<ProtectedRoute allowedRoles={["teacher"]}><Jeopardy /></ProtectedRoute>} />
-                <Route path="/games/memory" element={<ProtectedRoute allowedRoles={["teacher"]}><MemoryMatrix /></ProtectedRoute>} />
-                <Route path="/games/scales" element={<ProtectedRoute allowedRoles={["teacher"]}><BalanceScales /></ProtectedRoute>} />
-                <Route path="/games/word-search" element={<ProtectedRoute allowedRoles={["teacher"]}><WordSearch /></ProtectedRoute>} />
-                <Route path="/games/crossword" element={<ProtectedRoute allowedRoles={["teacher"]}><Crossword /></ProtectedRoute>} />
+                <Route path="/games/tug-of-war" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Tug of War error"><TugOfWar /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/jeopardy" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Jeopardy error"><Jeopardy /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/memory" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Memory game error"><MemoryMatrix /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/scales" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Balance scales error"><BalanceScales /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/word-search" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Word search error"><WordSearch /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/crossword" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Crossword error"><Crossword /></ErrorBoundary></ProtectedRoute>} />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>

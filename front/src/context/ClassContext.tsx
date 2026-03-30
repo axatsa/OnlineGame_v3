@@ -30,7 +30,17 @@ const ClassContext = createContext<ClassContextType | null>(null);
 
 export function ClassProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [activeClassId, setActiveClassId] = useState<string | number | null>(null);
+
+  // Restore activeClassId from localStorage to avoid null on page reload
+  const [activeClassId, setActiveClassIdState] = useState<string | number | null>(() => {
+    const saved = localStorage.getItem("classplay_active_class_id");
+    return saved ? (isNaN(Number(saved)) ? saved : Number(saved)) : null;
+  });
+
+  const setActiveClassId = (id: string | number) => {
+    localStorage.setItem("classplay_active_class_id", String(id));
+    setActiveClassIdState(id);
+  };
 
   // Fetch classes
   const { data: classes = [], isLoading } = useQuery({
@@ -49,12 +59,13 @@ export function ClassProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Set initial active class
+  // Set initial active class — prefer saved id, fallback to first class
   useEffect(() => {
     if (classes.length > 0 && !activeClassId) {
       setActiveClassId(classes[0].id);
     }
   }, [classes, activeClassId]);
+
 
   const activeClass = classes.find((c: ClassGroup) => c.id === activeClassId) ?? null;
 

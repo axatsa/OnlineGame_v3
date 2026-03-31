@@ -1,10 +1,13 @@
+import asyncio
+import base64
 import json
 import re
+import traceback
 from openai import OpenAI
 from config import OPENAI_API_KEY, OPENAI_MODEL
 import logging
 logger = logging.getLogger(__name__)
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -176,3 +179,159 @@ def generate_jeopardy(topic: str, grade: str = "", context: str = "", language: 
         {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
+
+
+# ─── Storybook generation (OpenAI fallback) ──────────────────────────────────
+
+_STORY_SYSTEM_OAI = (
+    "You are an award-winning children's storybook author. "
+    "You write warm, engaging, imaginative stories with a natural narrative arc. "
+    "Output ONLY valid JSON, no markdown fences, no extra text."
+)
+
+
+def _story_prompt_oai(title, topic, age_group, language, genre) -> str:
+    title_instruction = f'Title: "{title}"' if title else "Generate a creative and catchy title for this story."
+    return f"""Write a children's {genre} storybook in {language}.
+
+{title_instruction}
+Topic / educational theme: {topic}
+Target age: {age_group} years old
+Number of story pages: 10
+Words per page: exactly 60-70 words (count carefully!)
+
+Narrative requirements:
+- Page 1: introduce characters and setting
+- Pages 2-8: story unfolds with a small challenge or adventure
+- Page 9: problem is resolved
+- Page 10: warm, hopeful ending that reinforces the topic/theme
+- Language: {language} (all story text must be in {language})
+- Style: simple sentences, vivid imagery, child-friendly vocabulary
+
+For each page also include an illustration_prompt in English (max 25 words):
+  Format: "Children's storybook illustration, [scene description], watercolor style, soft warm colors, detailed."
+
+Return ONLY this JSON (no markdown, no extra text):
+{{
+  "title": "{title if title else 'Generated Title'}",
+  "description": "One engaging summary sentence in {language}",
+  "age_group": "{age_group}",
+  "genre": "{genre}",
+  "language": "{language}",
+  "pages": [
+    {{
+      "page_number": 1,
+      "text": "Story text in {language}, exactly 60-70 words.",
+      "illustration_prompt": "Children's storybook illustration, [scene], watercolor style, soft warm colors, detailed."
+    }}
+  ]
+}}"""
+
+
+def _parse_json_oai(text: str) -> Optional[dict]:
+    """Несколько стратегий извлечения JSON из ответа модели."""
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    m = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+    m = re.search(r"(\{.*\})", text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+    return None
+
+
+async def _generate_dalle_image(oai_client: OpenAI, prompt: str) -> Optional[str]:
+    """Генерирует одну иллюстрацию через DALL-E 3, возвращает base64 или None."""
+    full_prompt = (
+        f"{prompt} "
+        "Children's storybook, soft watercolor illustration, warm pastel palette, "
+        "professional children's book art, highly detailed, no text, no words, no letters."
+    )
+    try:
+        response = await asyncio.to_thread(
+            oai_client.images.generate,
+            model="dall-e-3",
+            prompt=full_prompt[:4000],
+            size="1024x1024",
+            quality="standard",
+            response_format="b64_json",
+            n=1,
+        )
+        b64 = response.data[0].b64_json
+        logger.info("DALL-E 3 image generated successfully")
+        return b64
+    except Exception as e:
+        logger.warning(f"DALL-E 3 image generation failed: {e}")
+        traceback.print_exc()
+        return None
+
+
+async def generate_storybook(
+    title: str = "",
+    topic: str = "",
+    age_group: str = "7-10",
+    language: str = "Russian",
+    genre: str = "fairy tale",
+    openai_api_key: str = "",
+) -> Optional[dict]:
+    """
+    Генерирует сторибук через OpenAI (fallback при недоступности Gemini):
+      1. Текст 10 страниц — gpt-4o-mini
+      2. 10 иллюстраций параллельно — DALL-E 3
+    Возвращает dict с pages (каждая страница содержит image_base64 или None).
+    """
+    if not openai_api_key:
+        logger.error("OPENAI_API_KEY is not set")
+        return None
+
+    oai_client = OpenAI(api_key=openai_api_key)
+
+    # ── Шаг 1: Генерация текста ──────────────────────────────────────────────
+    logger.info("OpenAI fallback: generating story text with gpt-4o-mini...")
+    try:
+        response = await asyncio.to_thread(
+            oai_client.chat.completions.create,
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": _STORY_SYSTEM_OAI},
+                {"role": "user", "content": _story_prompt_oai(title, topic, age_group, language, genre)},
+            ],
+            temperature=0.9,
+            max_tokens=4096,
+        )
+        raw = response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"OpenAI story generation failed: {e}")
+        return None
+
+    story_data = _parse_json_oai(raw)
+    if not story_data or "pages" not in story_data:
+        logger.error("Could not parse story JSON from OpenAI response")
+        return None
+
+    logger.info(f"OpenAI story parsed: {len(story_data['pages'])} pages")
+
+    # ── Шаг 2: Параллельная генерация иллюстраций ────────────────────────────
+    logger.info("OpenAI fallback: generating 10 illustrations with DALL-E 3...")
+    tasks = [
+        _generate_dalle_image(
+            oai_client,
+            page.get("illustration_prompt", f"Scene from page {page['page_number']}"),
+        )
+        for page in story_data["pages"]
+    ]
+    image_results = await asyncio.gather(*tasks)
+
+    for i, img_b64 in enumerate(image_results):
+        story_data["pages"][i]["image_base64"] = img_b64
+
+    return story_data

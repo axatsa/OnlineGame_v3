@@ -14,10 +14,33 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 def get_system_prompt(language: str) -> str:
     """Returns a system prompt that enforces content in the target language."""
     return (
-        f"You are a helpful education assistant. All content MUST be in {language}. "
-        "Header keys (q, a, title, word, clue, options, answer, categories, name, questions, points) are reserved, "
-        "but their values must be translated. Output valid JSON only."
+        f"You are an expert educational content creator. "
+        f"CRITICAL RULE: ALL generated text values MUST be written in {language}. "
+        f"This includes questions, answers, clues, titles, descriptions, options — everything. "
+        f"JSON key names stay in English (q, a, title, word, clue, options, answer, categories, "
+        f"name, questions, points) but every VALUE must be in {language}. "
+        f"Do NOT mix languages. Output ONLY valid JSON, no markdown fences, no extra text."
     )
+
+def build_class_context_block(grade: str, context: str) -> str:
+    if not grade and not context:
+        return ""
+
+    parts = []
+    if grade:
+        parts.append(
+            f"TARGET GRADE: {grade}. "
+            f"You MUST calibrate difficulty, vocabulary, and examples "
+            f"exactly for grade {grade} students. "
+            f"Do not use concepts they have not yet studied."
+        )
+    if context:
+        parts.append(
+            f"CLASS PROFILE: {context}. "
+            f"You MUST incorporate this profile — adapt themes, examples, "
+            f"and complexity to match this specific class."
+        )
+    return "\n".join(parts)
 
 def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple[Any, int]:
     """Helper to call OpenAI and return (content, total_tokens)"""
@@ -61,8 +84,7 @@ def generate_math_problems(topic: str, count: int, difficulty: str, grade: str =
     Generate {count} math problems in {language}.
     Topic: {topic}
     Difficulty: {difficulty}
-    Grade Level: {grade}
-    Class Context/Description: {context} (Use this style/theme if applicable)
+    {build_class_context_block(grade, context)}
     
     Return ONLY a JSON array of objects with 'q' and 'a' keys.
     Example: [{{"q": "2 + 2 = ?", "a": "4"}}, {{"q": "Solve for x: 2x = 10", "a": "x = 5"}}]
@@ -75,8 +97,7 @@ def generate_math_problems(topic: str, count: int, difficulty: str, grade: str =
 def generate_crossword_words(topic: str, count: int, language: str = "Russian", grade: str = "", context: str = "") -> tuple:
     user_prompt = f"""
     Generate exactly {count} words and clues related to the topic "{topic}" in {language}.
-    Grade Level: {grade}
-    Class Context: {context}
+    {build_class_context_block(grade, context)}
     
     RULES:
     - Words must be single words only (no spaces, no hyphens)
@@ -97,8 +118,7 @@ def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", la
     user_prompt = f"""
     Generate {count} multiple-choice quiz questions in {language}.
     Topic: {topic}
-    Grade: {grade}
-    Context: {context}
+    {build_class_context_block(grade, context)}
     
     DO NOT include the answer, hint, or correct letter embedded within the question text itself. Keep questions and answers strictly separated.
 
@@ -119,8 +139,7 @@ def generate_assignment(subject: str, topic: str, count: int, grade: str = "", c
     Create a detailed school assignment/worksheet in {language}.
     Subject: {subject}
     Topic: {topic}
-    Grade: {grade}
-    Context: {context} (Tailor the tone/examples to this description)
+    {build_class_context_block(grade, context)}
     Question Count: {count}
     
     DO NOT include the answer, hint, or correct letter embedded within the question text itself. Keep questions and answers strictly separated.
@@ -151,8 +170,7 @@ def generate_jeopardy(topic: str, grade: str = "", context: str = "", language: 
     user_prompt = f"""
     Create a Jeopardy game board in {language}.
     Topic: {topic}
-    Grade: {grade}
-    Context: {context}
+    {build_class_context_block(grade, context)}
     
     DO NOT include the answer, hint, or correct letter embedded within the question text itself. Keep questions and answers strictly separated.
 

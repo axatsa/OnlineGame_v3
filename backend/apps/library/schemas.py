@@ -1,6 +1,26 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+
+class BookPageSchema(BaseModel):
+    page_number: int
+    text: str
+    illustration_prompt: str
+    image_base64: Optional[str] = None
+
+class BookResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+    age_group: str
+    genre: str
+    language: str
+    cover_emoji: str
+    pages: List[BookPageSchema]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class SavedResourceBase(BaseModel):
     title: str

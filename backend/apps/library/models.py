@@ -15,3 +15,19 @@ class SavedResource(Base):
 
     # Relationships
     user = relationship("User", back_populates="saved_resources")
+
+class GeneratedBook(Base):
+    __tablename__ = "generated_books"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String)
+    description = Column(Text, nullable=True)
+    age_group = Column(String)
+    genre = Column(String)
+    language = Column(String)
+    cover_emoji = Column(String, default="📚")
+    pages = Column(Text)   # JSON string list of pages with text and image_base64
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="books")

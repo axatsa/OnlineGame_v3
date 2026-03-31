@@ -67,8 +67,8 @@ import { BookReaderFlip } from "../../components/library/BookReaderFlip";
 
 // ─── Generate Form ──────────────────────────────────────────────────────────
 const GenerateForm = ({
-    onClose, onGenerated, nextId,
-}: { onClose: () => void; onGenerated: (b: Book) => void; nextId: number }) => {
+    onClose, onGenerated,
+}: { onClose: () => void; onGenerated: (b: Book) => void; }) => {
     const { user } = useAuth();
     const [title, setTitle] = useState("");
     const [topic, setTopic] = useState("");
@@ -88,13 +88,12 @@ const GenerateForm = ({
                 topic: topic.trim(),
                 age_group: ageGroup, language, genre,
             });
-            const data = res.data.book;
-            const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-            const newBook: Book = { id: nextId, ...data, cover_emoji: emoji, createdAt: new Date() };
+            const data = res.data;
+            const newBook: Book = { ...data, createdAt: new Date(data.created_at) };
             onGenerated(newBook);
             toast.success(`Книга «${newBook.title}» создана!`);
-        } catch {
-            toast.error("Ошибка генерации. Проверьте Gemini API ключ.");
+        } catch (err: any) {
+            toast.error(err.response?.data?.detail || "Ошибка генерации книги.");
         } finally {
             setLoading(false);
         }
@@ -219,17 +218,42 @@ const Library = () => {
     const [showForm, setShowForm] = useState(false);
     const [openBook, setOpenBook] = useState<Book | null>(null);
 
-    const nextId = books.length > 0 ? Math.max(...books.map(b => b.id)) + 1 : 1;
+    React.useEffect(() => {
+        api.get("/library/books").then(res => {
+            setBooks(res.data.map((b: any) => ({
+                ...b,
+                createdAt: new Date(b.created_at),
+                pages: []
+            })));
+        }).catch(console.error);
+    }, []);
 
     const handleGenerated = (book: Book) => {
-        setBooks(prev => [...prev, book]);
+        setBooks(prev => [book, ...prev]);
         setShowForm(false);
         setOpenBook(book);
     };
 
-    const handleDelete = (id: number) => {
-        setBooks(prev => prev.filter(b => b.id !== id));
-        toast.success("Книга удалена");
+    const handleDelete = async (id: number) => {
+        if (!confirm("Вы уверены, что хотите удалить книгу?")) return;
+        try {
+            await api.delete(`/library/books/${id}`);
+            setBooks(prev => prev.filter(b => b.id !== id));
+            toast.success("Книга удалена");
+        } catch {
+            toast.error("Ошибка при удалении книги");
+        }
+    };
+
+    const handleOpenBook = async (book: Book) => {
+        try {
+            const toastId = toast.loading("Открываем книгу...");
+            const res = await api.get(`/library/books/${book.id}`);
+            toast.dismiss(toastId);
+            setOpenBook({ ...res.data, createdAt: new Date(res.data.created_at) });
+        } catch {
+            toast.error("Ошибка загрузки данных книги");
+        }
     };
 
     return (
@@ -317,7 +341,7 @@ const Library = () => {
                                         <div className="min-w-0">
                                             <p className="font-semibold text-foreground font-sans text-sm truncate">{book.title}</p>
                                             <p className="text-xs text-muted-foreground font-sans">
-                                                {book.genre} · {book.age_group} лет · {book.pages?.length ?? 10} стр.
+                                                {book.genre} · {book.age_group} лет · {(book as any).page_count ?? 10} стр.
                                             </p>
                                         </div>
                                     </div>
@@ -327,7 +351,7 @@ const Library = () => {
 
                                     {/* Actions */}
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => setOpenBook(book)}
+                                        <button onClick={() => handleOpenBook(book)}
                                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 transition-colors text-xs font-semibold font-sans">
                                             <BookText className="w-3.5 h-3.5" /> Читать
                                         </button>
@@ -349,7 +373,6 @@ const Library = () => {
                     <GenerateForm
                         onClose={() => setShowForm(false)}
                         onGenerated={handleGenerated}
-                        nextId={nextId}
                     />
                 )}
                 {openBook && <BookReaderFlip book={openBook} onClose={() => setOpenBook(null)} />}

@@ -453,13 +453,12 @@ const AssignmentGenerator = () => {
     const countMatch = prompt.match(/(\d+)/);
     const count = countMatch ? parseInt(countMatch[1]) : 10;
     // FIX #4: передаём язык в запрос
-    const langInstruction = lang === "uz" ? "in Uzbek language" : "in Russian language";
-
     try {
       const res = await api.post("/generate/assignment", {
         subject: subject,
-        topic: `${prompt} (${langInstruction})`,
+        topic: prompt.trim(),
         count: Math.min(count, 20),
+        language: lang === "uz" ? "Uzbek" : "Russian",
         class_id: activeClassId
       });
 

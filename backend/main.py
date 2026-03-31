@@ -12,7 +12,7 @@ from apps.auth.models import User, AuditLog
 from apps.classes.models import ClassGroup
 from apps.generator.models import TokenUsage
 from apps.gamification.models import StudentProfile, XPTransaction, CoinTransaction, DailyProgress, SeasonStats, ShopItem, Purchase
-from apps.library.models import SavedResource
+from apps.library.models import SavedResource, GeneratedBook
 from apps.admin.models import Organization, Payment
 
 from apps.auth.router import router as auth_router

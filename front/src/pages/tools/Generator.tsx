@@ -167,7 +167,7 @@ const Generator = () => {
         const payload = {
           topic: crosswordTopic,
           word_count: parseInt(wordCount) || 10,
-          language: lang === "uz" ? "O'zbekcha" : "Русский",
+          language: langLabel,
           class_id: activeClassId
         };
         const res = await api.post("/generate/crossword", payload);
@@ -941,6 +941,12 @@ const Generator = () => {
               </>
             )}
           </Button>
+          {generated && activeClass && (
+              <div className="text-xs text-primary/70 flex items-center justify-center gap-1.5 mt-3">
+                  <Sparkles className="w-3 h-3" />
+                  Адаптировано для: {activeClass.name} (Класс {activeClass.grade})
+              </div>
+          )}
         </div>
       </motion.div>
 

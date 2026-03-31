@@ -5,11 +5,13 @@ from apps.auth.models import User
 from apps.auth.dependencies import get_current_user
 from services import gemini_service, openai_service
 from config import GEMINI_API_KEY, OPENAI_API_KEY
-from apps.library.schemas import StorybookRequest, SavedResourceCreate, SavedResourceResponse
-from apps.library.models import SavedResource
+from apps.library.schemas import StorybookRequest, SavedResourceCreate, SavedResourceResponse, BookResponse
+from apps.library.models import SavedResource, GeneratedBook
 from typing import List
 import traceback
 import logging
+import json
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ router = APIRouter()
 
 library_router = APIRouter(prefix="/api/library", tags=["library"])
 
-@library_router.post("/generate")
+@library_router.post("/generate", response_model=BookResponse)
 async def gen_storybook(
     req: StorybookRequest,
     db: Session = Depends(get_db),
@@ -74,7 +76,68 @@ async def gen_storybook(
             detail="Book generation failed on all providers. Please try again later.",
         )
 
-    return {"book": result, "provider": provider}
+    emojis = ["📚","🧚","🦁","🐉","🚀","🌊","🌟","🦋","🐬","🏰"]
+    book = GeneratedBook(
+        user_id=user.id,
+        title=result["title"],
+        description=result.get("description"),
+        age_group=result.get("age_group", req.age_group),
+        genre=result.get("genre", req.genre),
+        language=result.get("language", req.language),
+        cover_emoji=random.choice(emojis),
+        pages=json.dumps(result["pages"], ensure_ascii=False),
+    )
+    db.add(book)
+    db.commit()
+    db.refresh(book)
+
+    book.pages = result["pages"]
+    return book
+
+@library_router.get("/books")
+def get_books(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    books = db.query(GeneratedBook)\
+              .filter(GeneratedBook.user_id == user.id)\
+              .order_by(GeneratedBook.created_at.desc())\
+              .all()
+    result = []
+    for b in books:
+        result.append({
+            "id": b.id,
+            "title": b.title,
+            "description": b.description,
+            "age_group": b.age_group,
+            "genre": b.genre,
+            "language": b.language,
+            "cover_emoji": b.cover_emoji,
+            "created_at": b.created_at.isoformat(),
+            "page_count": len(json.loads(b.pages)) if b.pages else 0,
+        })
+    return result
+
+@library_router.get("/books/{book_id}")
+def get_book(book_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    book = db.query(GeneratedBook)\
+             .filter(GeneratedBook.id == book_id,
+                     GeneratedBook.user_id == user.id)\
+             .first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    pages = json.loads(book.pages) if book.pages else []
+    return {**book.__dict__, "pages": pages}
+
+@library_router.delete("/books/{book_id}")
+def delete_book(book_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    book = db.query(GeneratedBook)\
+             .filter(GeneratedBook.id == book_id,
+                     GeneratedBook.user_id == user.id)\
+             .first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    db.delete(book)
+    db.commit()
+    return {"message": "Deleted"}
 
 
 router.include_router(library_router)

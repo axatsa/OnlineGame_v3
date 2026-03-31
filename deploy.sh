@@ -10,13 +10,12 @@ else
     exit 1
 fi
 
-# 2. Принудительное обновление кода (удаляем локальные конфликты в скрипте)
+# 2. Принудительное обновление кода
 echo '🔄 Принудительная загрузка кода из GitHub...'
 git fetch origin main
 git reset --hard origin/main
 
 # 3. Определяем команду docker compose
-# Проверяем наличие docker-compose (v1) или docker compose (v2)
 if docker compose version >/dev/null 2>&1; then
     DOCKER_CMD="docker compose"
 elif docker-compose version >/dev/null 2>&1; then
@@ -27,18 +26,22 @@ else
 fi
 echo "🛠️ Используем команду: $DOCKER_CMD"
 
-# 4. Пересборка и запуск контейнеров
-echo '🔨 Пересборка и запуск контейнеров...'
-# Остановка старых
-$DOCKER_CMD -f docker-compose.prod.yml down
-# Сборка и запуск новых
-$DOCKER_CMD -f docker-compose.prod.yml up -d --build
+# 4. Остановка и УДАЛЕНИЕ старых контейнеров (для решения конфликтов имен)
+echo '🧹 Очистка старых контейнеров...'
+$DOCKER_CMD -f docker-compose.prod.yml down --remove-orphans
 
-# 5. Ожидание готовности БД
+# Принудительное удаление, если down не справился (иногда бывает при конфликтах имен)
+docker rm -f online_games_db_prod online_games_backend_prod online_games_frontend_prod 2>/dev/null
+
+# 5. Сборка и запуск новых
+echo '🔨 Пересборка и запуск контейнеров...'
+$DOCKER_CMD -f docker-compose.prod.yml up -d --build --force-recreate
+
+# 6. Ожидание готовности БД
 echo '⏳ Ожидание инициализации базы данных...'
 sleep 5
 
-# 6. Запуск сидов
+# 7. Запуск сидов
 echo '🌱 Наполнение базы данных (Seeding)...'
 docker exec -t online_games_backend_prod python seed_users.py
 docker exec -t online_games_backend_prod python seed.py

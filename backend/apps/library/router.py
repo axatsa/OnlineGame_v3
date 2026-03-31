@@ -77,6 +77,8 @@ async def gen_storybook(
     return {"book": result, "provider": provider}
 
 
+router.include_router(library_router)
+
 resources_router = APIRouter(prefix="/api/resources", tags=["resources"])
 
 @resources_router.get("/", response_model=List[SavedResourceResponse])

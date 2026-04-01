@@ -314,20 +314,7 @@ export const BookReaderFlip = ({ book, onClose }: { book: Book; onClose: () => v
                         >
                             <PageCover book={book} colorClass={colorClass} />
                             
-                            {/* Inner pages */}
-                            {book.pages.map((page, i) => (
-                                <PageText key={`text-${i}`} page={page} totalPages={book.pages.length} />
-                            ))}
-                            {book.pages.map((page, i) => (
-                                <PageImage key={`img-${i}`} page={page} colorClass={colorClass} />
-                            )).map((el, i, arr) => {
-                                // We need to alternate Text / Image pages properly
-                                // For react-pageflip, pages are provided sequentially. 
-                                // Since we mapped them separately for keys above, we need to weave them.
-                                return null; 
-                            })}
-                            
-                            {/* Really weaving Text and Image */}
+                            {/* Inner pages — text and image interleaved */}
                             {book.pages.flatMap((page, i) => [
                                 <PageText key={`text-${i}`} page={page} totalPages={book.pages.length} />,
                                 <PageImage key={`img-${i}`} page={page} colorClass={colorClass} />

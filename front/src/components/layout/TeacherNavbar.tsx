@@ -5,7 +5,7 @@ import {
     GraduationCap, ChevronDown, Check, Plus, Globe, User
 } from "lucide-react";
 import { useClass } from "@/context/ClassContext";
-import { useLang, Lang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 
 interface TeacherNavbarProps {
@@ -15,7 +15,8 @@ interface TeacherNavbarProps {
 const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveNav }) => {
     const navigate = useNavigate();
     const { classes, activeClass, setActiveClassId } = useClass();
-    const { lang, setLang, t } = useLang();
+    const { t, i18n } = useTranslation();
+    const lang = i18n.language;
     const { user } = useAuth();
 
     const [showClassPicker, setShowClassPicker] = useState(false);
@@ -128,10 +129,10 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveN
                                     transition={{ duration: 0.12 }}
                                     className="absolute right-0 top-10 bg-card border border-border rounded-xl shadow-lg p-1.5 min-w-[130px] z-50"
                                 >
-                                    {(["ru", "uz"] as Lang[]).map(l => (
+                                    {(["ru", "uz"] as const).map(l => (
                                         <button
                                             key={l}
-                                            onClick={() => { setLang(l); setShowLangMenu(false); }}
+                                            onClick={() => { i18n.changeLanguage(l); setShowLangMenu(false); }}
                                             className={`w-full text-left px-3 py-2 rounded-lg text-sm font-sans transition-colors flex items-center gap-2 ${lang === l ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted text-foreground"}`}
                                         >
                                             {l === "ru" ? "🇷🇺 Русский" : "🇺🇿 O'zbekcha"}

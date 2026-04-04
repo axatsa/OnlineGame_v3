@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from rate_limiter import limiter
+import sentry_sdk
+import os
 from config import DATABASE_URL
 from database import engine, Base
 
@@ -24,6 +26,14 @@ from apps.admin.router import router as admin_router
 
 # Create tables
 Base.metadata.create_all(bind=engine)
+
+# Sentry Initialization
+sentry_dsn = os.getenv("SENTRY_DSN", "")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        traces_sample_rate=0.1,
+    )
 
 app = FastAPI(title="ClassPlay API")
 
@@ -54,12 +64,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
-app.include_router(classes_router)
-app.include_router(generator_router)
-app.include_router(gamification_router)
-app.include_router(library_router)
-app.include_router(admin_router)
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(classes_router, prefix="/api/v1")
+app.include_router(generator_router, prefix="/api/v1")
+app.include_router(gamification_router, prefix="/api/v1")
+app.include_router(library_router, prefix="/api/v1")
+app.include_router(admin_router, prefix="/api/v1")
+
+# Deprecated aliases for backward compatibility
+app.include_router(auth_router, deprecated=True)
+app.include_router(classes_router, deprecated=True)
+app.include_router(generator_router, deprecated=True)
+app.include_router(gamification_router, deprecated=True)
+app.include_router(library_router, deprecated=True)
+app.include_router(admin_router, deprecated=True)
 
 @app.get("/")
 def read_root():

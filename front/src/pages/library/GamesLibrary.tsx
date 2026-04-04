@@ -10,7 +10,7 @@ import gameMemory from "@/assets/game-memory.png";
 import gameScales from "@/assets/game-scales.png";
 import gameWordSearch from "@/assets/game-word-search.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 
 const coverImages: Record<string, string> = {
   "tug-of-war": gameTugOfWar,
@@ -23,7 +23,7 @@ const coverImages: Record<string, string> = {
 
 const GamesLibrary = () => {
   const navigate = useNavigate();
-  const { t } = useLang();
+  const { t } = useTranslation();
   const [howToPlayGame, setHowToPlayGame] = useState<typeof GAMES_CONFIG[0] | null>(null);
 
   return (

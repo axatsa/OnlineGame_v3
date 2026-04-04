@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 import { useClass } from "@/context/ClassContext";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { generateCrosswordLayout, CrosswordGrid } from "@/lib/crossword";
@@ -71,7 +71,8 @@ const SegmentedControl = ({
 const Generator = () => {
   const navigate = useNavigate();
   const { activeClass, activeClassId, classes, setActiveClassId } = useClass();
-  const { lang, t } = useLang();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const [showClassPicker, setShowClassPicker] = useState(false);
   const [genType, setGenType] = useState<GeneratorType>("math");
 
@@ -371,7 +372,7 @@ const Generator = () => {
             new Paragraph({ text: "Thompson International", heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER }),
             new Paragraph({ text: `${assignmentData.title}`, heading: HeadingLevel.HEADING_2, alignment: AlignmentType.CENTER }),
             new Paragraph({ text: `${assignmentData.subject} • ${assignmentData.grade}`, alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
-            ...(assignmentData.intro ? [new Paragraph({ text: assignmentData.intro, italics: true, spacing: { after: 400 } })] : []),
+            ...(assignmentData.intro ? [new Paragraph({ children: [new TextRun({ text: assignmentData.intro, italics: true })], spacing: { after: 400 } })] : []),
             new Paragraph({ text: "Name: _______________________ Date: ______________", spacing: { before: 200, after: 400 } }),
             ...assignmentData.questions.flatMap((q: any) => [
               new Paragraph({

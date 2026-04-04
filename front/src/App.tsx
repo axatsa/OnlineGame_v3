@@ -8,7 +8,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { ClassProvider } from "./context/ClassContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
-import { LangProvider } from "./context/LangContext";
 import Login from "./pages/auth/Login";
 import AdminPanel from "./pages/dashboard/AdminPanel";
 import TeacherDashboard from "./pages/dashboard/TeacherDashboard";
@@ -49,8 +48,7 @@ const App = () => (
       <BrowserRouter>
         <AuthListener />
         <AuthProvider>
-          <LangProvider>
-            <ClassProvider>
+          <ClassProvider>
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
@@ -114,7 +112,6 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ClassProvider>
-          </LangProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

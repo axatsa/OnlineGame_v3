@@ -10,23 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useClass, ClassGroup, GradeLevel } from "@/context/ClassContext";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 
 const GRADES: GradeLevel[] = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"];
-
-const GRADE_HINTS: Record<GradeLevel, string> = {
-  "1": "Счёт до 100, сложение/вычитание в пределах 20",
-  "2": "Сложение/вычитание до 1000, таблица умножения начинается",
-  "3": "Таблица умножения, деление, дроби — начало",
-  "4": "Дроби, порядок действий, геометрия — периметр",
-  "5": "Десятичные дроби, проценты, площади фигур",
-  "6": "Рациональные числа, уравнения, пропорции",
-  "7": "Линейные функции, степени, алгебраические выражения",
-  "8": "Квадратные уравнения, неравенства, геометрия",
-  "9": "Тригонометрия, системы уравнений, статистика",
-  "10": "Производная, логарифмы, вероятность",
-  "11": "Интегралы, комбинаторика, подготовка к ЕГЭ/SAT",
-};
 
 interface FormState {
   name: string;
@@ -39,7 +25,21 @@ const EMPTY_FORM: FormState = { name: "", grade: "3", studentCount: "", descript
 
 export default function ClassManager() {
   const navigate = useNavigate();
-  const { t } = useLang();
+  const { t } = useTranslation();
+
+  const GRADE_HINTS: Record<GradeLevel, string> = {
+    "1": t("grade_hint_1"),
+    "2": t("grade_hint_2"),
+    "3": t("grade_hint_3"),
+    "4": t("grade_hint_4"),
+    "5": t("grade_hint_5"),
+    "6": t("grade_hint_6"),
+    "7": t("grade_hint_7"),
+    "8": t("grade_hint_8"),
+    "9": t("grade_hint_9"),
+    "10": t("grade_hint_10"),
+    "11": t("grade_hint_11"),
+  };
   const { classes, activeClassId, setActiveClassId, addClass, updateClass, deleteClass } = useClass();
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -276,7 +276,7 @@ export default function ClassManager() {
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("className")}</Label>
                   <Input
-                    placeholder="e.g. 3B, 4A — Advanced, Morning Group..."
+                    placeholder={t("class_name_placeholder")}
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="h-11 rounded-xl font-sans"
@@ -328,13 +328,13 @@ export default function ClassManager() {
                     {t("classDesc")}
                   </Label>
                   <Textarea
-                    placeholder={`Describe your class so AI generates better content:\n• Is the group advanced, average, or struggling?\n• What topics have they covered?\n• Interests (space, animals, sport…)\n• Any weak spots the AI should keep in mind?`}
+                    placeholder={t("class_desc_placeholder")}
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                     className="min-h-[130px] rounded-xl font-sans text-sm resize-none"
                   />
                   <p className="text-xs text-muted-foreground font-sans">
-                    This description + grade level will be passed to AI when generating worksheets & crosswords.
+                    {t("class_desc_hint")}
                   </p>
                 </div>
               </div>

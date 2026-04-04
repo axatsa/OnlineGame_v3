@@ -4,7 +4,7 @@ import {
     LayoutDashboard, Users, Building2, BrainCircuit, DollarSign, Settings,
     LogOut
 } from "lucide-react";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 
 type Section = "dashboard" | "teachers" | "organizations" | "ai-monitor" | "finances" | "system";
 
@@ -27,7 +27,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     counts
 }) => {
     const navigate = useNavigate();
-    const { t } = useLang();
+    const { t } = useTranslation();
 
     const navItems: { icon: React.ElementType; label: string; section: Section; badge?: number }[] = [
         { icon: LayoutDashboard, label: "Дашборд", section: "dashboard" },

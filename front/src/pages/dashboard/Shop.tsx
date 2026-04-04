@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Coins, ArrowLeft, Loader2, ShoppingBag, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { gamificationService } from "@/api/gamificationService";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Sparkles } from "lucide-react";
 
 const Shop = () => {
     const navigate = useNavigate();
-    const { t } = useLang();
+    const { t } = useTranslation();
 
     const [items, setItems] = useState<any[]>([]);
     const [profile, setProfile] = useState<any>(null);
@@ -69,7 +70,7 @@ const Shop = () => {
                             <ArrowLeft className="w-4 h-4" />
                             {t("back")}
                         </button>
-                        <h1 className="text-xl font-bold text-foreground font-serif">ClassPlay Shop</h1>
+                        <h1 className="text-xl font-bold text-foreground font-serif">{t('game_shop_title')}</h1>
                     </div>
                     <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-xl border border-primary/20">
                         <Coins className="w-4 h-4 text-primary" />
@@ -82,16 +83,16 @@ const Shop = () => {
                 <div className="mb-10 text-center md:text-left">
                     <h2 className="text-4xl font-bold text-foreground font-serif mb-2 flex items-center justify-center md:justify-start gap-3">
                         <ShoppingBag className="w-10 h-10 text-primary" />
-                        Student Store
+                        {t('game_shop_header')}
                     </h2>
-                    <p className="text-muted-foreground font-sans text-lg">Spend your hard-earned coins on awesome rewards!</p>
+                    <p className="text-muted-foreground font-sans text-lg">{t('game_shop_desc')}</p>
                 </div>
 
                 {items.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 bg-card rounded-3xl border-2 border-dashed border-border opacity-50">
                         <AlertTriangle className="w-12 h-12 mb-4 text-muted-foreground" />
-                        <p className="font-bold text-xl text-muted-foreground font-serif">The shop is currently empty</p>
-                        <p className="text-sm text-muted-foreground">Ask your teacher to add some rewards!</p>
+                        <p className="font-bold text-xl text-muted-foreground font-serif">{t('game_shop_empty')}</p>
+                        <p className="text-sm text-muted-foreground">{t('game_shop_empty_desc')}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -121,7 +122,7 @@ const Shop = () => {
                                                 <span className="font-black text-lg font-mono">{item.price}</span>
                                             </div>
                                             {profile.coins < item.price && (
-                                                <span className="text-[10px] text-destructive font-bold uppercase tracking-tighter">Need {item.price - profile.coins} more</span>
+                                                <span className="text-[10px] text-destructive font-bold uppercase tracking-tighter">{t('game_shop_need_more', { count: item.price - profile.coins })}</span>
                                             )}
                                         </div>
 
@@ -135,7 +136,7 @@ const Shop = () => {
                                             ) : (
                                                 <>
                                                     <ShoppingBag className="w-4 h-4" />
-                                                    Buy Now
+                                                    {t('game_shop_buy_now')}
                                                 </>
                                             )}
                                         </Button>

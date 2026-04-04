@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useClass } from "@/context/ClassContext";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import * as docx from "docx";
 import { saveAs } from "file-saver";
 
@@ -83,43 +83,43 @@ const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
   URL.revokeObjectURL(url);
 };
 
-const exportTeachersCSV = (teachers: Teacher[]) => {
+const exportTeachersCSV = (teachers: Teacher[], t: any) => {
   downloadCSV(
     `classplay_teachers_${new Date().toISOString().slice(0, 10)}.csv`,
-    ["ФИО", "Логин", "Школа", "Статус", "Последний вход", "Тариф", "Токены", "IP"],
-    teachers.map(t => [t.name, t.login, t.school, t.status, t.lastLogin, t.plan, String(t.tokenUsage), t.ip])
+    [t("exp_name"), t("exp_login"), t("exp_school"), t("exp_status"), t("exp_last_login"), t("exp_plan"), t("exp_tokens"), t("exp_ip")],
+    teachers.map(t_ => [t_.name, t_.login, t_.school, t_.status, t_.lastLogin, t_.plan, String(t_.tokenUsage), t_.ip])
   );
 };
 
-const exportOrgsCSV = (orgs: Org[]) => {
+const exportOrgsCSV = (orgs: Org[], t: any) => {
   downloadCSV(
     `classplay_organizations_${new Date().toISOString().slice(0, 10)}.csv`,
-    ["Организация", "Контакт", "Лицензии (всего)", "Лицензии (занято)", "Истекает", "Статус"],
+    [t("exp_org_name"), t("exp_contact"), t("exp_seats_total"), t("exp_seats_used"), t("exp_expires"), t("exp_status")],
     orgs.map(o => [o.name, o.contact, String(o.seats), String(o.used), o.expires, o.status])
   );
 };
 
-const exportAiUsageCSV = (teachers: Teacher[]) => {
+const exportAiUsageCSV = (teachers: Teacher[], t: any) => {
   downloadCSV(
     `classplay_ai_usage_${new Date().toISOString().slice(0, 10)}.csv`,
-    ["#", "Учитель", "Школа", "IP", "Токены использовано", "Статус"],
+    ["#", t("exp_teacher"), t("exp_school"), t("exp_ip"), t("exp_tokens_used"), t("exp_status")],
     [...teachers]
       .sort((a, b) => b.tokenUsage - a.tokenUsage)
-      .map((t, i) => [String(i + 1), t.name, t.school, t.ip, String(t.tokenUsage), t.status])
+      .map((t_, i) => [String(i + 1), t_.name, t_.school, t_.ip, String(t_.tokenUsage), t_.status])
   );
 };
 
-const exportPaymentsCSV = (payments: Payment[]) => {
+const exportPaymentsCSV = (payments: Payment[], t: any) => {
   downloadCSV(
     `classplay_payments_${new Date().toISOString().slice(0, 10)}.csv`,
-    ["Организация", "Сумма", "Валюта", "Дата", "Метод оплаты", "Статус", "Период"],
+    [t("exp_org_name"), t("exp_amount"), t("exp_currency"), t("exp_date"), t("exp_method"), t("exp_status"), t("exp_period")],
     payments.map(p => [p.org, String(p.amount), p.currency, p.date, p.method, p.status, p.period])
   );
 };
 
 // HTML-to-PDF export via print dialog
 // structured DOCX export
-const exportTeachersDOCX = async (teachers: Teacher[]) => {
+const exportTeachersDOCX = async (teachers: Teacher[], t: any) => {
   try {
 
     const doc = new Document({
@@ -130,19 +130,19 @@ const exportTeachersDOCX = async (teachers: Teacher[]) => {
             width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
               new TableRow({
-                children: ["ФИО / Логин", "Школа", "Последний вход", "Токены", "Статус", "Тариф"].map(h => new TableCell({
+                children: [t("exp_teacher_login"), t("exp_school"), t("exp_last_login"), t("exp_tokens"), t("exp_status"), t("exp_plan")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
                   shading: { fill: "f3f4f6" }
                 }))
               }),
-              ...teachers.map(t => new TableRow({
+              ...teachers.map(t_ => new TableRow({
                 children: [
-                  `${t.name} (@${t.login})`,
-                  t.school,
-                  t.lastLogin,
-                  t.tokenUsage.toLocaleString(),
-                  t.status,
-                  t.plan
+                  `${t_.name} (@${t_.login})`,
+                  t_.school,
+                  t_.lastLogin,
+                  t_.tokenUsage.toLocaleString(),
+                  t_.status,
+                  t_.plan
                 ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
               }))
             ]
@@ -157,7 +157,7 @@ const exportTeachersDOCX = async (teachers: Teacher[]) => {
   } catch (e) { console.error(e); toast.error("DOCX failed"); }
 };
 
-const exportOrgsDOCX = async (orgs: Org[]) => {
+const exportOrgsDOCX = async (orgs: Org[], t: any) => {
   try {
     const doc = new Document({
       sections: [{
@@ -167,7 +167,7 @@ const exportOrgsDOCX = async (orgs: Org[]) => {
             width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
               new TableRow({
-                children: ["Название", "Контакт", "Лицензии", "Истекает", "Статус"].map(h => new TableCell({
+                children: [t("exp_org_name"), t("exp_contact"), t("exp_seats_total"), t("exp_expires"), t("exp_status")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
                   shading: { fill: "f3f4f6" }
                 }))
@@ -188,7 +188,7 @@ const exportOrgsDOCX = async (orgs: Org[]) => {
   } catch (e) { console.error(e); }
 };
 
-const exportAiUsageDOCX = async (teachers: Teacher[]) => {
+const exportAiUsageDOCX = async (teachers: Teacher[], t: any) => {
   try {
     const sorted = [...teachers].sort((a, b) => b.tokenUsage - a.tokenUsage);
     const doc = new Document({
@@ -199,14 +199,14 @@ const exportAiUsageDOCX = async (teachers: Teacher[]) => {
             width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
               new TableRow({
-                children: ["#", "Учитель", "Школа", "IP", "Токены", "Статус"].map(h => new TableCell({
+                children: ["#", t("exp_teacher"), t("exp_school"), t("exp_ip"), t("exp_tokens"), t("exp_status")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
                   shading: { fill: "f3f4f6" }
                 }))
               }),
-              ...sorted.map((t, i) => new TableRow({
+              ...sorted.map((t_, i) => new TableRow({
                 children: [
-                  String(i + 1), t.name, t.school, t.ip, t.tokenUsage.toLocaleString(), t.status
+                  String(i + 1), t_.name, t_.school, t_.ip, t_.tokenUsage.toLocaleString(), t_.status
                 ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
               }))
             ]
@@ -220,7 +220,7 @@ const exportAiUsageDOCX = async (teachers: Teacher[]) => {
   } catch (e) { console.error(e); }
 };
 
-const exportPaymentsDOCX = async (payments: Payment[]) => {
+const exportPaymentsDOCX = async (payments: Payment[], t: any) => {
   try {
     const doc = new Document({
       sections: [{
@@ -230,7 +230,7 @@ const exportPaymentsDOCX = async (payments: Payment[]) => {
             width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
               new TableRow({
-                children: ["Организация", "Сумма", "Дата", "Метод", "Статус", "Период"].map(h => new TableCell({
+                children: [t("exp_org_name"), t("exp_amount"), t("exp_date"), t("exp_method"), t("exp_status"), t("exp_period")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
                   shading: { fill: "f3f4f6" }
                 }))
@@ -251,7 +251,7 @@ const exportPaymentsDOCX = async (payments: Payment[]) => {
   } catch (e) { console.error(e); }
 };
 
-const exportAuditLogDOCX = async (logs: any[]) => {
+const exportAuditLogDOCX = async (logs: any[], t: any) => {
   try {
     const doc = new Document({
       sections: [{
@@ -261,7 +261,7 @@ const exportAuditLogDOCX = async (logs: any[]) => {
             width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
               new TableRow({
-                children: ["Действие", "Объект", "Время"].map(h => new TableCell({
+                children: [t("exp_action"), t("exp_target"), t("exp_time")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
                   shading: { fill: "f3f4f6" }
                 }))
@@ -282,11 +282,12 @@ const exportAuditLogDOCX = async (logs: any[]) => {
 
 // ─── Reusable Sub-components ──────────────────────────────────────────────────
 const StatusBadge = ({ status }: { status: string }) => {
+  const { t } = useTranslation();
   const map: Record<string, { label: string; cls: string }> = {
-    active: { label: "🟢 Активен", cls: "bg-success/15 text-success border-0" },
-    expiring: { label: "🟡 Истекает", cls: "bg-yellow-500/15 text-yellow-600 border-0" },
-    expired: { label: "🔴 Истёк", cls: "bg-destructive/15 text-destructive border-0" },
-    blocked: { label: "⛔ Заблокирован", cls: "bg-foreground/10 text-muted-foreground border-0" },
+    active: { label: `🟢 ${t("admin_status_active")}`, cls: "bg-success/15 text-success border-0" },
+    expiring: { label: `🟡 ${t("admin_status_expiring")}`, cls: "bg-yellow-500/15 text-yellow-600 border-0" },
+    expired: { label: `🔴 ${t("admin_status_expired")}`, cls: "bg-destructive/15 text-destructive border-0" },
+    blocked: { label: `⛔ ${t("admin_status_blocked")}`, cls: "bg-foreground/10 text-muted-foreground border-0" },
   };
   const s = map[status] ?? { label: status, cls: "" };
   return <Badge className={`font-sans rounded-full px-3 ${s.cls}`}>{s.label}</Badge>;
@@ -400,21 +401,21 @@ const ExportMenu = ({ onCSV, onPDF }: { onCSV: () => void; onPDF: () => void }) 
 };
 
 const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { teachers: Teacher[]; orgs: Org[]; payments: Payment[]; auditLogs: any[]; isLoading: boolean }) => {
-  const { t } = useLang();
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={Users} label="Всего учителей" value={String(teachers.length)} sub="+12 за месяц" trend="up" color="bg-primary/10 text-primary" />
-        <MetricCard icon={Building2} label="Организации" value={String(orgs.length)} sub={`${orgs.filter(o => o.status === "expiring").length} истекают`} color="bg-yellow-500/10 text-yellow-600" />
-        <MetricCard icon={DollarSign} label="Доход (MRR)" value={`$${payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0).toLocaleString()}`} sub="+18% рост" trend="up" color="bg-success/10 text-success" />
-        <MetricCard icon={BrainCircuit} label="Токенов" value="1.2M" sub="24.5k сегодня" color="bg-violet-500/10 text-violet-600" />
+        <MetricCard icon={Users} label={t("admin_total_teachers")} value={String(teachers.length)} sub="+12 за месяц" trend="up" color="bg-primary/10 text-primary" />
+        <MetricCard icon={Building2} label={t("admin_orgs")} value={String(orgs.length)} sub={`${orgs.filter(o => o.status === "expiring").length} истекают`} color="bg-yellow-500/10 text-yellow-600" />
+        <MetricCard icon={DollarSign} label={t("admin_revenue")} value={`$${payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0).toLocaleString()}`} sub="+18% рост" trend="up" color="bg-success/10 text-success" />
+        <MetricCard icon={BrainCircuit} label={t("admin_tokens_stat")} value="1.2M" sub="24.5k сегодня" color="bg-violet-500/10 text-violet-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="font-semibold text-foreground">Последние выплаты</h3>
-            <button className="text-xs font-semibold text-primary hover:underline">Все операции</button>
+            <h3 className="font-semibold text-foreground">{t("admin_recent_payments")}</h3>
+            <button className="text-xs font-semibold text-primary hover:underline">{t("admin_all_ops")}</button>
           </div>
           <div className="space-y-4">
             {isLoading ? <TableSkeleton rows={4} columns={3} /> : payments.slice(0, 4).map(p => (
@@ -438,7 +439,7 @@ const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { tea
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-5">
-          <h3 className="font-semibold text-foreground mb-5">Активность AI</h3>
+          <h3 className="font-semibold text-foreground mb-5">{t("admin_ai_activity")}</h3>
           <BarChart data={DAILY_TOKENS} />
         </div>
       </div>
@@ -457,7 +458,7 @@ const TeachersView = ({
   setShowResetModal: (v: number | null) => void;
   isLoading: boolean;
 }) => {
-  const { t } = useLang();
+  const { t } = useTranslation();
   // Local filtering removed, handled by backend
   const filtered = teachers;
   const [tmpPwd] = useState(() => Math.random().toString(36).slice(2, 8).toUpperCase());
@@ -468,21 +469,21 @@ const TeachersView = ({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск по ФИО, логину, школе..."
+            placeholder={t("admin_search_placeholder")}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="pl-10 rounded-xl font-sans"
           />
         </div>
         <Button variant="outline" className="gap-2 rounded-xl font-sans">
-          <Filter className="w-4 h-4" /> Фильтр
+          <Filter className="w-4 h-4" /> {t("adminFilter")}
         </Button>
         <ExportMenu
-          onCSV={() => exportTeachersCSV(teachers)}
-          onPDF={() => exportTeachersDOCX(teachers)}
+          onCSV={() => exportTeachersCSV(teachers, t)}
+          onPDF={() => exportTeachersDOCX(teachers, t)}
         />
         <Button className="gap-2 rounded-xl font-sans">
-          <Plus className="w-4 h-4" /> Добавить учителя
+          <Plus className="w-4 h-4" /> {t("admin_add_teacher")}
         </Button>
       </div>
 
@@ -491,7 +492,7 @@ const TeachersView = ({
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                {["ФИО / Логин", "Школа", "Последний вход", "Токены", "Статус", "Действия"].map(h => (
+                {[t("exp_teacher_login"), t("exp_school"), t("exp_last_login"), t("exp_tokens"), t("exp_status"), t("exp_action")].map(h => (
                   <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider font-sans whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -506,7 +507,7 @@ const TeachersView = ({
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
-                    <EmptyState icon={Users} title="Учителей не найдено" description="Попробуйте изменить запрос" />
+                    <EmptyState icon={Users} title={t("admin_teachers_not_found")} description={t("admin_no_teachers")} />
                   </td>
                 </tr>
               ) : (
@@ -580,15 +581,15 @@ const TeachersView = ({
                   <Key className="w-5 h-5 text-yellow-500" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Сброс пароля</h3>
+                  <h3 className="font-semibold text-foreground">{t("admin_reset_pwd_title")}</h3>
                   <p className="text-xs text-muted-foreground font-sans">{teachers.find(t => t.id === showResetModal)?.name}</p>
                 </div>
               </div>
               <div className="bg-muted rounded-xl p-4 mb-4">
-                <p className="text-xs text-muted-foreground font-sans mb-1">Временный пароль</p>
+                <p className="text-xs text-muted-foreground font-sans mb-1">{t("admin_temp_pwd")}</p>
                 <p className="text-2xl font-mono font-bold text-foreground tracking-widest">{tmpPwd}</p>
               </div>
-              <p className="text-xs text-muted-foreground font-sans mb-4">Продиктуйте этот пароль учителю. Он будет действителен 24 часа.</p>
+              <p className="text-xs text-muted-foreground font-sans mb-4">{t("admin_pwd_hint")}</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 rounded-xl font-sans" onClick={() => setShowResetModal(null)}>Отмена</Button>
                 <Button className="flex-1 rounded-xl font-sans" onClick={() => setShowResetModal(null)}>Подтвердить</Button>
@@ -602,15 +603,16 @@ const TeachersView = ({
 };
 
 const OrgsView = ({ orgs, isLoading }: { orgs: Org[]; isLoading: boolean }) => {
-  const { t, lang } = useLang();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
         <ExportMenu
-          onCSV={() => exportOrgsCSV(orgs)}
-          onPDF={() => exportOrgsDOCX(orgs)}
+          onCSV={() => exportOrgsCSV(orgs, t)}
+          onPDF={() => exportOrgsDOCX(orgs, t)}
         />
-        <Button className="gap-2 rounded-xl font-sans"><Plus className="w-4 h-4" /> Новая организация</Button>
+        <Button className="gap-2 rounded-xl font-sans"><Plus className="w-4 h-4" /> {t("admin_new_org")}</Button>
       </div>
       <div className="grid gap-4">
         {isLoading ? (
@@ -676,7 +678,7 @@ const AiMonitorView = ({
   dailyTokens?: { day: string; tokens: number; cost: number }[];
   isLoading: boolean;
 }) => {
-  const { t } = useLang();
+  const { t } = useTranslation();
   const totalTokens = dailyTokens.reduce((s, d) => s + d.tokens, 0);
   const totalCost = dailyTokens.reduce((s, d) => s + d.cost, 0);
   return (
@@ -692,8 +694,8 @@ const AiMonitorView = ({
       <div className="bg-card border border-border rounded-2xl p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="font-semibold text-foreground mb-1">Переключение AI провайдера</h3>
-            <p className="text-sm text-muted-foreground font-sans">Если один провайдер недоступен — переключите одной кнопкой.</p>
+            <h3 className="font-semibold text-foreground mb-1">{t("admin_ai_switch")}</h3>
+            <p className="text-sm text-muted-foreground font-sans">{t("admin_ai_switch_sub")}</p>
           </div>
           <div className="flex gap-3">
             {(["gemini", "openai"] as const).map(p => (
@@ -737,12 +739,12 @@ const AiMonitorView = ({
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h3 className="font-semibold text-foreground">Топ пользователей AI</h3>
-            <Badge className="bg-destructive/10 text-destructive border-0 font-sans">1 аномалия</Badge>
+            <h3 className="font-semibold text-foreground">{t("admin_top_ai")}</h3>
+            <Badge className="bg-destructive/10 text-destructive border-0 font-sans">1 {t("admin_anomaly")}</Badge>
           </div>
           <ExportMenu
-            onCSV={() => exportAiUsageCSV(teachers)}
-            onPDF={() => exportAiUsageDOCX(teachers)}
+            onCSV={() => exportAiUsageCSV(teachers, t)}
+            onPDF={() => exportAiUsageDOCX(teachers, t)}
           />
         </div>
         <div className="overflow-x-auto">
@@ -798,7 +800,8 @@ const AiMonitorView = ({
 };
 
 const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading: boolean }) => {
-  const { t, lang } = useLang();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const mrrData = [
     { month: "Aug", mrr: 1200 },
     { month: "Sep", mrr: 1900 },
@@ -835,7 +838,7 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
       <div className="bg-card border border-border rounded-2xl p-5">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="font-semibold text-foreground">MRR — Monthly Recurring Revenue</h3>
+            <h3 className="font-semibold text-foreground">{t("admin_mrr_full")}</h3>
             <p className="text-xs text-muted-foreground font-sans mt-0.5">{t("adminChartSub")}</p>
           </div>
           <div className="flex items-center gap-2 bg-success/10 text-success px-3 py-1.5 rounded-full">
@@ -871,8 +874,8 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h3 className="font-semibold text-foreground">{t("adminPaymentHistory")}</h3>
           <ExportMenu
-            onCSV={() => exportPaymentsCSV(payments)}
-            onPDF={() => exportPaymentsDOCX(payments)}
+            onCSV={() => exportPaymentsCSV(payments, t)}
+            onPDF={() => exportPaymentsDOCX(payments, t)}
           />
         </div>
         <div className="overflow-x-auto">
@@ -946,7 +949,7 @@ const SystemView = ({
   alertEnabled: boolean; setAlertEnabled: (v: boolean) => void;
   auditLogs: any[]; isLoading: boolean;
 }) => {
-  const { t } = useLang();
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="bg-card border border-border rounded-2xl p-6">
@@ -1005,15 +1008,15 @@ const SystemView = ({
           <h3 className="font-bold text-foreground flex items-center gap-2">
             <Shield className="w-4 h-4 text-primary" /> {t("adminAuditLogs")}
           </h3>
-          <Button variant="outline" size="sm" className="rounded-xl h-8 px-3 text-xs gap-1.5" onClick={() => exportAuditLogDOCX(auditLogs)}>
-            <Download className="w-3.5 h-3.5" /> Экспорт
+          <Button variant="outline" size="sm" className="rounded-xl h-8 px-3 text-xs gap-1.5" onClick={() => exportAuditLogDOCX(auditLogs, t)}>
+            <Download className="w-3.5 h-3.5" /> {t("admin_export")}
           </Button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-muted/40 border-b border-border">
-                {["Время", "Действие", "Объект"].map(h => (
+                {[t("exp_time"), t("exp_action"), t("exp_target")].map(h => (
                   <th key={h} className="px-6 py-3 text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans">{h}</th>
                 ))}
               </tr>
@@ -1051,7 +1054,8 @@ const SystemView = ({
 };
 
 const AdminPanel = () => {
-  const { t, lang } = useLang();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<Section>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1150,12 +1154,12 @@ const AdminPanel = () => {
   };
 
   const sectionTitles: Record<Section, { title: string; sub: string }> = {
-    dashboard: { title: "Дашборд", sub: "Общая финансовая и техническая сводка" },
-    teachers: { title: "Учителя", sub: "Управление аккаунтами и доступом" },
-    organizations: { title: "Организации", sub: "Школы и пакетные лицензии" },
-    "ai-monitor": { title: "AI Мониторинг", sub: "Контроль токенов, расходов и провайдеров" },
-    finances: { title: "Финансы", sub: "MRR, история платежей и выставление счётов" },
-    system: { title: "Система", sub: "Настройки, API ключи, объявления" },
+    dashboard: { title: t("admin_dash_title"), sub: t("admin_dash_sub") },
+    teachers: { title: t("admin_teachers_title"), sub: t("admin_teachers_sub") },
+    organizations: { title: t("admin_orgs_title"), sub: t("admin_orgs_sub") },
+    "ai-monitor": { title: t("admin_monitor_title"), sub: t("admin_monitor_sub") },
+    finances: { title: t("admin_finances_title"), sub: t("admin_finances_sub") },
+    system: { title: t("admin_system_title"), sub: t("admin_system_sub") },
   };
   const current = sectionTitles[activeSection];
 
@@ -1291,7 +1295,7 @@ const AdminPanel = () => {
           {/* Pagination Controls */}
           {["teachers", "organizations", "finances", "audit-logs"].includes(activeSection) && !isLoading && (
             <div className="mt-6 flex justify-center gap-2">
-              <span className="flex items-center px-4 font-mono text-sm">Page {page}</span>
+              <span className="flex items-center px-4 font-mono text-sm">{t("page")} {page}</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -1299,7 +1303,7 @@ const AdminPanel = () => {
                 disabled={page === 1}
                 className="rounded-xl font-sans"
               >
-                Назад
+                {t("prev")}
               </Button>
               <Button
                 variant="outline"
@@ -1308,7 +1312,7 @@ const AdminPanel = () => {
                 disabled={teachers.length < LIMIT && orgs.length < LIMIT && payments.length < LIMIT && auditLogs.length < LIMIT}
                 className="rounded-xl font-sans"
               >
-                Вперед
+                {t("next")}
               </Button>
             </div>
           )}

@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, X, Dices, Eraser, Palette, FileText, Printer, Download
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import { useClass } from "@/context/ClassContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -304,11 +304,11 @@ const AssignmentPrintView = ({
           __html: `
             <div class="page">
               <h1>${assignment.title}</h1>
-              <h2>Тест топшириқлари</h2>
+              <h2>${t("prt_test_tasks")}</h2>
               <div class="meta">
-                <span>Синф: <strong>${assignment.grade}</strong></span>
-                <span>Ўқувчи: <span class="fill-line"></span></span>
-                <span>Сана: <strong>${assignment.date}</strong></span>
+                <span>${t("prt_grade")}: <strong>${assignment.grade}</strong></span>
+                <span>${t("prt_student")}: <span class="fill-line"></span></span>
+                <span>${t("prt_date")}: <strong>${assignment.date}</strong></span>
               </div>
               ${assignment.questions.map(q => `
                 <div class="question">
@@ -318,14 +318,14 @@ const AssignmentPrintView = ({
               `).join("")}
             </div>
             <div class="page">
-              <h1>ЖАВОБЛАР ВАРАҚАСИ</h1>
-              <h2>${assignment.title} — Ўқитувчи учун</h2>
+              <h1>${t("prt_answer_key")}</h1>
+              <h2>${assignment.title} — ${t("prt_for_teacher")}</h2>
               <div class="meta">
-                <span>Синф: <strong>${assignment.grade}</strong></span>
-                <span>Сана: <strong>${assignment.date}</strong></span>
-                <span>Жами: <strong>${assignment.questions.length} та савол</strong></span>
+                <span>${t("prt_grade")}: <strong>${assignment.grade}</strong></span>
+                <span>${t("prt_date")}: <strong>${assignment.date}</strong></span>
+                <span>${t("prt_total")}: <strong>${assignment.questions.length} ${t("prt_questions")}</strong></span>
               </div>
-              <div class="answer-key">⚠️ Бу варақа фақат ўқитувчи учун!</div>
+              <div class="answer-key">${t("prt_teacher_only")}</div>
               <div class="answers-grid">
                 ${assignment.questions.map(q => `
                   <div class="answer-item">
@@ -335,7 +335,7 @@ const AssignmentPrintView = ({
                 `).join("")}
               </div>
               <div style="margin-top:20pt; border-top:1px solid #000; padding-top:10pt; font-size:10pt;">
-                <strong>Баҳолаш жадвали:</strong>
+                <strong>${t("prt_grading_scale")}:</strong>
                 <div class="answers-grid" style="grid-template-columns: repeat(4,1fr); margin-top:6pt;">
                   <div class="answer-item">90-100% → "5"</div>
                   <div class="answer-item">75-89% → "4"</div>
@@ -353,16 +353,16 @@ const AssignmentPrintView = ({
         {/* Student sheet */}
         <div className="flex-1">
           <div className="text-xs font-sans font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5" /> Ўқувчи учун (1-варақ А4)
+            <FileText className="w-3.5 h-3.5" /> {t("prt_for_student")} (1-варақ А4)
           </div>
           <div className="bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden"
             style={{ aspectRatio: "1/1.414", padding: "32px", fontFamily: "serif", fontSize: "11px", color: "#000" }}>
             <h2 className="text-center font-bold text-base mb-1" style={{ fontFamily: "serif" }}>{assignment.title}</h2>
-            <p className="text-center text-gray-600 text-xs mb-4">Тест топшириқлари</p>
+            <p className="text-center text-gray-600 text-xs mb-4">{t("prt_test_tasks")}</p>
             <div className="flex justify-between text-xs mb-4 pb-2 border-b border-gray-400">
-              <span>Синф: <strong>{assignment.grade}</strong></span>
-              <span>Ўқувчи: <span className="inline-block w-32 border-b border-gray-600"></span></span>
-              <span>Сана: {assignment.date}</span>
+              <span>{t("prt_grade")}: <strong>{assignment.grade}</strong></span>
+              <span>{t("prt_student")}: <span className="inline-block w-32 border-b border-gray-600"></span></span>
+              <span>{t("prt_date")}: {assignment.date}</span>
             </div>
             <div className="space-y-2">
               {assignment.questions.slice(0, 12).map((q) => (
@@ -376,7 +376,9 @@ const AssignmentPrintView = ({
                 </div>
               ))}
               {assignment.questions.length > 12 && (
-                <p className="text-xs text-gray-400 text-center pt-2">... ва {assignment.questions.length - 12} та савол яна</p>
+                <p className="text-xs text-gray-400 text-center pt-2">
+                  {t("prt_more_questions_prefix")} {assignment.questions.length - 12} {t("prt_more_questions_suffix")}
+                </p>
               )}
             </div>
           </div>
@@ -385,19 +387,19 @@ const AssignmentPrintView = ({
         {/* Answer key sheet */}
         <div className="flex-1">
           <div className="text-xs font-sans font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5" /> Ўқитувчи учун (2-варақ А4)
+            <FileText className="w-3.5 h-3.5" /> {t("prt_for_teacher")} (2-варақ А4)
           </div>
           <div className="bg-white border-2 border-blue-200 shadow-lg rounded-lg overflow-hidden"
             style={{ aspectRatio: "1/1.414", padding: "32px", fontFamily: "serif", fontSize: "11px", color: "#000" }}>
-            <h2 className="text-center font-bold text-base mb-1" style={{ fontFamily: "serif" }}>ЖАВОБЛАР ВАРАҚАСИ</h2>
-            <p className="text-center text-gray-600 text-xs mb-4">{assignment.title} — Ўқитувчи учун</p>
+            <h2 className="text-center font-bold text-base mb-1" style={{ fontFamily: "serif" }}>{t("prt_answer_key")}</h2>
+            <p className="text-center text-gray-600 text-xs mb-4">{assignment.title} — {t("prt_for_teacher")}</p>
             <div className="flex justify-between text-xs mb-3 pb-2 border-b border-gray-400">
-              <span>Синф: <strong>{assignment.grade}</strong></span>
-              <span>Жами: <strong>{assignment.questions.length} савол</strong></span>
+              <span>{t("prt_grade")}: <strong>{assignment.grade}</strong></span>
+              <span>{t("prt_total")}: <strong>{assignment.questions.length} {t("prt_questions")}</strong></span>
               <span>{assignment.date}</span>
             </div>
             <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-xs mb-4 text-yellow-800">
-              ⚠️ Бу варақа фақат ўқитувчи учун!
+              {t("prt_teacher_only")}
             </div>
             <div className="grid grid-cols-4 gap-1.5 mb-4">
               {assignment.questions.map((q) => (
@@ -408,7 +410,7 @@ const AssignmentPrintView = ({
               ))}
             </div>
             <div className="border-t border-gray-300 pt-3 mt-auto">
-              <p className="text-xs font-bold mb-1.5">Баҳолаш жадвали:</p>
+              <p className="text-xs font-bold mb-1.5">{t("prt_grading_scale")}:</p>
               <div className="grid grid-cols-4 gap-1 text-xs">
                 {[["90-100%", '"5"', "bg-green-100"], ["75-89%", '"4"', "bg-blue-100"], ["55-74%", '"3"', "bg-yellow-100"], ["0-54%", '"2"', "bg-red-100"]].map(([pct, grade, bg]) => (
                   <div key={pct} className={`${bg} rounded text-center p-1`}>
@@ -426,7 +428,8 @@ const AssignmentPrintView = ({
 
 // ──────────────── Assignment Generator (inner component) ────────────────
 const AssignmentGenerator = () => {
-  const { t, lang } = useLang();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GeneratedAssignment | null>(null);
@@ -558,7 +561,7 @@ type Tool = "roulette" | "board" | "generator";
 
 const Tools = () => {
   const navigate = useNavigate();
-  const { t } = useLang();
+  const { t } = useTranslation();
   const [activeTool, setActiveTool] = useState<Tool>("roulette");
   const [names, setNames] = useState<string[]>(["Alice", "Bob", "Charlie", "Diana"]);
   const [inputName, setInputName] = useState("");
@@ -576,9 +579,9 @@ const Tools = () => {
   };
 
   const tabs: { id: Tool; icon: React.ReactNode; label: string }[] = [
-    { id: "roulette", icon: <Dices className="w-4 h-4" />, label: "Рулетка" },
-    { id: "board", icon: <Palette className="w-4 h-4" />, label: "Доска" },
-    { id: "generator", icon: <FileText className="w-4 h-4" />, label: "Генератор" },
+    { id: "roulette", icon: <Dices className="w-4 h-4" />, label: t("tool_roulette") },
+    { id: "board", icon: <Palette className="w-4 h-4" />, label: t("tool_board") },
+    { id: "generator", icon: <FileText className="w-4 h-4" />, label: t("tool_generator") },
   ];
 
   return (

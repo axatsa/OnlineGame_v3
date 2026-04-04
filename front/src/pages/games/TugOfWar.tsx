@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import tugOfWarImg from "@/assets/tug-of-war-characters.png";
 import { useClass } from "@/context/ClassContext";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -34,7 +34,8 @@ function shuffleArray<T>(arr: T[]): T[] {
 
 const TugOfWar = () => {
   const { activeClassId } = useClass();
-  const { lang } = useLang();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language as "ru" | "uz";
   const [status, setStatus] = useState<GameStatus>("setup");
   const [topic, setTopic] = useState("");
   // FIX #4: выбор языка вопросов
@@ -48,8 +49,8 @@ const TugOfWar = () => {
   const [blueScore, setBlueScore] = useState(0);
   const [redScore, setRedScore] = useState(0);
   const [feedback, setFeedback] = useState<{ team: "blue" | "red" | "time"; correct: boolean } | null>(null);
-  const [team1Name, setTeam1Name] = useState("Team 1");
-  const [team2Name, setTeam2Name] = useState("Team 2");
+  const [team1Name, setTeam1Name] = useState(t('game_team1'));
+  const [team2Name, setTeam2Name] = useState(t('game_team2'));
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const stopwatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -181,44 +182,44 @@ const TugOfWar = () => {
   };
 
   const winner = position <= -4 ? team1Name : position >= 4 ? team2Name : null;
-  const howToPlay = "Две команды соревнуются, отвечая на вопросы независимо друг от друга. У каждой команды свои вопросы — подсматривать невозможно! Каждый правильный ответ тянет канат в свою сторону. Первая команда, перетянувшая канат 4 шага, побеждает!";
+  const howToPlay = t('game_tug_of_war_how');
 
   const blueQ = blueQuestions[blueCurrentQ % (blueQuestions.length || 1)];
   const redQ = redQuestions[redCurrentQ % (redQuestions.length || 1)];
   const ropePercent = 50 + position * 10;
 
   return (
-    <GameShell title="Tug of War" onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
+    <GameShell title={t('game_tug_of_war_title')} onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
       <AnimatePresence mode="wait">
         {status === "setup" && (
           <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="flex flex-col items-center justify-center h-full gap-8 p-8 bg-white"
           >
             <div className="text-center">
-              <h2 className="text-4xl font-bold text-gray-800 font-serif mb-2">Battle of Knowledge</h2>
-              <p className="text-gray-500 font-sans">Две команды соревнуются в знаниях</p>
+              <h2 className="text-4xl font-bold text-gray-800 font-serif mb-2">{t('game_tug_of_war_title')}</h2>
+              <p className="text-gray-500 font-sans">{t('game_tug_of_war_sub')}</p>
             </div>
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-gray-700 font-sans text-sm">Команда 1</Label>
+                  <Label className="text-gray-700 font-sans text-sm">{t('game_team1')}</Label>
                   <Input value={team1Name} onChange={(e) => setTeam1Name(e.target.value)}
                     className="border-blue-200 focus:border-blue-400 font-sans" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-gray-700 font-sans text-sm">Команда 2</Label>
+                  <Label className="text-gray-700 font-sans text-sm">{t('game_team2')}</Label>
                   <Input value={team2Name} onChange={(e) => setTeam2Name(e.target.value)}
                     className="border-red-200 focus:border-red-400 font-sans" />
                 </div>
               </div>
               <div className="space-y-1">
-                <Label className="text-gray-700 font-sans text-sm">Тема (необязательно)</Label>
-                <Input placeholder="напр. Математика, Русский язык..."
+                <Label className="text-gray-700 font-sans text-sm">{t('genTopicOptional', 'Тема (необязательно)')}</Label>
+                <Input placeholder={t('genTopicPlaceholder')}
                   value={topic} onChange={(e) => setTopic(e.target.value)}
                   className="font-sans" />
               </div>
               <div className="flex items-center justify-between py-2 px-1">
-                <Label className="text-gray-700 font-sans text-sm">Музыка в игре</Label>
+                <Label className="text-gray-700 font-sans text-sm">{t('game_music')}</Label>
                 <button
                   onClick={() => setIsAudioEnabled(!isAudioEnabled)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isAudioEnabled ? "bg-blue-600" : "bg-gray-200"}`}
@@ -228,7 +229,7 @@ const TugOfWar = () => {
               </div>
               {/* FIX #4: выбор языка вопросов */}
               <div className="space-y-1.5">
-                <Label className="text-gray-700 font-sans text-sm">Язык вопросов</Label>
+                <Label className="text-gray-700 font-sans text-sm">{t('game_questions_language')}</Label>
                 <div className="flex gap-2">
                   <button onClick={() => setSelectedLang("ru")}
                     className={`flex-1 py-2 rounded-xl text-sm font-sans border-2 transition-all ${selectedLang === "ru" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}>
@@ -243,11 +244,11 @@ const TugOfWar = () => {
               {/* FIX #3: информация о разных вопросах */}
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
                 <p className="text-xs text-blue-700 font-sans">
-                  🔀 У каждой команды будут <strong>разные вопросы</strong> — подсматривать не получится!
+                  🔀 {t('game_different_questions_info')}
                 </p>
               </div>
               <Button onClick={startGame} className="w-full h-12 font-semibold font-sans bg-blue-600 hover:bg-blue-700 text-white">
-                Начать битву!
+                {t('game_start_battle')}
               </Button>
             </div>
           </motion.div>
@@ -258,7 +259,7 @@ const TugOfWar = () => {
             className="flex flex-col items-center justify-center h-full gap-4 bg-white"
           >
             <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-            <p className="text-gray-500 font-sans text-lg">Preparing the battle...</p>
+            <p className="text-gray-500 font-sans text-lg">{t('game_preparing')}</p>
           </motion.div>
         )}
 
@@ -275,7 +276,7 @@ const TugOfWar = () => {
               {/* FIX #3: у синей команды свой вопрос */}
               <div className={`flex-1 flex flex-col gap-3 transition-opacity ${feedback?.team === "blue" ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
                 <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5">
-                  <p className="text-xs text-blue-500 font-sans font-medium">Вопрос #{blueCurrentQ + 1}</p>
+                  <p className="text-xs text-blue-500 font-sans font-medium">{t('game_question_number')}{blueCurrentQ + 1}</p>
                 </div>
                 <p className="text-blue-700 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{blueQ.q}</p>
                 <div className="flex flex-col gap-2 mt-1">
@@ -315,7 +316,7 @@ const TugOfWar = () => {
                 </div>
                 {/* FIX #3: секундомер — считает вверх */}
                 <div className="text-center">
-                  <p className="text-xs text-gray-400 font-sans mb-0.5">секундомер</p>
+                  <p className="text-xs text-gray-400 font-sans mb-0.5">{t('game_stopwatch')}</p>
                   <p className="font-mono font-bold text-xl text-gray-700">
                     ⏱ {formatStopwatch(elapsed)}
                   </p>
@@ -355,13 +356,13 @@ const TugOfWar = () => {
                   <motion.div key="fb" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
                     className={`text-3xl font-bold px-6 py-3 rounded-2xl bg-white shadow-xl border-2 z-50 absolute ${feedback.correct ? "border-green-500 text-green-600" : "border-red-500 text-red-500"}`}
                   >
-                    {feedback.correct ? "✅ Верно!" : "❌ Ошибка!"}
+                    {feedback.correct ? `✅ ${t('game_correct')}` : `❌ ${t('game_error')}`}
                   </motion.div>
                 )}
               </AnimatePresence>
 
               <div className="px-5 py-2 rounded-full text-sm font-semibold font-sans shadow-sm bg-gray-100 text-gray-700">
-                🔀 У каждой команды свои вопросы!
+                🔀 {t('game_different_questions_info')}
               </div>
             </div>
 
@@ -374,7 +375,7 @@ const TugOfWar = () => {
               {/* FIX #3: у красной команды свой вопрос */}
               <div className={`flex-1 flex flex-col gap-3 transition-opacity ${feedback?.team === "red" ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
                 <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-1.5">
-                  <p className="text-xs text-red-500 font-sans font-medium">Вопрос #{redCurrentQ + 1}</p>
+                  <p className="text-xs text-red-500 font-sans font-medium">{t('game_question_number')}{redCurrentQ + 1}</p>
                 </div>
                 <p className="text-red-600 font-bold text-center text-base font-sans leading-snug px-1 pt-2">{redQ.q}</p>
                 <div className="flex flex-col gap-2 mt-1">
@@ -411,11 +412,11 @@ const TugOfWar = () => {
             className="flex flex-col items-center justify-center h-full gap-6 bg-white"
           >
             <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.8 }} className="text-8xl">🏆</motion.div>
-            <h2 className="text-5xl font-bold text-gray-800 font-serif">{winner} победила!</h2>
+            <h2 className="text-5xl font-bold text-gray-800 font-serif">{winner} {t('game_won')}</h2>
             <p className="text-gray-500 font-sans">{team1Name}: {blueScore} | {team2Name}: {redScore}</p>
-            <p className="text-gray-400 font-sans text-sm">Время игры: {formatStopwatch(elapsed)}</p>
+            <p className="text-gray-400 font-sans text-sm">{t('game_play_time')} {formatStopwatch(elapsed)}</p>
             <Button onClick={startGame} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 text-lg rounded-2xl">
-              Играть снова
+              {t('game_playAgain')}
             </Button>
           </motion.div>
         )}

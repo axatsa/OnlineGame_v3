@@ -4,13 +4,13 @@ import { Trophy, Star, Coins, Zap, ArrowLeft, Loader2, Sparkles } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { gamificationService } from "@/api/gamificationService";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 const StudentDashboard = () => {
     const navigate = useNavigate();
-    const { t } = useLang();
+    const { t } = useTranslation();
     const { user } = useAuth();
 
     const [profile, setProfile] = useState<any>(null);
@@ -68,11 +68,11 @@ const StudentDashboard = () => {
                             <ArrowLeft className="w-4 h-4" />
                             {t("back")}
                         </button>
-                        <h1 className="text-xl font-bold text-foreground font-serif">ClassPlay Dashboard</h1>
+                        <h1 className="text-xl font-bold text-foreground font-serif">{t('student_dashboard_title')}</h1>
                     </div>
                     <Button variant="default" className="rounded-xl gap-2" onClick={() => navigate("/shop")}>
                         <Coins className="w-4 h-4" />
-                        {profile.coins} Coins
+                        {profile.coins} {t('coins_label')}
                     </Button>
                 </div>
             </header>
@@ -88,20 +88,20 @@ const StudentDashboard = () => {
                         <div className="w-32 h-32 rounded-full bg-primary/10 border-4 border-primary/20 flex items-center justify-center relative">
                             <span className="text-4xl font-black text-primary font-serif">{profile.level}</span>
                             <div className="absolute -bottom-2 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
-                                Level
+                                {t('game_level')}
                             </div>
                         </div>
 
                         <div className="flex-1 space-y-4 w-full text-center md:text-left">
                             <div>
-                                <h2 className="text-3xl font-bold text-foreground font-serif">Hello, {user?.full_name || "Hero"}!</h2>
-                                <p className="text-muted-foreground font-sans">You're making great progress. Keep it up!</p>
+                                <h2 className="text-3xl font-bold text-foreground font-serif">{t('welcome_user', { name: user?.full_name || "Hero" })}</h2>
+                                <p className="text-muted-foreground font-sans">{t('student_dashboard_subtitle')}</p>
                             </div>
 
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm font-medium">
-                                    <span className="text-primary">{profile.xp} XP Total</span>
-                                    <span className="text-muted-foreground">{nextLevelXP - profile.xp} XP to Level {profile.level + 1}</span>
+                                    <span className="text-primary">{t('xp_total', { count: profile.xp })}</span>
+                                    <span className="text-muted-foreground">{t('xp_to_next_level', { count: nextLevelXP - profile.xp, level: profile.level + 1 })}</span>
                                 </div>
                                 <Progress value={progressPercent} className="h-4 rounded-full bg-secondary" />
                             </div>
@@ -114,13 +114,13 @@ const StudentDashboard = () => {
                     <div className="md:col-span-2 space-y-6">
                         <h3 className="text-xl font-bold text-foreground font-serif flex items-center gap-2">
                             <Zap className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                            Daily Mission
+                            {t('daily_mission')}
                         </h3>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Daily XP</span>
+                                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{t('daily_xp')}</span>
                                     <Sparkles className="w-4 h-4 text-primary" />
                                 </div>
                                 <div className="text-3xl font-black font-serif">{dailyStats.xp_today} / {dailyStats.limit_xp}</div>
@@ -129,7 +129,7 @@ const StudentDashboard = () => {
 
                             <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Daily Coins</span>
+                                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{t('daily_coins')}</span>
                                     <Coins className="w-4 h-4 text-primary" />
                                 </div>
                                 <div className="text-3xl font-black font-serif">{dailyStats.coins_today} / {dailyStats.limit_coins}</div>
@@ -140,10 +140,10 @@ const StudentDashboard = () => {
                         <div className="bg-primary/5 rounded-2xl border border-primary/10 p-6">
                             <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
                                 <Star className="w-4 h-4 fill-primary" />
-                                Smart Tip: Variety Bonus
+                                {t('smart_tip_title')}
                             </h4>
                             <p className="text-sm text-primary/80 font-sans">
-                                Complete different types of activities today to earn up to <span className="font-bold">+20% bonus XP</span>!
+                                {t('smart_tip_desc')}
                             </p>
                         </div>
                     </div>
@@ -152,7 +152,7 @@ const StudentDashboard = () => {
                     <div className="space-y-6">
                         <h3 className="text-xl font-bold text-foreground font-serif flex items-center gap-2">
                             <Trophy className="w-5 h-5 text-primary" />
-                            Top Friends
+                            {t('top_friends')}
                         </h3>
 
                         <div className="bg-card rounded-2xl border border-border overflow-hidden">
@@ -167,15 +167,15 @@ const StudentDashboard = () => {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-foreground truncate">{item.name}</p>
-                                            <p className="text-xs text-muted-foreground">Level {item.level}</p>
+                                            <p className="text-xs text-muted-foreground">{t('game_level')} {item.level}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-mono text-xs font-bold text-primary">{item.xp} XP</p>
+                                            <p className="font-mono text-xs font-bold text-primary">{t('xp_total', { count: item.xp })}</p>
                                         </div>
                                     </div>
                                 ))}
                                 {leaderboard.length === 0 && (
-                                    <div className="p-10 text-center text-muted-foreground italic">No ratings yet</div>
+                                    <div className="p-10 text-center text-muted-foreground italic">{t('no_ratings_yet')}</div>
                                 )}
                             </div>
                         </div>

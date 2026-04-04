@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, X, Loader2, Sparkles } from "lucide-react";
 import { useClass } from "@/context/ClassContext";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -14,14 +14,14 @@ const POINTS = [100, 200, 300, 400, 500];
 
 const Jeopardy = () => {
   const { activeClassId } = useClass();
-  // FIX #4: используем язык интерфейса для генерации
-  const { lang } = useLang();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language as "ru" | "uz";
   const [status, setStatus] = useState<"setup" | "loading" | "playing">("setup");
   const [topic, setTopic] = useState("");
   const [selectedLang, setSelectedLang] = useState<"ru" | "uz">(lang);
   const [teams, setTeams] = useState<{ name: string; score: number }[]>([
-    { name: "Team A", score: 0 },
-    { name: "Team B", score: 0 },
+    { name: `${t('game_team1')}`, score: 0 },
+    { name: `${t('game_team2')}`, score: 0 },
   ]);
   const [newTeam, setNewTeam] = useState("");
   const [answered, setAnswered] = useState<Set<string>>(new Set());
@@ -101,10 +101,10 @@ const Jeopardy = () => {
     setActiveCell(null);
   };
 
-  const howToPlay = "Tap a cell to reveal the question. Read it aloud. Reveal the answer and award points to the correct team. The team with the most points wins!";
+  const howToPlay = t('game_jeopardy_how');
 
   return (
-    <GameShell title="Jeopardy" onBack="/games"
+    <GameShell title={t('game_jeopardy_title')} onBack="/games"
       onRestart={() => { setStatus("setup"); setAnswered(new Set()); setTeams(t => t.map(t => ({ ...t, score: 0 }))); }}
       howToPlay={howToPlay}>
       <AnimatePresence mode="wait">
@@ -112,20 +112,20 @@ const Jeopardy = () => {
           <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="flex flex-col items-center justify-center h-full gap-6 p-8 bg-white"
           >
-            <h2 className="text-4xl font-bold text-gray-800 font-serif">Jeopardy</h2>
+            <h2 className="text-4xl font-bold text-gray-800 font-serif">{t('game_jeopardy_title')}</h2>
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-sm">
               {/* Topic input */}
               <div className="space-y-1.5">
-                <Label className="text-gray-700 font-sans font-medium">Game Topic</Label>
+                <Label className="text-gray-700 font-sans font-medium">{t('game_topic_label')}</Label>
                 <Input value={topic} onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g. History, Math, Biology..."
+                  placeholder={t('game_topic_placeholder')}
                   className="font-sans" />
-                <p className="text-xs text-gray-400 font-sans">AI will generate {POINTS.length * 5} questions about this topic</p>
+                <p className="text-xs text-gray-400 font-sans">{t('game_jeopardy_ai_info', { count: POINTS.length * 5 })}</p>
               </div>
 
               {/* Language selector */}
               <div className="space-y-2">
-                <Label className="text-gray-700 font-sans font-medium">Язык вопросов</Label>
+                <Label className="text-gray-700 font-sans font-medium">{t('game_questions_language')}</Label>
                 <div className="flex gap-2">
                   <button onClick={() => setSelectedLang("ru")}
                     className={`flex-1 py-2 rounded-xl text-sm font-medium font-sans border-2 transition-all ${selectedLang === "ru" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"}`}>
@@ -141,7 +141,7 @@ const Jeopardy = () => {
               <div className="border-t border-gray-100" />
 
               <div className="space-y-2">
-                <Label className="text-gray-700 font-sans font-medium">Teams (2–4)</Label>
+                <Label className="text-gray-700 font-sans font-medium">{t('game_teams_label')}</Label>
                 {teams.map((t, i) => (
                   <div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2">
                     <span className="flex-1 text-gray-700 font-sans text-sm">{t.name}</span>
@@ -157,12 +157,12 @@ const Jeopardy = () => {
                 <div className="flex gap-2">
                   <Input value={newTeam} onChange={(e) => setNewTeam(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addTeam()}
-                    placeholder="Team Name..." className="font-sans" />
+                    placeholder={t('game_team_name_placeholder')} className="font-sans" />
                   <Button onClick={addTeam} variant="outline"><Plus className="w-4 h-4" /></Button>
                 </div>
               )}
               <Button onClick={startGame} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold font-sans">
-                <Sparkles className="w-4 h-4 mr-2" /> Start Game
+                <Sparkles className="w-4 h-4 mr-2" /> {t('game_start')}
               </Button>
             </div>
           </motion.div>
@@ -173,7 +173,7 @@ const Jeopardy = () => {
             className="flex flex-col items-center justify-center h-full gap-4 bg-white"
           >
             <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-            <p className="text-gray-500 font-sans text-lg">Generating game board about "{topic}"...</p>
+            <p className="text-gray-500 font-sans text-lg">{t('game_preparing')}</p>
           </motion.div>
         )}
 
@@ -183,7 +183,7 @@ const Jeopardy = () => {
           >
             {topic && (
               <div className="text-center py-2 text-sm font-sans text-gray-500 bg-white border-b border-gray-100">
-                Topic: <span className="font-semibold text-blue-600">{topic}</span>
+                {t('genTopic')}: <span className="font-semibold text-blue-600">{topic}</span>
               </div>
             )}
             {/* Board */}
@@ -248,21 +248,21 @@ const Jeopardy = () => {
               className="bg-white rounded-3xl p-8 max-w-xl w-full text-center shadow-2xl border border-gray-200"
             >
               <div className="text-blue-500 font-bold font-sans text-sm mb-3 uppercase tracking-wider">
-                {activeCell.cat} — {activeCell.pts} points
+                {activeCell.cat} — {activeCell.pts} {t('points')}
               </div>
               <p className="text-gray-800 text-3xl font-bold font-serif mb-6 leading-tight">
                 {questions[`${activeCell.cat}-${activeCell.pts}`]?.q}
               </p>
               {!showAnswer ? (
                 <Button onClick={() => setShowAnswer(true)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8">
-                  Show Answer
+                  {t('game_show_answer')}
                 </Button>
               ) : (
                 <div className="space-y-4">
                   <div className="bg-green-50 border border-green-300 rounded-2xl p-4">
                     <p className="text-green-700 font-bold text-2xl font-serif">{questions[`${activeCell.cat}-${activeCell.pts}`]?.a}</p>
                   </div>
-                  <p className="text-gray-500 text-sm font-sans">Award points to:</p>
+                  <p className="text-gray-500 text-sm font-sans">{t('game_award_points_to')}</p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {teams.map((team, i) => (
                       <Button key={i} onClick={() => awardPoints(i)}
@@ -273,7 +273,7 @@ const Jeopardy = () => {
                     <Button variant="outline"
                       onClick={() => { setAnswered(a => new Set([...a, `${activeCell.cat}-${activeCell.pts}`])); setActiveCell(null); }}
                       className="border-gray-300 text-gray-600 hover:bg-gray-50">
-                      No Winner
+                      {t('game_no_winner')}
                     </Button>
                   </div>
                 </div>

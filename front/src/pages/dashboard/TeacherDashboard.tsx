@@ -6,15 +6,16 @@ import {
   ChevronDown, Plus, Check, Settings2, Globe, BookMarked,
 } from "lucide-react";
 import { useClass } from "@/context/ClassContext";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
-import type { Lang } from "@/context/LangContext";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { classes, activeClass, setActiveClassId } = useClass();
-  const { lang, setLang, t } = useLang();
+  const { t, i18n } = useTranslation();
+  const setLang = (l: string) => i18n.changeLanguage(l);
+  const lang = i18n.language;
   const [showClassPicker, setShowClassPicker] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
 
@@ -168,7 +169,7 @@ const TeacherDashboard = () => {
                     transition={{ duration: 0.12 }}
                     className="absolute right-0 top-10 bg-card border border-border rounded-xl shadow-lg p-1.5 min-w-[130px] z-50"
                   >
-                    {(["ru", "uz"] as Lang[]).map(l => (
+                    {(["ru", "uz"] as string[]).map(l => (
                       <button
                         key={l}
                         onClick={() => { setLang(l); setShowLangMenu(false); }}

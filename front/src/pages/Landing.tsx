@@ -13,6 +13,7 @@ import {
   Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 const FeatureCard = ({ icon: Icon, title, desc, delay }: { icon: any, title: string, desc: string, delay: number }) => (
   <motion.div
@@ -31,46 +32,50 @@ const FeatureCard = ({ icon: Icon, title, desc, delay }: { icon: any, title: str
   </motion.div>
 );
 
-const PriceCard = ({ title, price, features, highlighted = false, delay = 0 }: { title: string, price: string, features: string[], highlighted?: boolean, delay?: number }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    whileInView={{ opacity: 1, scale: 1 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.5, delay }}
-    className={`p-8 rounded-[2rem] flex flex-col h-full transition-all duration-300 ${
-      highlighted 
-        ? "bg-primary text-primary-foreground shadow-2xl scale-105 border-4 border-primary/20" 
-        : "bg-white/60 backdrop-blur-lg border border-white/20 shadow-xl"
-    }`}
-  >
-    <div className="mb-8">
-      <h3 className="text-2xl font-black mb-2 uppercase tracking-wider">{title}</h3>
-      <div className="flex items-baseline gap-1">
-        <span className="text-5xl font-black">{price}</span>
-        {price !== "Индивидуально" && price !== "$0" && <span className={highlighted ? "text-primary-foreground/70" : "text-muted-foreground"}>/мес</span>}
-      </div>
-    </div>
-    <ul className="space-y-4 mb-10 flex-grow">
-      {features.map((f, i) => (
-        <li key={i} className="flex items-start gap-3">
-          <CheckCircle2 className={`w-5 h-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-white" : "text-primary"}`} />
-          <span className="text-sm font-medium leading-tight">{f}</span>
-        </li>
-      ))}
-    </ul>
-    <Button 
-      variant={highlighted ? "secondary" : "default"} 
-      className={`w-full h-14 rounded-2xl text-lg font-bold shadow-lg transition-transform active:scale-95 ${
-        highlighted ? "bg-white text-primary hover:bg-white/90" : ""
+const PriceCard = ({ title, price, features, highlighted = false, delay = 0 }: { title: string, price: string, features: string[], highlighted?: boolean, delay?: number }) => {
+  const { t } = useTranslation();
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay }}
+      className={`p-8 rounded-[2rem] flex flex-col h-full transition-all duration-300 ${
+        highlighted 
+          ? "bg-primary text-primary-foreground shadow-2xl scale-105 border-4 border-primary/20" 
+          : "bg-white/60 backdrop-blur-lg border border-white/20 shadow-xl"
       }`}
     >
-      Начать сейчас
-    </Button>
-  </motion.div>
-);
+      <div className="mb-8">
+        <h3 className="text-2xl font-black mb-2 uppercase tracking-wider">{title}</h3>
+        <div className="flex items-baseline gap-1">
+          <span className="text-5xl font-black">{price}</span>
+          {price !== "Индивидуально" && price !== "$0" && <span className={highlighted ? "text-primary-foreground/70" : "text-muted-foreground"}>/{t("adminPeriod")}</span>}
+        </div>
+      </div>
+      <ul className="space-y-4 mb-10 flex-grow">
+        {features.map((f, i) => (
+          <li key={i} className="flex items-start gap-3">
+            <CheckCircle2 className={`w-5 h-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-white" : "text-primary"}`} />
+            <span className="text-sm font-medium leading-tight">{f}</span>
+          </li>
+        ))}
+      </ul>
+      <Button 
+        variant={highlighted ? "secondary" : "default"} 
+        className={`w-full h-14 rounded-2xl text-lg font-bold shadow-lg transition-transform active:scale-95 ${
+          highlighted ? "bg-white text-primary hover:bg-white/90" : ""
+        }`}
+      >
+        {t("land_start")}
+      </Button>
+    </motion.div>
+  );
+};
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-slate-50 via-red-50/30 to-slate-100 font-sans text-slate-900 overflow-x-hidden">
@@ -91,9 +96,9 @@ const Landing = () => {
           </div>
           
           <nav className="hidden md:flex items-center gap-10">
-            <a href="#features" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">Функции</a>
-            <a href="#preview" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">Предпросмотр</a>
-            <a href="#pricing" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">Цены</a>
+            <a href="#features" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">{t("land_features")}</a>
+            <a href="#preview" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">{t("land_preview")}</a>
+            <a href="#pricing" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">{t("land_pricing")}</a>
           </nav>
 
           <Button 
@@ -101,7 +106,7 @@ const Landing = () => {
             variant="default"
             className="rounded-xl px-8 h-10 font-bold shadow-md hover:shadow-xl transition-all"
           >
-            Войти
+            {t("land_login")}
           </Button>
         </div>
       </header>
@@ -115,14 +120,14 @@ const Landing = () => {
             transition={{ duration: 0.8 }}
           >
             <span className="inline-block py-2 px-6 rounded-full bg-primary/10 text-primary font-bold text-sm mb-6 border border-primary/20 backdrop-blur-sm">
-              ✨ МАГИЯ ОБУЧЕНИЯ С ПОМОЩЬЮ ИИ
+              {t("land_hero_badge")}
             </span>
             <h1 className="text-6xl md:text-8xl font-black font-serif tracking-tight leading-[1.05] text-slate-900">
-              Революция <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-red-600 to-rose-500">в Вашем Классе</span>
+              {t("land_hero_title1")} <br />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-red-600 to-rose-500">{t("land_hero_title2")}</span>
             </h1>
             <p className="max-w-2xl mx-auto text-xl md:text-2xl text-slate-500 mt-8 leading-relaxed font-sans">
-              Хватит тратить часы на подготовку. Создавайте уроки, игры и персонализированные книги за считанные секунды.
+              {t("land_hero_sub")}
             </p>
           </motion.div>
 
@@ -132,11 +137,11 @@ const Landing = () => {
             transition={{ delay: 0.3, duration: 0.8 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10"
           >
-            <Button size="lg" className="h-16 px-12 text-xl font-bold rounded-2xl shadow-[0_20px_50px_rgba(153,27,27,0.3)] hover:scale-105 transition-transform">
-              Попробовать бесплатно <ArrowRight className="ml-2 w-5 h-5" />
+            <Button onClick={() => navigate("/login")} size="lg" className="h-16 px-12 text-xl font-bold rounded-2xl shadow-[0_20px_50px_rgba(153,27,27,0.3)] hover:scale-105 transition-transform">
+              {t("land_hero_cta")} <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <button className="h-16 px-12 text-lg font-bold text-slate-600 hover:text-primary transition-colors">
-              Смотреть демо
+              {t("land_hero_demo")}
             </button>
           </motion.div>
         </div>
@@ -163,45 +168,45 @@ const Landing = () => {
       <section id="features" className="py-32 px-6 bg-slate-50/50 relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-black font-serif mb-6">Все, что нужно учителю</h2>
-            <p className="text-xl text-slate-500 max-w-2xl mx-auto">Одна платформа, бесконечные возможности. Доверьте рутину искусственному интеллекту.</p>
+            <h2 className="text-4xl md:text-5xl font-black font-serif mb-6">{t("land_features_title")}</h2>
+            <p className="text-xl text-slate-500 max-w-2xl mx-auto">{t("land_features_sub")}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard 
               icon={Sparkles} 
-              title="ИИ-Генераторы" 
-              desc="Создавайте задания по математике, квизы и кроссворды на любом языке (RU/UZ/EN)." 
+              title={t("land_f1_title")} 
+              desc={t("land_f1_desc")} 
               delay={0.1}
             />
             <FeatureCard 
               icon={Gamepad2} 
-              title="Интерактивные Игры" 
-              desc="Перетягивание каната, Jeopardy и Филворды прямо на вашей смарт-доске." 
+              title={t("land_f2_title")} 
+              desc={t("land_f2_desc")} 
               delay={0.2}
             />
             <FeatureCard 
               icon={BookOpen} 
-              title="Персональные Книги" 
-              desc="Генерация детских историй с ИИ-иллюстрациями за считанные минуты." 
+              title={t("land_f3_title")} 
+              desc={t("land_f3_desc")} 
               delay={0.3}
             />
             <FeatureCard 
               icon={Calculator} 
-              title="Математика 1-11" 
-              desc="Динамические задачи с автоматической подстройкой под уровень класса." 
+              title={t("land_f4_title")} 
+              desc={t("land_f4_desc")} 
               delay={0.4}
             />
             <FeatureCard 
               icon={Layout} 
-              title="Экспорт в DOCX" 
-              desc="Скачивайте готовые материалы для печати в профессиональном формате." 
+              title={t("land_f5_title")} 
+              desc={t("land_f5_desc")} 
               delay={0.5}
             />
             <FeatureCard 
               icon={Layers} 
-              title="Управление Классами" 
-              desc="Удобный дашборд для отслеживания прогресса и статистики учеников." 
+              title={t("land_f6_title")} 
+              desc={t("land_f6_desc")} 
               delay={0.6}
             />
           </div>
@@ -221,23 +226,23 @@ const Landing = () => {
             >
               <div>
                 <h2 className="text-4xl md:text-6xl font-black font-serif mb-8 leading-tight text-slate-900">
-                  Увидьте <br />
-                  <span className="text-primary italic">Результат</span>
+                  {t("land_res_title1")} <br />
+                  <span className="text-primary italic">{t("land_res_title2")}</span>
                 </h2>
                 <div className="space-y-6">
                   <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                     <h4 className="flex items-center gap-2 font-bold text-xl mb-2">
                        <CheckCircle2 className="text-primary w-6 h-6" />
-                       Высокая Точность
+                       {t("land_res_acc")}
                     </h4>
-                    <p className="text-slate-500">Каждое задание проверяется нашим алгоритмом на корректность и эстетику.</p>
+                    <p className="text-slate-500">{t("land_res_acc_desc")}</p>
                   </div>
                   <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                     <h4 className="flex items-center gap-2 font-bold text-xl mb-2">
                        <CheckCircle2 className="text-primary w-6 h-6" />
-                       Готово к Печати
+                       {t("land_res_print")}
                     </h4>
-                    <p className="text-slate-500">Оптимизировано под формат A4. Просто скачайте, распечатайте и раздайте классу.</p>
+                    <p className="text-slate-500">{t("land_res_print_desc")}</p>
                   </div>
                 </div>
               </div>
@@ -253,15 +258,15 @@ const Landing = () => {
               <div className="space-y-4 translate-y-8">
                 <img src="/landing/game.png" alt="Игра" className="rounded-3xl shadow-xl border-4 border-white hover:scale-105 transition-transform" />
                 <div className="p-8 rounded-3xl bg-primary shadow-2xl text-white">
-                   <h5 className="text-2xl font-black mb-2">10k+</h5>
-                   <p className="opacity-80">Генераций сделано учителями в прошлом месяце.</p>
+                   <h5 className="text-2xl font-black mb-2">{t("land_stat_gen")}</h5>
+                   <p className="opacity-80">{t("land_stat_gen_desc")}</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="p-8 rounded-3xl bg-slate-900 shadow-2xl text-white">
                    <Users className="w-10 h-10 mb-4 text-primary" />
-                   <h5 className="text-xl font-bold">Для Организаций</h5>
-                   <p className="opacity-60 text-sm">Подходит как для частных репетиторов, так и для целых школ.</p>
+                   <h5 className="text-xl font-bold">{t("land_org_title")}</h5>
+                   <p className="opacity-60 text-sm">{t("land_org_desc")}</p>
                 </div>
                 <img src="/landing/books.png" alt="Книги" className="rounded-3xl shadow-xl border-4 border-white hover:scale-105 transition-transform" />
               </div>
@@ -274,47 +279,47 @@ const Landing = () => {
       <section id="pricing" className="py-32 px-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-slate-50 to-slate-100">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20 space-y-4">
-            <h2 className="text-5xl font-black font-serif">Тарифы для любого масштаба</h2>
-            <p className="text-xl text-slate-500">От индивидуальных занятий до государственных учреждений.</p>
+            <h2 className="text-5xl font-black font-serif">{t("land_price_title")}</h2>
+            <p className="text-xl text-slate-500">{t("land_price_sub")}</p>
           </div>
 
           {/* Pricing Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
             <PriceCard 
-              title="Бесплатно" 
+              title={t("land_p1_title")} 
               price="$0" 
               features={[
-                "10 ИИ-генераций в месяц",
-                "Базовый доступ к играм",
-                "Поддержка сообщества",
-                "1 место учителя"
+                t("land_p1_f1"),
+                t("land_p1_f2"),
+                t("land_p1_f3"),
+                t("land_p1_f4")
               ]}
               delay={0.1}
             />
             <PriceCard 
-              title="Pro Учитель" 
+              title={t("land_p2_title")} 
               price="$9" 
               highlighted={true}
               features={[
-                "Безлимитные генерации",
-                "Полная библиотека игр",
-                "Создание ИИ-книг",
-                "Продвинутая аналитика класса",
-                "Приоритетная поддержка",
-                "1 выделенное место"
+                t("land_p2_f1"),
+                t("land_p2_f2"),
+                t("land_p2_f3"),
+                t("land_p2_f4"),
+                t("land_p2_f5"),
+                t("land_p2_f6")
               ]}
               delay={0.2}
             />
             <PriceCard 
-              title="Для Школ" 
-              price="$49" 
+              title={t("land_p3_title")} 
+              price={t("land_p3_price")} 
               features={[
-                "Все функции Pro-плана",
-                "До 10 мест для учителей",
-                "Панель администратора школы",
-                "Массовый импорт классов",
-                "Брендирование отчетов",
-                "Работа по договору и счетам"
+                t("land_p3_f1"),
+                t("land_p3_f2"),
+                t("land_p3_f3"),
+                t("land_p3_f4"),
+                t("land_p3_f5"),
+                t("land_p3_f6")
               ]}
               delay={0.3}
             />
@@ -328,11 +333,11 @@ const Landing = () => {
           >
              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-20 -mt-20" />
              <div className="space-y-4 relative z-10">
-               <h3 className="text-3xl font-black font-serif leading-tight">Нужно больше мест?</h3>
-               <p className="text-slate-400 text-lg">Мы предлагаем индивидуальные условия для университетов, образовательных центров и департаментов.</p>
+               <h3 className="text-3xl font-black font-serif leading-tight">{t("land_cta_more")}</h3>
+               <p className="text-slate-400 text-lg">{t("land_cta_desc")}</p>
              </div>
              <Button variant="outline" className="relative z-10 bg-white/10 hover:bg-white/20 border-white/20 text-white h-16 px-12 rounded-2xl text-xl font-bold flex-shrink-0">
-               Связаться с нами
+               {t("land_cta_btn")}
              </Button>
           </motion.div>
         </div>
@@ -349,31 +354,31 @@ const Landing = () => {
                 </div>
                 <span className="text-xl font-black font-serif">ClassPlay</span>
               </div>
-              <p className="text-slate-500 max-w-sm">Самая мощная в мире ИИ-платформа, созданная специально для современного образования.</p>
+              <p className="text-slate-500 max-w-sm">{t("land_foot_desc")}</p>
             </div>
             
             <div className="flex flex-wrap justify-center gap-10">
               <div className="space-y-6">
-                <h5 className="font-bold text-sm uppercase tracking-widest text-slate-400">Продукт</h5>
+                <h5 className="font-bold text-sm uppercase tracking-widest text-slate-400">{t("land_foot_prod1")}</h5>
                 <ul className="space-y-4 font-bold text-slate-600">
-                  <li><a href="#" className="hover:text-primary transition-colors">Функции</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">Цены</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">API</a></li>
+                  <li><a href="#features" className="hover:text-primary transition-colors">{t("land_foot_prod2")}</a></li>
+                  <li><a href="#pricing" className="hover:text-primary transition-colors">{t("land_foot_prod3")}</a></li>
+                  <li><a href="#" className="hover:text-primary transition-colors">{t("land_foot_prod4")}</a></li>
                 </ul>
               </div>
               <div className="space-y-6">
-                <h5 className="font-bold text-sm uppercase tracking-widest text-slate-400">Компания</h5>
+                <h5 className="font-bold text-sm uppercase tracking-widest text-slate-400">{t("land_foot_comp1")}</h5>
                 <ul className="space-y-4 font-bold text-slate-600">
-                  <li><a href="#" className="hover:text-primary transition-colors">О нас</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">Конфиденциальность</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">Условия</a></li>
+                  <li><a href="#" className="hover:text-primary transition-colors">{t("land_foot_comp2")}</a></li>
+                  <li><a href="#" className="hover:text-primary transition-colors">{t("land_foot_comp3")}</a></li>
+                  <li><a href="#" className="hover:text-primary transition-colors">{t("land_foot_comp4")}</a></li>
                 </ul>
               </div>
             </div>
           </div>
           
           <div className="text-center pt-10 border-t border-slate-100">
-            <p className="text-slate-400 text-sm font-medium">© 2026 ClassPlay Inc. Все права защищены.</p>
+            <p className="text-slate-400 text-sm font-medium">{t("land_copy")}</p>
           </div>
         </div>
       </footer>

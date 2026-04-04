@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import GameShell from "./GameShell";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 const TOPICS: Record<string, { emoji: string; pairs: string[] }> = {
   Fruits: { emoji: "🍎", pairs: ["🍎", "🍌", "🍇", "🍊", "🍓", "🍉", "🍑", "🥭", "🍋", "🍒", "🥝", "🫐", "🍍", "🥥", "🍆", "🌽", "🫒", "🍅", "🥕", "🌶️"] },
@@ -20,6 +21,7 @@ interface Card {
 }
 
 const MemoryMatrix = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<"setup" | "playing" | "finished">("setup");
   const [topic, setTopic] = useState("Fruits");
   const [gridSize, setGridSize] = useState("Easy");
@@ -79,35 +81,35 @@ const MemoryMatrix = () => {
   }, [cards, status]);
 
   const cols = gridSize === "Easy" ? 4 : gridSize === "Medium" ? 6 : 8;
-  const howToPlay = "Flip two cards to find matching pairs. If they match, they stay face-up. Find all pairs to win! Try to remember card positions to minimize moves.";
+  const howToPlay = t('game_memory_how');
 
   return (
-    <GameShell title="Memory Matrix" onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
+    <GameShell title={t('game_memory_matrix_title')} onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
       <AnimatePresence mode="wait">
         {status === "setup" && (
           <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="flex flex-col items-center justify-center h-full gap-6 p-8"
           >
-            <h2 className="text-4xl font-bold text-gray-800 font-serif">Memory Matrix</h2>
+            <h2 className="text-4xl font-bold text-gray-800 font-serif">{t('game_memory_matrix_title')}</h2>
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 w-full max-w-md space-y-5 shadow-sm">
               <div>
-                <p className="text-gray-500 font-sans text-sm mb-2">Topic</p>
+                <p className="text-gray-500 font-sans text-sm mb-2">{t('genTopic')}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(TOPICS).map(([t, { emoji }]) => (
-                    <button key={t} onClick={() => setTopic(t)}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-xl font-sans font-medium transition-all border ${topic === t ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50"}`}>
-                      <span className="text-xl">{emoji}</span> {t}
+                  {Object.entries(TOPICS).map(([t_key, { emoji }]) => (
+                    <button key={t_key} onClick={() => setTopic(t_key)}
+                      className={`flex items-center gap-2 px-4 py-3 rounded-xl font-sans font-medium transition-all border ${topic === t_key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50"}`}>
+                      <span className="text-xl">{emoji}</span> {t_key === "Fruits" ? t('fruits') : t_key === "Animals" ? t('animals') : t_key === "Sports" ? t('sports') : t('pokemon')}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-gray-500 font-sans text-sm mb-2">Difficulty (Grid Size)</p>
+                <p className="text-gray-500 font-sans text-sm mb-2">{t('game_memory_difficulty_label')}</p>
                 <div className="flex gap-2">
                   {["Easy", "Medium", "Hard", "XL"].map((d) => (
                     <button key={d} onClick={() => setGridSize(d)}
                       className={`flex-1 py-2.5 rounded-xl font-sans font-medium text-sm transition-all border ${gridSize === d ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"}`}>
-                      {d}
+                      {d === "Easy" ? t('genDiffEasy') : d === "Medium" ? t('genDiffMed') : d === "Hard" ? t('genDiffHard') : "XL"}
                     </button>
                   ))}
                 </div>
@@ -116,7 +118,7 @@ const MemoryMatrix = () => {
                 </p>
               </div>
               <Button onClick={startGame} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                Start Game
+                {t('game_start')}
               </Button>
             </div>
           </motion.div>
@@ -127,10 +129,10 @@ const MemoryMatrix = () => {
             className="flex flex-col h-full"
           >
             <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-100">
-              <span className="text-gray-500 font-sans text-sm">Topic: <strong className="text-gray-800">{topic}</strong></span>
-              <span className="text-gray-500 font-sans text-sm">Moves: <strong className="text-gray-800">{moves}</strong></span>
+              <span className="text-gray-500 font-sans text-sm">{t('genTopic')}: <strong className="text-gray-800">{topic === "Fruits" ? t('fruits') : topic === "Animals" ? t('animals') : topic === "Sports" ? t('sports') : t('pokemon')}</strong></span>
+              <span className="text-gray-500 font-sans text-sm">{t('moves', 'Ходов')}: <strong className="text-gray-800">{moves}</strong></span>
               <span className="text-gray-500 font-sans text-sm">
-                Found: <strong className="text-gray-800">{cards.filter((c) => c.matched).length / 2}/{cards.length / 2}</strong>
+                {t('found')}: <strong className="text-gray-800">{cards.filter((c) => c.matched).length / 2}/{cards.length / 2}</strong>
               </span>
             </div>
             <div className="flex-1 flex items-center justify-center p-4">
@@ -173,10 +175,10 @@ const MemoryMatrix = () => {
             className="flex flex-col items-center justify-center h-full gap-6"
           >
             <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: 3 }} className="text-8xl">🎉</motion.div>
-            <h2 className="text-4xl font-bold text-gray-800 font-serif">Excellent!</h2>
-            <p className="text-gray-500 font-sans text-lg">Completed in <strong className="text-gray-800">{moves}</strong> moves</p>
+            <h2 className="text-4xl font-bold text-gray-800 font-serif">{t('game_excellent')}</h2>
+            <p className="text-gray-500 font-sans text-lg">{t('game_completed_in_moves', { count: moves })}</p>
             <Button onClick={startGame} className="font-semibold px-8 py-3 text-lg rounded-2xl">
-              Play Again
+              {t('game_playAgain')}
             </Button>
           </motion.div>
         )}

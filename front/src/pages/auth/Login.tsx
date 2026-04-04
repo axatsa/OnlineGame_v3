@@ -4,15 +4,15 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GraduationCap } from "lucide-react";
-import { useLang } from "@/context/LangContext";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
-import type { Lang } from "@/context/LangContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { lang, setLang, t } = useLang();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const { login, user } = useAuth();
 
   useEffect(() => {
@@ -99,10 +99,10 @@ const Login = () => {
           {/* Lang switcher */}
           <div className="flex justify-end">
             <div className="flex bg-muted rounded-full p-1 gap-0.5">
-              {(["ru", "uz"] as Lang[]).map((l) => (
+              {(["ru", "uz"] as const).map((l) => (
                 <button
                   key={l}
-                  onClick={() => setLang(l)}
+                  onClick={() => i18n.changeLanguage(l)}
                   className={`px-4 py-1.5 rounded-full text-sm font-semibold font-sans transition-colors ${lang === l
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"

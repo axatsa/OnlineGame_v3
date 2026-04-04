@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RotateCcw, LogOut, Loader2 } from "lucide-react";
 import { useClass } from "@/context/ClassContext";
+import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -59,11 +60,12 @@ const generateGrid = (words: string[], difficulty: string, isRu: boolean): { gri
 };
 
 const WordSearch = () => {
+  const { t, i18n } = useTranslation();
   const { activeClassId } = useClass();
   const [status, setStatus] = useState<"setup" | "loading" | "playing" | "finished">("setup");
   const [topicInput, setTopicInput] = useState("");
-  const [difficulty, setDifficulty] = useState("Средне");
-  const [language, setLanguage] = useState<"ru" | "uz">("ru");
+  const [difficulty, setDifficulty] = useState("Medium");
+  const [language, setLanguage] = useState<"ru" | "uz">(i18n.language as "ru" | "uz");
   const [grid, setGrid] = useState<string[][]>([]);
   const [placedWords, setPlacedWords] = useState<{ word: string; cells: [number, number][] }[]>([]);
   const [found, setFound] = useState<Set<string>>(new Set());
@@ -165,49 +167,49 @@ const WordSearch = () => {
   const getHighlightClass = (r: number, c: number) => highlighted.get(cellKey(r, c));
 
   const isFinished = found.size === placedWords.length && placedWords.length > 0;
-  const howToPlay = "Найдите скрытые слова в сетке букв. Кликните и перетащите по буквам, чтобы выделить слово. Найденные слова зачёркиваются. Найдите все слова чтобы победить!";
+  const howToPlay = t('game_word_search_how');
 
   const currentTopic = topicInput.trim() || (language === "ru" ? "География" : "Animals");
 
   return (
-    <GameShell title="Philword" onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
+    <GameShell title={t('game_word_search_title')} onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
       <AnimatePresence mode="wait">
         {status === "setup" && (
           <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="flex flex-col items-center justify-center h-full gap-6 p-8 bg-white"
           >
-            <h2 className="text-4xl font-bold text-gray-800 font-serif">Philword</h2>
+            <h2 className="text-4xl font-bold text-gray-800 font-serif">{t('game_word_search_title')}</h2>
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-sm">
               <div className="space-y-1.5">
-                <p className="text-gray-700 font-sans text-sm font-medium">Язык / Тил</p>
+                <p className="text-gray-700 font-sans text-sm font-medium">{t('language_label')}</p>
                 <div className="flex gap-2">
                   {(["ru", "uz"] as const).map((l) => (
                     <button key={l} onClick={() => setLanguage(l)}
                       className={`flex-1 py-2.5 rounded-xl font-sans font-semibold text-sm transition-all ${language === l ? "bg-blue-600 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"}`}>
-                      {l === "ru" ? "🇷🇺 Русский" : "🇺🇿 O'zbek"}
+                      {l === "ru" ? "🇷🇺 Русский" : "🇺🇿 O'zbekcha"}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="space-y-1.5">
-                <p className="text-gray-700 font-sans text-sm font-medium">Тема</p>
+                <p className="text-gray-700 font-sans text-sm font-medium">{t('genTopic')}</p>
                 <Input value={topicInput} onChange={(e) => setTopicInput(e.target.value)}
                   placeholder={language === "ru" ? "Животные, География, Фрукты..." : "Animals, Fruits, Space..."}
                   className="font-sans" />
               </div>
               <div className="space-y-1.5">
-                <p className="text-gray-700 font-sans text-sm font-medium">Сложность</p>
+                <p className="text-gray-700 font-sans text-sm font-medium">{t('genDiff')}</p>
                 <div className="flex gap-2">
-                  {(language === "ru" ? ["Легко", "Средне", "Сложно"] : ["Easy", "Medium", "Hard"]).map((d) => (
+                  {["Easy", "Medium", "Hard"].map((d) => (
                     <button key={d} onClick={() => setDifficulty(d)}
                       className={`flex-1 py-2.5 rounded-xl font-sans font-medium text-sm transition-all ${difficulty === d ? "bg-blue-600 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"}`}>
-                      {d}
+                      {d === "Easy" ? t('genDiffEasy') : d === "Medium" ? t('genDiffMed') : t('genDiffHard')}
                     </button>
                   ))}
                 </div>
               </div>
               <Button onClick={startGame} className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold font-sans">
-                Начать игру
+                {t('game_start')}
               </Button>
             </div>
           </motion.div>
@@ -222,9 +224,9 @@ const WordSearch = () => {
               {isFinished ? (
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center flex flex-col items-center gap-4 h-full justify-center pt-20">
                   <div className="text-8xl">🎉</div>
-                  <h2 className="text-4xl font-bold text-gray-800 font-serif">Все найдены!</h2>
+                  <h2 className="text-4xl font-bold text-gray-800 font-serif">{t('game_all_found')}</h2>
                   <Button onClick={startGame} className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 text-lg rounded-2xl">
-                    Играть снова
+                    {t('game_playAgain')}
                   </Button>
                 </motion.div>
               ) : (
@@ -300,12 +302,12 @@ const WordSearch = () => {
                 <button onClick={startGame}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-sans font-medium transition-colors">
                   <RotateCcw className="w-3.5 h-3.5" />
-                  Сброс
+                  {t('reset')}
                 </button>
                 <button onClick={() => setStatus("setup")}
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 text-xs font-sans font-medium transition-colors">
                   <LogOut className="w-3.5 h-3.5" />
-                  Выход
+                  {t('exit')}
                 </button>
               </div>
             </div>

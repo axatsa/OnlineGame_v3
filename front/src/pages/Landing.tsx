@@ -140,7 +140,7 @@ const Landing = () => {
             <Button onClick={() => navigate("/login")} size="lg" className="h-16 px-12 text-xl font-bold rounded-2xl shadow-[0_20px_50px_rgba(153,27,27,0.3)] hover:scale-105 transition-transform">
               {t("land_hero_cta")} <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <button className="h-16 px-12 text-lg font-bold text-slate-600 hover:text-primary transition-colors">
+            <button onClick={() => navigate("/demo")} className="h-16 px-12 text-lg font-bold text-slate-600 hover:text-primary transition-colors">
               {t("land_hero_demo")}
             </button>
           </motion.div>

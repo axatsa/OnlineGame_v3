@@ -31,3 +31,14 @@ class JeopardyRequest(BaseModel):
     topic: str
     language: str = "Russian"
     class_id: Optional[int] = None
+
+class GenerationLogResponse(BaseModel):
+    id: int
+    generator_type: str
+    topic: str
+    content: str # Will hold stringified JSON
+    created_at: str
+    is_favorite: int
+
+    class Config:
+        from_attributes = True

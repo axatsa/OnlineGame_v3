@@ -11,11 +11,15 @@ import {
   Filter, Download, Calendar, Cpu,
   ToggleLeft, ToggleRight, FileText,
   ArrowUpRight, ArrowDownRight, WifiOff, Wifi,
-  CreditCard, Receipt, BarChart3, Loader2, Globe
+  CreditCard, Receipt, BarChart3, Loader2, Globe, Sun, Moon,
+  Upload, ChevronDown, ChevronUp, BarChart2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useClass } from "@/context/ClassContext";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "@/context/ThemeContext";
+import BulkImportModal from "./BulkImportModal";
+import OrgStatsModal from "./OrgStatsModal";
 import * as docx from "docx";
 import { saveAs } from "file-saver";
 
@@ -602,9 +606,12 @@ const TeachersView = ({
   );
 };
 
-const OrgsView = ({ orgs, isLoading }: { orgs: Org[]; isLoading: boolean }) => {
+const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: boolean; onRefresh: () => void }) => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
+  const [importOrg, setImportOrg] = useState<{ id: number, name: string } | null>(null);
+  const [statsOrg, setStatsOrg] = useState<number | null>(null);
+  
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
@@ -632,6 +639,13 @@ const OrgsView = ({ orgs, isLoading }: { orgs: Org[]; isLoading: boolean }) => {
                     <Building2 className="w-4 h-4 text-muted-foreground" />
                     <h3 className="font-semibold text-foreground font-sans">{org.name}</h3>
                     <StatusBadge status={org.status} />
+                    <button 
+                      onClick={() => setStatsOrg(org.id)}
+                      className="ml-2 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors text-primary"
+                      title="Статистика использования"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                   <p className="text-xs text-muted-foreground font-sans">{org.contact}</p>
                 </div>
@@ -651,8 +665,13 @@ const OrgsView = ({ orgs, isLoading }: { orgs: Org[]; isLoading: boolean }) => {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="rounded-xl font-sans h-8 text-xs gap-1">
-                      <Calendar className="w-3 h-3" /> Продлить
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-xl font-sans h-8 text-xs gap-1 text-primary hover:bg-primary/10 border-primary/20"
+                      onClick={() => setImportOrg({ id: org.id, name: org.name })}
+                    >
+                      <Upload className="w-3 h-3" /> CSV Импорт Учителей
                     </Button>
                     <Button variant="outline" size="sm" className="rounded-xl font-sans h-8 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10">
                       <Ban className="w-3 h-3" /> Блок
@@ -1057,6 +1076,7 @@ const AdminPanel = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
+  const { isDark, toggle: toggleTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<Section>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1077,68 +1097,68 @@ const AdminPanel = () => {
   const [page, setPage] = useState(1);
   const LIMIT = 50;
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const skip = (page - 1) * LIMIT;
+      const [teachersData, analyticsData, orgsData, paymentsData, logsData] = await Promise.all([
+        adminService.getTeachers(skip, LIMIT, searchQuery),
+        adminService.getAnalytics(),
+        adminService.getOrganizations(skip, LIMIT),
+        adminService.getPayments(skip, LIMIT),
+        adminService.getAuditLogs(skip, LIMIT)
+      ]);
+
+      const analyticsMap = new Map((analyticsData as any).map((a: any) => [a.user_id, a]));
+      const mappedTeachers: Teacher[] = (teachersData as any).map((u: any) => {
+        const stats = analyticsMap.get(u.id) as any;
+        return {
+          id: u.id,
+          name: u.full_name || "Unknown",
+          login: u.email,
+          school: "Online",
+          status: "active",
+          lastLogin: stats?.last_active ? new Date(stats.last_active).toLocaleString("ru-RU") : "—",
+          plan: "Pro",
+          tokenUsage: stats?.total_tokens || 0,
+          ip: "—"
+        };
+      });
+      setTeachers(mappedTeachers);
+      setOrgs((orgsData as any).map((o: any) => ({
+        id: o.id,
+        name: o.name,
+        contact: o.contact_person,
+        seats: o.license_seats,
+        used: o.used_seats || 0,
+        expires: o.expires_at,
+        status: o.status
+      })));
+      setPayments((paymentsData as any).map((p: any) => ({
+        id: p.id,
+        org: p.org_name || "Unknown",
+        amount: p.amount,
+        currency: p.currency,
+        date: p.date,
+        method: p.method,
+        status: p.status,
+        period: p.period
+      })));
+      setAuditLogs((logsData as any).map((l: any) => ({
+        id: l.id,
+        action: l.action,
+        target: l.target,
+        time: new Date(l.timestamp).toLocaleString("ru-RU"),
+        type: l.log_type
+      })));
+    } catch (e) {
+      console.error("Failed to fetch admin data", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const skip = (page - 1) * LIMIT;
-        const [teachersData, analyticsData, orgsData, paymentsData, logsData] = await Promise.all([
-          adminService.getTeachers(skip, LIMIT, searchQuery),
-          adminService.getAnalytics(),
-          adminService.getOrganizations(skip, LIMIT),
-          adminService.getPayments(skip, LIMIT),
-          adminService.getAuditLogs(skip, LIMIT)
-        ]);
-
-        const analyticsMap = new Map((analyticsData as any).map((a: any) => [a.user_id, a]));
-        const mappedTeachers: Teacher[] = (teachersData as any).map((u: any) => {
-          const stats = analyticsMap.get(u.id) as any;
-          return {
-            id: u.id,
-            name: u.full_name || "Unknown",
-            login: u.email,
-            school: "Online",
-            status: "active",
-            lastLogin: stats?.last_active ? new Date(stats.last_active).toLocaleString("ru-RU") : "—",
-            plan: "Pro",
-            tokenUsage: stats?.total_tokens || 0,
-            ip: "—"
-          };
-        });
-        setTeachers(mappedTeachers);
-        setOrgs((orgsData as any).map((o: any) => ({
-          id: o.id,
-          name: o.name,
-          contact: o.contact_person,
-          seats: o.license_seats,
-          used: o.used_seats || 0,
-          expires: o.expires_at,
-          status: o.status
-        })));
-        setPayments((paymentsData as any).map((p: any) => ({
-          id: p.id,
-          org: p.org_name || "Unknown",
-          amount: p.amount,
-          currency: p.currency,
-          date: p.date,
-          method: p.method,
-          status: p.status,
-          period: p.period
-        })));
-        setAuditLogs((logsData as any).map((l: any) => ({
-          id: l.id,
-          action: l.action,
-          target: l.target,
-          time: new Date(l.timestamp).toLocaleString("ru-RU"),
-          type: l.log_type
-        })));
-      } catch (e) {
-        console.error("Failed to fetch admin data", e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     // Debounce search
     const timer = setTimeout(() => {
       fetchData();
@@ -1238,6 +1258,14 @@ const AdminPanel = () => {
               <Cpu className="w-3.5 h-3.5" />
               {aiProvider === "gemini" ? "Gemini" : "OpenAI"} • Онлайн
             </div>
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+              title={isDark ? "Светлая тема" : "Тёмная тема"}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+            </button>
             <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors overflow-hidden">
               <img src="/favicon.webp" alt="Logo" className="w-full h-full object-cover" />
             </button>
@@ -1266,7 +1294,7 @@ const AdminPanel = () => {
                   isLoading={isLoading}
                 />
               )}
-              {activeSection === "organizations" && <OrgsView orgs={orgs} isLoading={isLoading} />}
+              {activeSection === "organizations" && <OrgsView orgs={orgs} isLoading={isLoading} onRefresh={fetchData} />}
               {activeSection === "ai-monitor" && (
                 <AiMonitorView
                   teachers={teachers}

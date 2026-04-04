@@ -22,9 +22,11 @@ import BalanceScales from "./pages/games/BalanceScales";
 import WordSearch from "./pages/games/WordSearch";
 import Crossword from "./pages/games/Crossword";
 import Profile from "./pages/dashboard/Profile";
+import HistoryPage from "./pages/dashboard/HistoryPage";
 import Library from "./pages/library/Library";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
+import DemoGenerator from "./pages/DemoGenerator";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/demo" element={<DemoGenerator />} />
 
                 {/* Admin Routes */}
                 <Route path="/admin" element={
@@ -93,6 +96,11 @@ const App = () => (
                 <Route path="/profile" element={
                   <ProtectedRoute allowedRoles={["teacher", "super_admin"]}>
                     <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/history" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <HistoryPage />
                   </ProtectedRoute>
                 } />
                 <Route path="/library" element={

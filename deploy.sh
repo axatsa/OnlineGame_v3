@@ -48,6 +48,6 @@ docker exec -t online_games_backend_prod python seed.py
 docker exec -t online_games_backend_prod python seed_gamification.py
 
 echo '✅ Деплой успешно завершен!'
-echo '🌐 Проект доступен по адресу: https://classplay.uz !
+echo '🌐 Проект доступен по адресу: https://classplay.uz!
 
 '

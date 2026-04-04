@@ -13,8 +13,8 @@ import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { generateCrosswordLayout, CrosswordGrid } from "@/lib/crossword";
-import { TableSkeleton } from "@/components/common/TableSkeleton";
 import { EmptyState } from "@/components/common/EmptyState";
+import ResultEditor from "./ResultEditor";
 
 type GeneratorType = "math" | "crossword" | "quiz" | "assignment";
 
@@ -576,21 +576,21 @@ const Generator = () => {
     setShowEdit(true);
   };
 
-  const saveEdit = () => {
+  const saveEdit = (newData: any) => {
     try {
       if (genType === "math") {
-        setGeneratedProblems(JSON.parse(editContent));
+        setGeneratedProblems(newData);
       } else if (genType === "crossword") {
-        setCrosswordData(JSON.parse(editContent));
+        setCrosswordData(newData);
       } else if (genType === "quiz") {
-        setQuizData(JSON.parse(editContent));
+        setQuizData(newData);
       } else if (genType === "assignment") {
-        setAssignmentData(JSON.parse(editContent));
+        setAssignmentData(newData);
       }
       setShowEdit(false);
       toast.success("Changes applied!");
     } catch (e) {
-      toast.error("Invalid JSON format. Please check your syntax.");
+      toast.error("Format error. Please check your inputs.");
     }
   };
 
@@ -1402,24 +1402,20 @@ const Generator = () => {
       </div>
 
       {/* Edit Dialog */}
-      < Dialog open={showEdit} onOpenChange={setShowEdit} >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-serif">Edit Content</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              className="w-full h-60 p-3 rounded-xl border border-input bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
-            <Button onClick={saveEdit}>Apply Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog >
+      {showEdit && (
+        <ResultEditor 
+          open={showEdit}
+          onOpenChange={setShowEdit}
+          type={genType}
+          data={
+            genType === "math" ? generatedProblems :
+            genType === "quiz" ? quizData :
+            genType === "crossword" ? crosswordData :
+            assignmentData
+          }
+          onSave={saveEdit}
+        />
+      )}
 
       {/* Save Dialog */}
       < Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog} >

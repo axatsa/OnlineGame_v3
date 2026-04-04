@@ -3,17 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Dices, Gamepad2, GraduationCap, User, BookOpen,
-  ChevronDown, Plus, Check, Settings2, Globe, BookMarked,
+  ChevronDown, Plus, Check, Settings2, Globe, BookMarked, Sun, Moon,
 } from "lucide-react";
 import { useClass } from "@/context/ClassContext";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { classes, activeClass, setActiveClassId } = useClass();
   const { t, i18n } = useTranslation();
+  const { isDark, toggle: toggleTheme } = useTheme();
   const setLang = (l: string) => i18n.changeLanguage(l);
   const lang = i18n.language;
   const [showClassPicker, setShowClassPicker] = useState(false);
@@ -21,6 +23,7 @@ const TeacherDashboard = () => {
 
   const navPills = [
     { key: "Generators", label: t("navGenerators"), route: "/generator" },
+    { key: "History", label: "История", route: "/history" },
     { key: "Tools", label: t("navTools"), route: "/tools" },
     { key: "Games", label: t("navGames"), route: "/games" },
     { key: "Library", label: t("navLibrary"), route: "/library" },
@@ -37,6 +40,15 @@ const TeacherDashboard = () => {
       iconBg: "bg-primary/15",
       iconColor: "text-primary",
       route: "/generator",
+    },
+    {
+      title: "История",
+      description: "Просмотр и использование ранее сгенерированных материалов",
+      icon: BookMarked,
+      gradient: "from-yellow-500/10 to-orange-500/5",
+      iconBg: "bg-yellow-500/15",
+      iconColor: "text-yellow-600",
+      route: "/history",
     },
     {
       title: t("cardToolsTitle"),
@@ -184,6 +196,15 @@ const TeacherDashboard = () => {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+              title={isDark ? "Светлая тема" : "Тёмная тема"}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+            </button>
 
             {/* Profile */}
             <button

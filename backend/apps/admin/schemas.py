@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class OrganizationBase(BaseModel):
@@ -49,3 +49,29 @@ class TokenUsageStats(BaseModel):
     email: str
     total_tokens: int
     last_active: str | None
+
+# ── B2B: Org Stats ──────────────────────────────────────────────
+
+class TeacherStatItem(BaseModel):
+    name: str
+    email: str
+    generations_30d: int
+    last_active: Optional[str]
+
+class OrgStatsResponse(BaseModel):
+    org_name: str
+    total_teachers: int
+    active_last_7_days: int
+    total_generations: int
+    teachers: List[TeacherStatItem]
+
+# ── B2B: Bulk Import ─────────────────────────────────────────────
+
+class ImportedTeacher(BaseModel):
+    email: str
+    temp_password: str
+
+class BulkImportResponse(BaseModel):
+    created: List[ImportedTeacher]
+    skipped: List[str]
+    errors: List[str]

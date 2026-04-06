@@ -39,16 +39,22 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.online_games_frontend.rule=Host(`classplay.uz`) || Host(`www.classplay.uz`)"
+      - "traefik.http.routers.online_games_frontend.entrypoints=websecure"
+      - "traefik.http.routers.online_games_frontend.tls=true"
+      - "traefik.http.routers.online_games_frontend.tls.certresolver=le"
+      - "traefik.docker.network=web"
       - "traefik.http.services.online_games_frontend.loadbalancer.server.port=80"
     depends_on:
       - backend
     networks:
       - app_network
+      - web
 
 volumes:
   postgres_data_prod:
 
-
 networks:
   app_network:
     driver: bridge
+  web:
+    external: true

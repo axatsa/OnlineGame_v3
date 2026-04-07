@@ -89,9 +89,7 @@ const Landing = () => {
       <header className="fixed top-0 left-0 right-0 h-20 bg-white/70 backdrop-blur-xl border-b border-white/20 z-50 px-6">
         <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
+            <img src="/logo-v4.png" alt="ClassPlay Logo" className="w-12 h-12 rounded-xl object-contain drop-shadow-md" />
             <span className="text-2xl font-black tracking-tight font-serif text-slate-800">ClassPlay</span>
           </div>
           
@@ -349,9 +347,7 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-10 mb-20 text-center md:text-left">
             <div className="space-y-6">
               <div className="flex items-center justify-center md:justify-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <GraduationCap className="w-5 h-5 text-white" />
-                </div>
+                <img src="/logo-v4.png" alt="ClassPlay Logo" className="w-10 h-10 rounded-lg object-contain drop-shadow-md" />
                 <span className="text-xl font-black font-serif">ClassPlay</span>
               </div>
               <p className="text-slate-500 max-w-sm">{t("land_foot_desc")}</p>

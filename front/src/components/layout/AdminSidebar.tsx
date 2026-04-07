@@ -42,7 +42,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         <div className="flex flex-col h-full bg-sidebar">
             <div className="p-6 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center overflow-hidden">
-                    <img src="/favicon.webp" alt="Logo" className="w-full h-full object-cover" />
+                    <img src="/logo-v4.png" alt="Logo" className="w-full h-full object-cover" />
                 </div>
                 <div>
                     <span className="text-base font-bold text-sidebar-foreground font-serif block">ClassPlay</span>

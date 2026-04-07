@@ -1006,7 +1006,7 @@ const Generator = () => {
                       <div ref={answerRef} className="w-[210mm] bg-white p-8 flex flex-col">
                         <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-200">
                           <div className="flex items-center gap-2">
-                            <img src="/logo-t.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                            <img src="/logo-v4.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
                             <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">Thompson International</span>
                           </div>
                           <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">Answer Key • {quizTopic}</span>
@@ -1044,7 +1044,7 @@ const Generator = () => {
                             <>
                               <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
                                 <div className="flex items-center gap-1.5">
-                                  <img src="/logo-t.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                                  <img src="/logo-v4.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
                                   <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">Thompson International</span>
                                 </div>
                                 <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">{quizTopic}</span>
@@ -1085,7 +1085,7 @@ const Generator = () => {
                       <div className="p-6 flex flex-col print:p-5 border-t-4 border-dashed border-gray-300" style={{ pageBreakBefore: "always" }}>
                         <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
                           <div className="flex items-center gap-1.5">
-                            <img src="/logo-t.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                            <img src="/logo-v4.png" alt="Logo" className="w-6 h-6 rounded object-contain" />
                             <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">Thompson International</span>
                           </div>
                           <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">Answer Key • {quizTopic}</span>
@@ -1114,7 +1114,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-v4.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {assignmentData.title}</span>
@@ -1177,7 +1177,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-v4.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {mathTopic}</span>
@@ -1205,7 +1205,7 @@ const Generator = () => {
                     <div className="p-10 h-full flex flex-col print:p-2">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-v4.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <div className="text-right">
@@ -1252,7 +1252,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-v4.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {crosswordTopic}</span>
@@ -1294,7 +1294,7 @@ const Generator = () => {
                     <div className="p-8 flex flex-col min-h-full print:p-2">
                       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-t.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo-v4.png" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">Thompson International</span>
                         </div>
                         <div className="text-right">

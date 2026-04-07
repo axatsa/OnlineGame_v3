@@ -85,7 +85,7 @@ const TeacherDashboard = () => {
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo-t.png" alt="ClassPlay Logo" className="w-12 h-12 rounded-lg object-contain" />
+            <img src="/logo-v4.png" alt="ClassPlay Logo" className="w-12 h-12 rounded-lg object-contain" />
             <span className="text-xl font-bold font-serif text-foreground hidden sm:inline">ClassPlay</span>
           </div>
 

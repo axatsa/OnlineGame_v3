@@ -73,7 +73,9 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        serif: ['Merriweather', 'serif'],
+        serif: ['DM Serif Display', 'serif'],
+        display: ['DM Serif Display', 'serif'],
+        merriweather: ['Merriweather', 'serif'],
       },
       keyframes: {
         "accordion-down": {

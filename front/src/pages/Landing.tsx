@@ -1,385 +1,302 @@
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { 
-  GraduationCap, 
-  Sparkles, 
-  Gamepad2, 
-  BookOpen, 
-  CheckCircle2, 
-  ArrowRight,
-  Calculator,
-  Layout,
-  Layers,
-  Users
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import {
+  ArrowRight, Sparkles, BookOpen, Users, Gamepad2,
+  CheckCircle2, Star, Zap, Globe, LogOut, User, Settings
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
+import { useAuth } from "@/context/AuthContext";
 
-const FeatureCard = ({ icon: Icon, title, desc, delay }: { icon: any, title: string, desc: string, delay: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.5, delay }}
-    whileHover={{ y: -5 }}
-    className="p-8 rounded-3xl bg-white/40 backdrop-blur-md border border-white/40 shadow-xl hover:shadow-2xl transition-all"
-  >
-    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-      <Icon className="w-7 h-7 text-primary" />
-    </div>
-    <h3 className="text-2xl font-bold mb-4 font-serif">{title}</h3>
-    <p className="text-muted-foreground leading-relaxed font-sans">{desc}</p>
-  </motion.div>
-);
-
-const PriceCard = ({ title, price, features, highlighted = false, delay = 0 }: { title: string, price: string, features: string[], highlighted?: boolean, delay?: number }) => {
-  const { t } = useTranslation();
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
-      className={`p-8 rounded-[2rem] flex flex-col h-full transition-all duration-300 ${
-        highlighted 
-          ? "bg-primary text-primary-foreground shadow-2xl scale-105 border-4 border-primary/20" 
-          : "bg-white/60 backdrop-blur-lg border border-white/20 shadow-xl"
-      }`}
-    >
-      <div className="mb-8">
-        <h3 className="text-2xl font-black mb-2 uppercase tracking-wider">{title}</h3>
-        <div className="flex items-baseline gap-1">
-          <span className="text-5xl font-black">{price}</span>
-          {price !== "Индивидуально" && price !== "$0" && <span className={highlighted ? "text-primary-foreground/70" : "text-muted-foreground"}>/{t("adminPeriod")}</span>}
-        </div>
-      </div>
-      <ul className="space-y-4 mb-10 flex-grow">
-        {features.map((f, i) => (
-          <li key={i} className="flex items-start gap-3">
-            <CheckCircle2 className={`w-5 h-5 flex-shrink-0 mt-0.5 ${highlighted ? "text-white" : "text-primary"}`} />
-            <span className="text-sm font-medium leading-tight">{f}</span>
-          </li>
-        ))}
-      </ul>
-      <Button 
-        variant={highlighted ? "secondary" : "default"} 
-        className={`w-full h-14 rounded-2xl text-lg font-bold shadow-lg transition-transform active:scale-95 ${
-          highlighted ? "bg-white text-primary hover:bg-white/90" : ""
-        }`}
-      >
-        {t("land_start")}
-      </Button>
-    </motion.div>
-  );
+const fadeUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, delay: i * 0.12, ease: "easeOut" }
+  })
 };
 
-const Landing = () => {
+export default function Landing() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { user, logout } = useAuth();
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const features = [
+    { icon: Sparkles, title: "AI Генератор", desc: "Создавайте контент для уроков за секунды с помощью искусственного интеллекта", zone: "emerald" },
+    { icon: Gamepad2, title: "Мини-игры", desc: "6 интерактивных игр для вовлечения студентов: Jeopardy, Memory, Crossword и другие", zone: "amber" },
+    { icon: BookOpen, title: "Библиотека", desc: "Храните и управляйте всеми созданными материалами в одном месте", zone: "sky" },
+    { icon: Users, title: "Классы", desc: "Управляйте несколькими классами и отслеживайте прогресс каждого студента", zone: "fuchsia" },
+  ];
+
+  const stats = [
+    { value: "6+", label: "Мини-игр" },
+    { value: "AI", label: "Генератор" },
+    { value: "∞", label: "Материалов" },
+    { value: "100%", label: "Бесплатно" },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 overflow-x-hidden">
-      {/* Background Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-secondary/15 rounded-full blur-[120px]" />
-      </div>
+    <div className="min-h-screen font-sans antialiased w-full">
+      {/* ──────────── NAVBAR ──────────── */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 px-6 lg:px-12 flex justify-between items-center transition-all duration-300 ${
+        navScrolled ? "bg-white/80 backdrop-blur-xl shadow-sm py-3" : "bg-transparent py-5"
+      }`}>
+        <button onClick={() => navigate("/")} className="flex items-center gap-3 group">
+          <img
+            src="/logo_sticker.webp"
+            alt="ClassPlay"
+            className="w-10 h-10 rounded-xl object-contain group-hover:scale-110 transition-transform duration-200"
+          />
+          <span className="text-xl font-display font-bold tracking-tight text-slate-900">ClassPlay</span>
+        </button>
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-20 bg-white/70 backdrop-blur-xl border-b border-white/20 z-50 px-6">
-        <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-            <img src="/logo-sticker.webp" alt="ClassPlay Logo" className="w-12 h-12 rounded-xl object-contain drop-shadow-md" />
-            <span className="text-2xl font-black tracking-tight font-serif text-slate-800">ClassPlay</span>
-          </div>
-          
-          <nav className="hidden md:flex items-center gap-10">
-            <a href="#features" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">{t("land_features")}</a>
-            <a href="#preview" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">{t("land_preview")}</a>
-            <a href="#pricing" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest">{t("land_pricing")}</a>
-          </nav>
-
-          <Button 
-            onClick={() => navigate("/login")}
-            variant="default"
-            className="rounded-xl px-8 h-10 font-bold shadow-md hover:shadow-xl transition-all"
-          >
-            {t("land_login")}
-          </Button>
+        <div className="flex items-center gap-4">
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setShowProfile(v => !v)}
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-sky-500 flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+              >
+                <User className="w-5 h-5 text-white" />
+              </button>
+              {showProfile && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute right-0 top-14 w-56 bg-white rounded-2xl shadow-2xl border border-black/5 p-2 flex flex-col gap-1"
+                >
+                  <div className="px-4 py-3 border-b border-black/5">
+                    <p className="font-semibold text-sm text-slate-900">{user.name || user.email}</p>
+                    <p className="text-xs text-slate-400">{user.email}</p>
+                  </div>
+                  <button onClick={() => navigate("/teacher")} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 rounded-xl text-sm text-slate-700 transition-colors">
+                    <Settings className="w-4 h-4 opacity-50" /> Дашборд
+                  </button>
+                  <button onClick={logout} className="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 rounded-xl text-sm text-red-500 transition-colors">
+                    <LogOut className="w-4 h-4" /> Выйти
+                  </button>
+                </motion.div>
+              )}
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate("/demo")}
+                className="px-5 py-2.5 rounded-full text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-black/5 transition-colors"
+              >
+                Демо
+              </button>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-5 py-2.5 rounded-full text-sm font-semibold bg-slate-900 text-white hover:bg-slate-700 transition-colors shadow-sm"
+              >
+                Войти
+              </button>
+            </>
+          )}
         </div>
-      </header>
+      </nav>
 
-      {/* Hero */}
-      <section className="pt-44 pb-24 px-6 relative overflow-hidden">
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <span className="inline-block py-2 px-6 rounded-full bg-primary/10 text-primary font-bold text-sm mb-6 border border-primary/20 backdrop-blur-sm">
-              {t("land_hero_badge")}
-            </span>
-            <h1 className="text-6xl md:text-8xl font-black font-serif tracking-tight leading-[1.05] text-slate-900">
-              {t("land_hero_title1")} <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-red-600 to-rose-500">{t("land_hero_title2")}</span>
-            </h1>
-            <p className="max-w-2xl mx-auto text-xl md:text-2xl text-slate-500 mt-8 leading-relaxed font-sans">
-              {t("land_hero_sub")}
-            </p>
+      {/* ──────────── ZONE 1: HERO (emerald) ──────────── */}
+      <section className="min-h-[90vh] w-full zone-emerald pt-36 px-6 lg:px-24 flex flex-col justify-center">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          className="max-w-5xl"
+        >
+          <motion.div variants={fadeUp} custom={0} className="flex items-center gap-3 mb-10">
+            <img src="/logo_sticker.webp" alt="ClassPlay" className="w-16 h-16 rounded-2xl object-contain" />
+            <span className="text-sm font-semibold uppercase tracking-widest opacity-60">ClassPlay</span>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10"
+          <motion.h1
+            variants={fadeUp}
+            custom={1}
+            className="text-[13vw] sm:text-7xl md:text-9xl font-display font-medium tracking-tighter leading-[0.85] mb-8"
           >
-            <Button onClick={() => navigate("/login")} size="lg" className="h-16 px-12 text-xl font-bold rounded-2xl shadow-[0_20px_50px_rgba(153,27,27,0.3)] hover:scale-105 transition-transform">
-              {t("land_hero_cta")} <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <button onClick={() => navigate("/demo")} className="h-16 px-12 text-lg font-bold text-slate-600 hover:text-primary transition-colors">
-              {t("land_hero_demo")}
+            Обучение,<br />
+            <span style={{ color: "var(--zone-emerald-muted)" }}>которое работает.</span>
+          </motion.h1>
+
+          <motion.p
+            variants={fadeUp}
+            custom={2}
+            className="text-xl md:text-2xl max-w-2xl leading-relaxed mb-12"
+            style={{ color: "var(--zone-emerald-muted)" }}
+          >
+            AI-платформа для учителей: генерируйте материалы, запускайте игры и управляйте классами — всё в одном месте.
+          </motion.p>
+
+          <motion.div variants={fadeUp} custom={3} className="flex flex-wrap gap-4">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-8 py-5 rounded-full text-xl font-semibold flex items-center gap-3 hover:scale-105 transition-transform shadow-2xl"
+              style={{ background: "var(--zone-emerald-text)", color: "var(--zone-emerald-bg)" }}
+            >
+              Начать бесплатно <ArrowRight size={22} />
+            </button>
+            <button
+              onClick={() => navigate("/demo")}
+              className="px-8 py-5 rounded-full text-xl font-medium flex items-center gap-3 border-2 hover:bg-black/5 transition-colors"
+              style={{ borderColor: "var(--zone-emerald-text)", color: "var(--zone-emerald-text)" }}
+            >
+              <Zap size={20} /> Попробовать демо
             </button>
           </motion.div>
-        </div>
+        </motion.div>
+      </section>
 
-        {/* Floating preview element */}
+      {/* ──────────── ZONE 2: STATS (stone) ──────────── */}
+      <section className="zone-stone py-20 px-6 lg:px-24">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12">
+          {stats.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="flex flex-col items-center md:items-start gap-2"
+            >
+              <span className="text-5xl md:text-7xl font-display font-medium tracking-tighter">{s.value}</span>
+              <span className="text-sm font-medium uppercase tracking-widest opacity-50">{s.label}</span>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ──────────── ZONE 3: FEATURES (amber) ──────────── */}
+      <section className="zone-amber py-32 px-6 lg:px-24">
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 1 }}
-          className="mt-24 max-w-6xl mx-auto relative group"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-5xl"
         >
-          <div className="absolute inset-0 bg-primary/20 rounded-[3rem] blur-3xl group-hover:bg-primary/30 transition-all duration-700" />
-          <div className="relative rounded-[2.5rem] border-8 border-white/60 overflow-hidden shadow-2xl backdrop-blur-sm">
-            <img 
-              src="/placeholder.svg" 
-              alt="ClassPlay Dashboard" 
-              className="w-full object-cover rounded-[1.8rem]"
-            />
+          <h2 className="text-5xl md:text-7xl font-display font-medium tracking-tighter mb-6">
+            Всё что нужно
+          </h2>
+          <p className="text-xl max-w-xl mb-20" style={{ color: "var(--zone-amber-muted)" }}>
+            Один инструмент, чтобы планировать, создавать и проводить уроки.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-20">
+            {features.map((f, i) => (
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="flex flex-col group cursor-pointer"
+              >
+                <div className={`border-l-4 pl-8 transition-colors duration-300 group-hover:border-current border-current/20`}>
+                  <f.icon className="w-10 h-10 mb-6 opacity-70 group-hover:scale-110 transition-transform origin-left duration-500" />
+                  <h3 className="text-3xl md:text-4xl font-display font-medium tracking-tighter leading-tight mb-4">
+                    {f.title}
+                  </h3>
+                  <p className="text-lg leading-relaxed opacity-70">{f.desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="py-32 px-6 bg-slate-50/50 relative">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-black font-serif mb-6">{t("land_features_title")}</h2>
-            <p className="text-xl text-slate-500 max-w-2xl mx-auto">{t("land_features_sub")}</p>
-          </div>
+      {/* ──────────── ZONE 4: HOW IT WORKS (sky) ──────────── */}
+      <section className="zone-sky py-32 px-6 lg:px-24">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-5xl"
+        >
+          <h2 className="text-5xl md:text-7xl font-display font-medium tracking-tighter mb-20">
+            Как это работает
+          </h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard 
-              icon={Sparkles} 
-              title={t("land_f1_title")} 
-              desc={t("land_f1_desc")} 
-              delay={0.1}
-            />
-            <FeatureCard 
-              icon={Gamepad2} 
-              title={t("land_f2_title")} 
-              desc={t("land_f2_desc")} 
-              delay={0.2}
-            />
-            <FeatureCard 
-              icon={BookOpen} 
-              title={t("land_f3_title")} 
-              desc={t("land_f3_desc")} 
-              delay={0.3}
-            />
-            <FeatureCard 
-              icon={Calculator} 
-              title={t("land_f4_title")} 
-              desc={t("land_f4_desc")} 
-              delay={0.4}
-            />
-            <FeatureCard 
-              icon={Layout} 
-              title={t("land_f5_title")} 
-              desc={t("land_f5_desc")} 
-              delay={0.5}
-            />
-            <FeatureCard 
-              icon={Layers} 
-              title={t("land_f6_title")} 
-              desc={t("land_f6_desc")} 
-              delay={0.6}
-            />
+          <div className="flex flex-col gap-16">
+            {[
+              { n: "01", title: "Создайте класс", desc: "Добавьте класс, пригласите студентов. Всё хранится в вашем аккаунте." },
+              { n: "02", title: "Сгенерируйте материал", desc: "Опишите тему — AI создаст задания, викторины и игры за секунды." },
+              { n: "03", title: "Запустите урок", desc: "Используйте интерактивные игры прямо на уроке для максимального вовлечения." },
+            ].map((step, i) => (
+              <motion.div
+                key={step.n}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="flex flex-col md:flex-row gap-8 md:gap-16 group cursor-pointer"
+              >
+                <span className="text-5xl md:text-7xl font-display font-medium tracking-tighter opacity-25 group-hover:opacity-100 transition-opacity">
+                  {step.n}
+                </span>
+                <div className="flex-1 group-hover:translate-x-2 transition-transform duration-300">
+                  <h3 className="text-3xl md:text-5xl font-display font-medium tracking-tighter mb-4">{step.title}</h3>
+                  <p className="text-xl opacity-60">{step.desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* Preview Section */}
-      <section id="preview" className="py-32 px-6 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="space-y-12"
-            >
-              <div>
-                <h2 className="text-4xl md:text-6xl font-black font-serif mb-8 leading-tight text-slate-900">
-                  {t("land_res_title1")} <br />
-                  <span className="text-primary italic">{t("land_res_title2")}</span>
-                </h2>
-                <div className="space-y-6">
-                  <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                    <h4 className="flex items-center gap-2 font-bold text-xl mb-2">
-                       <CheckCircle2 className="text-primary w-6 h-6" />
-                       {t("land_res_acc")}
-                    </h4>
-                    <p className="text-slate-500">{t("land_res_acc_desc")}</p>
-                  </div>
-                  <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                    <h4 className="flex items-center gap-2 font-bold text-xl mb-2">
-                       <CheckCircle2 className="text-primary w-6 h-6" />
-                       {t("land_res_print")}
-                    </h4>
-                    <p className="text-slate-500">{t("land_res_print_desc")}</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="relative grid grid-cols-2 gap-4"
-            >
-              <div className="space-y-4 translate-y-8">
-                <img src="/placeholder.svg" alt="Игра" className="rounded-3xl shadow-xl border-4 border-white hover:scale-105 transition-transform bg-white" />
-                <div className="p-8 rounded-3xl bg-primary shadow-2xl text-white">
-                   <h5 className="text-2xl font-black mb-2">{t("land_stat_gen")}</h5>
-                   <p className="opacity-80">{t("land_stat_gen_desc")}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="p-8 rounded-3xl bg-slate-900 shadow-2xl text-white">
-                   <Users className="w-10 h-10 mb-4 text-primary" />
-                   <h5 className="text-xl font-bold">{t("land_org_title")}</h5>
-                   <p className="opacity-60 text-sm">{t("land_org_desc")}</p>
-                </div>
-                <img src="/placeholder.svg" alt="Книги" className="rounded-3xl shadow-xl border-4 border-white hover:scale-105 transition-transform bg-white" />
-              </div>
-            </motion.div>
+      {/* ──────────── ZONE 5: CTA (fuchsia) ──────────── */}
+      <section className="zone-fuchsia py-40 px-6 lg:px-24">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="max-w-4xl"
+        >
+          <div className="flex items-center gap-3 mb-8">
+            <Star className="w-8 h-8" style={{ color: "var(--zone-fuchsia-muted)" }} />
+            <span className="text-sm font-semibold uppercase tracking-widest opacity-60">Начать сейчас</span>
           </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-32 px-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-slate-50 to-slate-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20 space-y-4">
-            <h2 className="text-5xl font-black font-serif">{t("land_price_title")}</h2>
-            <p className="text-xl text-slate-500">{t("land_price_sub")}</p>
+          <h2 className="text-5xl md:text-8xl font-display font-medium tracking-tighter leading-[0.9] mb-12">
+            Готовы изменить<br />ваши уроки?
+          </h2>
+          <div className="flex flex-wrap gap-6 mb-16">
+            {["AI генератор", "6 игр", "Управление классами", "Бесплатно"].map(item => (
+              <div key={item} className="flex items-center gap-2 text-lg">
+                <CheckCircle2 className="w-5 h-5" style={{ color: "var(--zone-fuchsia-muted)" }} />
+                <span>{item}</span>
+              </div>
+            ))}
           </div>
-
-          {/* Pricing Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-            <PriceCard 
-              title={t("land_p1_title")} 
-              price="$0" 
-              features={[
-                t("land_p1_f1"),
-                t("land_p1_f2"),
-                t("land_p1_f3"),
-                t("land_p1_f4")
-              ]}
-              delay={0.1}
-            />
-            <PriceCard 
-              title={t("land_p2_title")} 
-              price="$9" 
-              highlighted={true}
-              features={[
-                t("land_p2_f1"),
-                t("land_p2_f2"),
-                t("land_p2_f3"),
-                t("land_p2_f4"),
-                t("land_p2_f5"),
-                t("land_p2_f6")
-              ]}
-              delay={0.2}
-            />
-            <PriceCard 
-              title={t("land_p3_title")} 
-              price={t("land_p3_price")} 
-              features={[
-                t("land_p3_f1"),
-                t("land_p3_f2"),
-                t("land_p3_f3"),
-                t("land_p3_f4"),
-                t("land_p3_f5"),
-                t("land_p3_f6")
-              ]}
-              delay={0.3}
-            />
-          </div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-20 p-10 rounded-[3rem] bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-10 overflow-hidden relative"
+          <button
+            onClick={() => navigate("/login")}
+            className="px-10 py-6 rounded-full text-2xl font-display font-semibold flex items-center gap-4 hover:scale-105 transition-transform shadow-2xl"
+            style={{ background: "var(--zone-fuchsia-text)", color: "var(--zone-fuchsia-bg)" }}
           >
-             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-20 -mt-20" />
-             <div className="space-y-4 relative z-10">
-               <h3 className="text-3xl font-black font-serif leading-tight">{t("land_cta_more")}</h3>
-               <p className="text-slate-400 text-lg">{t("land_cta_desc")}</p>
-             </div>
-             <Button variant="outline" className="relative z-10 bg-white/10 hover:bg-white/20 border-white/20 text-white h-16 px-12 rounded-2xl text-xl font-bold flex-shrink-0">
-               {t("land_cta_btn")}
-             </Button>
-          </motion.div>
-        </div>
+            Попробовать ClassPlay <ArrowRight size={26} />
+          </button>
+        </motion.div>
       </section>
 
-      {/* CTA Footer */}
-      <footer className="pt-20 pb-10 px-6 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-10 mb-20 text-center md:text-left">
-            <div className="space-y-6">
-              <div className="flex items-center justify-center md:justify-start gap-3">
-                <img src="/logo-sticker.webp" alt="ClassPlay Logo" className="w-10 h-10 rounded-lg object-contain drop-shadow-md" />
-                <span className="text-xl font-black font-serif">ClassPlay</span>
-              </div>
-              <p className="text-slate-500 max-w-sm">{t("land_foot_desc")}</p>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-10">
-              <div className="space-y-6">
-                <h5 className="font-bold text-sm uppercase tracking-widest text-slate-400">{t("land_foot_prod1")}</h5>
-                <ul className="space-y-4 font-bold text-slate-600">
-                  <li><a href="#features" className="hover:text-primary transition-colors">{t("land_foot_prod2")}</a></li>
-                  <li><a href="#pricing" className="hover:text-primary transition-colors">{t("land_foot_prod3")}</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">{t("land_foot_prod4")}</a></li>
-                </ul>
-              </div>
-              <div className="space-y-6">
-                <h5 className="font-bold text-sm uppercase tracking-widest text-slate-400">{t("land_foot_comp1")}</h5>
-                <ul className="space-y-4 font-bold text-slate-600">
-                  <li><a href="#" className="hover:text-primary transition-colors">{t("land_foot_comp2")}</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">{t("land_foot_comp3")}</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">{t("land_foot_comp4")}</a></li>
-                </ul>
-              </div>
-            </div>
+      {/* ──────────── FOOTER ──────────── */}
+      <footer className="zone-stone border-t border-black/5 py-12 px-6 lg:px-24">
+        <div className="max-w-5xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-3">
+            <img src="/logo_sticker.webp" alt="ClassPlay" className="w-8 h-8 rounded-lg object-contain opacity-70" />
+            <span className="font-display font-bold text-slate-500 tracking-tight">ClassPlay</span>
           </div>
-          
-          <div className="text-center pt-10 border-t border-slate-100">
-            <p className="text-slate-400 text-sm font-medium">{t("land_copy")}</p>
+          <div className="flex items-center gap-2 text-sm text-slate-400">
+            <Globe className="w-4 h-4" />
+            <span>Создано для учителей</span>
           </div>
+          <p className="text-sm text-slate-400">© 2026 ClassPlay. Все права защищены.</p>
         </div>
       </footer>
     </div>
   );
-};
-
-export default Landing;
+}

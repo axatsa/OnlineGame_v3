@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&family=Merriweather:wght@400;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -55,6 +55,21 @@
 
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
+
+    /* Editorial Zone Colors */
+    --zone-emerald-bg: #d1fae5;
+    --zone-emerald-text: #064e3b;
+    --zone-emerald-muted: #065f46;
+    --zone-amber-bg: #fef3c7;
+    --zone-amber-text: #78350f;
+    --zone-amber-muted: #92400e;
+    --zone-sky-bg: #e0f2fe;
+    --zone-sky-text: #0c4a6e;
+    --zone-sky-muted: #0369a1;
+    --zone-fuchsia-bg: #fae8ff;
+    --zone-fuchsia-text: #701a75;
+    --zone-fuchsia-muted: #86198f;
+    --zone-stone-bg: #fafaf9;
   }
 
   .dark {
@@ -110,15 +125,25 @@
     font-family: 'Inter', sans-serif;
   }
   h1, h2, h3 {
-    font-family: 'Merriweather', serif;
+    font-family: 'DM Serif Display', serif;
   }
 }
 
 @layer utilities {
+  .font-display {
+    font-family: 'DM Serif Display', serif;
+  }
   .font-serif {
     font-family: 'Merriweather', serif;
   }
   .font-sans {
     font-family: 'Inter', sans-serif;
   }
+
+  /* Editorial Zone helpers */
+  .zone-emerald { background-color: var(--zone-emerald-bg); color: var(--zone-emerald-text); }
+  .zone-amber   { background-color: var(--zone-amber-bg);   color: var(--zone-amber-text); }
+  .zone-sky     { background-color: var(--zone-sky-bg);     color: var(--zone-sky-text); }
+  .zone-fuchsia { background-color: var(--zone-fuchsia-bg); color: var(--zone-fuchsia-text); }
+  .zone-stone   { background-color: var(--zone-stone-bg);   color: #1c1917; }
 }

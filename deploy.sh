@@ -26,11 +26,11 @@ else
 fi
 echo "🛠️ Используем команду: $DOCKER_CMD"
 
-# 4. Остановка и УДАЛЕНИЕ старых контейнеров (для решения конфликтов имен)
+# 4. Остановка и УДАЛЕНИЕ старых контейнеров
 echo '🧹 Очистка старых контейнеров...'
 $DOCKER_CMD -f docker-compose.prod.yml down --remove-orphans
 
-# Принудительное удаление, если down не справился (иногда бывает при конфликтах имен)
+# Принудительное удаление, если down не справился
 docker rm -f online_games_db_prod online_games_backend_prod online_games_frontend_prod 2>/dev/null
 
 # 5. Сборка и запуск новых
@@ -41,13 +41,15 @@ $DOCKER_CMD -f docker-compose.prod.yml up -d --build --force-recreate
 echo '⏳ Ожидание инициализации базы данных...'
 sleep 5
 
-# 7. Запуск сидов
+# 7. Миграция схемы (добавление новых колонок)
+echo '⚙️ Синхронизация схемы базы данных...'
+docker exec -t online_games_backend_prod python fix_db.py
+
+# 8. Запуск сидов
 echo '🌱 Наполнение базы данных (Seeding)...'
 docker exec -t online_games_backend_prod python seed_users.py
 docker exec -t online_games_backend_prod python seed.py
 docker exec -t online_games_backend_prod python seed_gamification.py
 
 echo '✅ Деплой успешно завершен!'
-echo '🌐 Проект доступен по адресу: https://classplay.uz!
-
-'
+echo '🌐 Проект доступен по адресу: https://classplay.uz!'

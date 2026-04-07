@@ -290,10 +290,10 @@ export default function Landing() {
                 <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-6">
                   <Gift className="w-6 h-6 text-slate-600" />
                 </div>
-                <h3 className="text-3xl font-display font-semibold mb-2">{t("land_p1_title", "Бесплатно")}</h3>
+                <h3 className="text-3xl font-display font-semibold text-slate-900 mb-2">{t("land_p1_title", "Бесплатно")}</h3>
                 <p className="text-slate-500 mb-8 font-medium">Креативность без ограничений, базовые инструменты всегда под рукой.</p>
                 
-                <h4 className="text-5xl font-display font-semibold mb-8">$0<span className="text-xl text-slate-400 font-normal"> / мес</span></h4>
+                <h4 className="text-5xl font-display font-semibold text-slate-900 mb-8">$0<span className="text-xl text-slate-400 font-normal"> / мес</span></h4>
                 
                 <ul className="space-y-4 mb-8">
                   {[
@@ -358,10 +358,10 @@ export default function Landing() {
                 <div className="w-12 h-12 rounded-2xl bg-fuchsia-100 flex items-center justify-center mb-6">
                   <Crown className="w-6 h-6 text-fuchsia-600" />
                 </div>
-                <h3 className="text-3xl font-display font-semibold mb-2">{t("land_p3_title", "Для Школ")}</h3>
+                <h3 className="text-3xl font-display font-semibold text-slate-900 mb-2">{t("land_p3_title", "Для Школ")}</h3>
                 <p className="text-slate-500 mb-8 font-medium">Решение для всего образовательного учреждения с администрированием.</p>
                 
-                <h4 className="text-5xl font-display font-semibold mb-8">{t("land_p3_price", "$49")}<span className="text-xl text-slate-400 font-normal"> / мес</span></h4>
+                <h4 className="text-5xl font-display font-semibold text-slate-900 mb-8">{t("land_p3_price", "$49")}<span className="text-xl text-slate-400 font-normal"> / мес</span></h4>
                 
                 <ul className="space-y-4 mb-8">
                   {[

@@ -32,6 +32,12 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if not getattr(user, 'is_active', True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is blocked. Contact your administrator.",
+        )
         
     access_token = create_access_token(data={"sub": user.email})
     return {
@@ -39,6 +45,31 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": user
     }
+
+@router.get("/me")
+def get_me(user: User = Depends(get_current_user)):
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role,
+        "phone": getattr(user, 'phone', None),
+        "school": getattr(user, 'school', None),
+        "is_active": getattr(user, 'is_active', True),
+        "created_at": str(getattr(user, 'created_at', None)),
+        "tokens_limit": user.tokens_limit,
+        "tokens_used_this_month": user.tokens_used_this_month,
+    }
+
+@router.patch("/me")
+def update_me(data: dict, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    allowed = {"full_name", "phone", "school"}
+    for key, val in data.items():
+        if key in allowed and val is not None:
+            setattr(user, key, val)
+    db.commit()
+    db.refresh(user)
+    return {"message": "Profile updated"}
 
 @router.put("/change-password")
 def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):

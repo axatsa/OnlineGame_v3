@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -11,6 +11,10 @@ class User(Base):
     hashed_password = Column(String)
     full_name = Column(String, nullable=True)
     role = Column(String, default="teacher")  # 'super_admin' or 'teacher'
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    phone = Column(String, nullable=True)
+    school = Column(String, nullable=True)
 
     # Token quota tracking
     tokens_used_this_month = Column(Integer, default=0)

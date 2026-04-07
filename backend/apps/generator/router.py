@@ -181,3 +181,43 @@ def toggle_favorite(log_id: int, request: Request, db: Session = Depends(get_db)
     log.is_favorite = 1 if log.is_favorite == 0 else 0
     db.commit()
     return {"id": log.id, "is_favorite": log.is_favorite}
+
+from services.email_service import send_resource_email
+
+@router.post("/history/{log_id}/send-email")
+def send_email_endpoint(log_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    log = db.query(GenerationLog).filter(GenerationLog.id == log_id, GenerationLog.user_id == user.id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Log not found")
+    
+    # We load the content to check its format
+    try:
+        content_str = str(log.content)
+    except:
+        content_str = "Содержимое задания недоступно или имеет сложный формат."
+        
+    try:
+        success = send_resource_email(user.email, log.topic or "Задание ClassPlay", content_str)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to send email")
+        return {"message": "Email sent successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/public/history/{log_id}")
+def get_public_history(log_id: int, db: Session = Depends(get_db)):
+    """
+    Public endpoint strictly for retrieving generated resource content via a QR code link.
+    It does not require authentication so that a teacher can easily scan it on a mobile 
+    device from a smart board and preview/save it to phone.
+    """
+    log = db.query(GenerationLog).filter(GenerationLog.id == log_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return {
+        "generator_type": log.generator_type,
+        "topic": log.topic,
+        "content": log.content,
+        "created_at": log.created_at.isoformat()
+    }
+

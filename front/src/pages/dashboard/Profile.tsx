@@ -1,279 +1,298 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Lock, Save, Loader2, User, LogOut, FileText, Trash2, Printer } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/context/AuthContext";
-import { useTranslation } from "react-i18next";
+import {
+  User, Mail, Phone, School, Lock, Edit3, Save, X,
+  Zap, BookOpen, BarChart2, Clock, QrCode, Copy, Check
+} from "lucide-react";
 import api from "@/lib/api";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
-const Profile = () => {
-    const navigate = useNavigate();
-    const { t } = useTranslation();
-    const { user, logout } = useAuth();
+interface UserProfile {
+  id: number;
+  email: string;
+  full_name: string | null;
+  role: string;
+  phone: string | null;
+  school: string | null;
+  created_at: string | null;
+  tokens_limit: number;
+  tokens_used_this_month: number;
+}
 
-    const [oldPassword, setOldPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+interface Stats {
+  total_resources: number;
+  total_tokens: number;
+  active_classes: number;
+}
 
-    // Saved Resources
-    const [resources, setResources] = useState<any[]>([]);
-    const [loadingRes, setLoadingRes] = useState(true);
-    const [viewRes, setViewRes] = useState<any | null>(null);
+export default function Profile() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ full_name: "", phone: "", school: "" });
+  const [pwdForm, setPwdForm] = useState({ old_password: "", new_password: "", confirm: "" });
+  const [msg, setMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPwd, setSavingPwd] = useState(false);
 
-    useEffect(() => {
-        fetchResources();
-    }, []);
+  useEffect(() => {
+    loadProfile();
+    loadStats();
+  }, []);
 
-    const fetchResources = async () => {
-        try {
-            const res = await api.get("/resources/");
-            setResources(res.data);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoadingRes(false);
-        }
-    };
+  const loadProfile = async () => {
+    try {
+      const res = await api.get("/auth/me");
+      setProfile(res.data);
+      setEditForm({
+        full_name: res.data.full_name || "",
+        phone: res.data.phone || "",
+        school: res.data.school || "",
+      });
+    } catch {}
+  };
 
-    const deleteResource = async (id: number) => {
-        if (!confirm(t("areYouSure"))) return;
-        try {
-            await api.delete(`/resources/${id}`);
-            toast.success(t("resourceDeleted"));
-            setResources(prev => prev.filter(r => r.id !== id));
-        } catch (e) {
-            toast.error(t("deleteFailed"));
-        }
-    };
+  const loadStats = async () => {
+    try {
+      const [res, classRes, historyRes] = await Promise.allSettled([
+        api.get("/generator/usage-stats"),
+        api.get("/classes/"),
+        api.get("/history/"),
+      ]);
+      setStats({
+        total_resources: historyRes.status === "fulfilled" ? (historyRes.value.data?.items?.length || historyRes.value.data?.length || 0) : 0,
+        total_tokens: res.status === "fulfilled" ? (res.value.data?.tokens_used_this_month || 0) : 0,
+        active_classes: classRes.status === "fulfilled" ? (classRes.value.data?.length || 0) : 0,
+      });
+    } catch {}
+  };
 
-    const handleChangePassword = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newPassword || !oldPassword) {
-            toast.error(t("fillBothFields"));
-            return;
-        }
+  const saveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      const res = await api.patch("/auth/me", editForm);
+      setProfile(p => p ? { ...p, ...editForm } : p);
+      setEditing(false);
+      flash("Profile updated", "success");
+    } catch {
+      flash("Failed to update profile", "error");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
-        setIsLoading(true);
-        try {
-            await api.put("/auth/change-password", {
-                old_password: oldPassword,
-                new_password: newPassword
-            });
-            toast.success(t("passwordUpdated"));
-            setOldPassword("");
-            setNewPassword("");
-        } catch (error: any) {
-            console.error(error);
-            toast.error(error.response?.data?.detail || t("deleteFailed"));
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const changePassword = async () => {
+    if (pwdForm.new_password !== pwdForm.confirm) {
+      flash("Passwords do not match", "error");
+      return;
+    }
+    setSavingPwd(true);
+    try {
+      await api.put("/auth/change-password", {
+        old_password: pwdForm.old_password,
+        new_password: pwdForm.new_password,
+      });
+      setPwdForm({ old_password: "", new_password: "", confirm: "" });
+      flash("Password changed", "success");
+    } catch (e: any) {
+      flash(e?.response?.data?.detail || "Failed to change password", "error");
+    } finally {
+      setSavingPwd(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-background">
-            <header className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border">
-                <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate("/teacher")}
-                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground font-sans transition-colors"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            {t("backToDash")}
-                        </button>
-                        <h1 className="text-xl font-bold text-foreground font-serif">{t("profile")}</h1>
-                    </div>
-                </div>
-            </header>
+  const flash = (text: string, type: "success" | "error") => {
+    setMsg({ text, type });
+    setTimeout(() => setMsg(null), 3000);
+  };
 
-            <main className="max-w-4xl mx-auto px-6 py-10">
-                <div className="grid md:grid-cols-3 gap-8">
+  const copyEmail = () => {
+    if (profile?.email) {
+      navigator.clipboard.writeText(profile.email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
-                    {/* Left Column: User Info & Actions */}
-                    <div className="space-y-6">
-                        <div className="bg-card rounded-2xl border border-border p-6 flex flex-col items-center text-center gap-4">
-                            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="w-10 h-10 text-primary" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-foreground font-serif">{user?.full_name}</h2>
-                                <p className="text-muted-foreground font-sans mb-2">{user?.email}</p>
-                                <span className="px-3 py-1 rounded-full bg-muted text-xs font-mono text-muted-foreground uppercase">{user?.role}</span>
-                            </div>
-                            <Button variant="destructive" className="w-full mt-4 rounded-xl" onClick={logout}>
-                                <LogOut className="w-4 h-4 mr-2" /> {t("adminLogout")}
-                            </Button>
-                        </div>
+  const usagePercent = profile && profile.tokens_limit > 0
+    ? Math.min(100, Math.round((profile.tokens_used_this_month / profile.tokens_limit) * 100))
+    : 0;
 
-                        {/* Password Form */}
-                        <div className="bg-card rounded-2xl border border-border p-6">
-                            <div className="flex items-center gap-2 mb-6">
-                                <Lock className="w-5 h-5 text-primary" />
-                                <h3 className="text-lg font-bold text-foreground font-serif">{t("changePassword")}</h3>
-                            </div>
+  const usageColor = usagePercent > 80 ? "#ef4444" : usagePercent > 50 ? "#f59e0b" : "#10b981";
 
-                            <form onSubmit={handleChangePassword} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="old-pass">{t("currentPassword")}</Label>
-                                    <Input
-                                        id="old-pass"
-                                        type="password"
-                                        value={oldPassword}
-                                        onChange={(e) => setOldPassword(e.target.value)}
-                                        className="rounded-xl"
-                                        placeholder="••••••"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new-pass">{t("newPassword")}</Label>
-                                    <Input
-                                        id="new-pass"
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        className="rounded-xl"
-                                        placeholder="••••••"
-                                    />
-                                </div>
-                                <Button type="submit" disabled={isLoading} className="w-full rounded-xl">
-                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                                    {t("updatePassword")}
-                                </Button>
-                            </form>
-                        </div>
-                    </div>
+  if (!profile) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent" />
+    </div>
+  );
 
-                    {/* Right Column: Saved Resources */}
-                    <div className="md:col-span-2 space-y-6">
-                        <div className="bg-card rounded-2xl border border-border p-6 min-h-[500px]">
-                            <div className="flex items-center gap-2 mb-6">
-                                <FileText className="w-5 h-5 text-primary" />
-                                <h3 className="text-lg font-bold text-foreground font-serif">{t("savedResources")}</h3>
-                            </div>
-
-                            {loadingRes ? (
-                                <div className="flex justify-center py-10">
-                                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : resources.length === 0 ? (
-                                <div className="text-center py-10 text-muted-foreground">
-                                    {t("noResources")}
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {resources.map(res => (
-                                        <div key={res.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border hover:bg-muted/50 transition-colors">
-                                            <div className="min-w-0">
-                                                <h4 className="font-semibold text-foreground truncate">{res.title}</h4>
-                                                <p className="text-xs text-muted-foreground uppercase tracking-wider">{res.type} • {new Date(res.created_at).toLocaleDateString()}</p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button variant="outline" size="sm" onClick={() => setViewRes(res)}>
-                                                    {t("view")}
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteResource(res.id)}>
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            {/* View Resource Modal */}
-            <Dialog open={!!viewRes} onOpenChange={(open) => !open && setViewRes(null)}>
-                {viewRes && (
-                    <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
-                        <DialogHeader className="p-4 border-b border-border bg-muted/30">
-                            <div className="flex justify-between items-center mr-8">
-                                <div>
-                                    <DialogTitle className="text-lg font-bold">{viewRes.title}</DialogTitle>
-                                    <p className="text-xs text-muted-foreground uppercase mt-1">{viewRes.type}</p>
-                                </div>
-                                <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
-                                    <Printer className="w-4 h-4" /> {t("print")}
-                                </Button>
-                            </div>
-                        </DialogHeader>
-
-                        <div className="p-8 overflow-y-auto bg-white flex-1 print:p-0">
-                            {/* Render content based on type */}
-                            <div className="print-content">
-                                {(() => {
-                                    try {
-                                        const content = JSON.parse(viewRes.content);
-                                        if (viewRes.type === "math" && content.problems) {
-                                            return (
-                                                <div className="space-y-4 font-mono text-sm max-w-lg mx-auto">
-                                                    <h2 className="text-center font-serif text-xl font-bold mb-6 underline decoration-2 decoration-gray-200 underline-offset-4">{viewRes.title}</h2>
-                                                    {content.problems.map((p: string, i: number) => (
-                                                        <div key={i} className="pb-2 border-b border-gray-100">{p}</div>
-                                                    ))}
-                                                </div>
-                                            );
-                                        } else if (viewRes.type === "crossword" && content.grid) {
-                                            return (
-                                                <div className="flex flex-col items-center">
-                                                    <h2 className="text-center font-serif text-xl font-bold mb-6">{viewRes.title}</h2>
-                                                    <div className="inline-grid gap-px bg-gray-900 border-2 border-gray-900 p-px mb-8"
-                                                        style={{
-                                                            gridTemplateColumns: `repeat(${content.width}, 1.5rem)`,
-                                                            gridTemplateRows: `repeat(${content.height}, 1.5rem)`
-                                                        }}>
-                                                        {content.grid.map((row: any[], r: number) =>
-                                                            row.map((cell: any, c: any) => {
-                                                                const wordStart = content.words.find((w: any) => w.row === r && w.col === c);
-                                                                return (
-                                                                    <div key={`${r}-${c}`} className={`w-6 h-6 relative flex items-center justify-center text-xs font-bold ${cell ? "bg-white" : "bg-gray-300"}`}>
-                                                                        {cell && wordStart && (
-                                                                            <span className="absolute top-0.5 left-0.5 text-[6px] leading-none">{wordStart.number}</span>
-                                                                        )}
-                                                                    </div>
-                                                                )
-                                                            })
-                                                        )}
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-8 text-xs font-sans w-full max-w-lg">
-                                                        <div>
-                                                            <h4 className="font-bold text-gray-900 mb-2 uppercase">Across</h4>
-                                                            <ul className="space-y-1 list-none">
-                                                                {content.words.filter((w: any) => w.isAcross).sort((a: any, b: any) => a.number - b.number).map((w: any) => (
-                                                                    <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-gray-900 mb-2 uppercase">Down</h4>
-                                                            <ul className="space-y-1 list-none">
-                                                                {content.words.filter((w: any) => !w.isAcross).sort((a: any, b: any) => a.number - b.number).map((w: any) => (
-                                                                    <li key={w.word}><span className="font-bold">{w.number}.</span> {w.clue}</li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-                                    } catch (e) {
-                                        return <p className="text-destructive">Error parsing content</p>;
-                                    }
-                                })()}
-                            </div>
-                        </div>
-                    </DialogContent>
-                )}
-            </Dialog>
+  return (
+    <div className="max-w-2xl mx-auto p-6 space-y-6">
+      {msg && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl text-sm font-medium shadow-lg ${
+          msg.type === "success" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+        }`}>
+          {msg.text}
         </div>
-    );
-};
+      )}
 
-export default Profile;
+      {/* Profile Card */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-black/5 dark:border-white/10 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-emerald-500 to-sky-500 p-6 text-white">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-bold">
+              {(profile.full_name || profile.email)[0].toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold truncate">{profile.full_name || "—"}</h1>
+              <div className="flex items-center gap-2 mt-1 opacity-90">
+                <span className="text-sm">{profile.email}</span>
+                <button onClick={copyEmail} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
+                  {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              {profile.created_at && (
+                <p className="text-xs opacity-70 mt-1">
+                  С нами с {new Date(profile.created_at).toLocaleDateString("ru-RU", { month: "long", year: "numeric" })}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setEditing(!editing)}
+              className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors"
+            >
+              <Edit3 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 divide-x divide-black/5 dark:divide-white/10 border-b border-black/5 dark:border-white/10">
+          {[
+            { icon: BookOpen, label: "Материалы", value: stats?.total_resources ?? "—" },
+            { icon: BarChart2, label: "Классы", value: stats?.active_classes ?? "—" },
+            { icon: Zap, label: "Токены/мес", value: profile.tokens_used_this_month?.toLocaleString() ?? 0 },
+          ].map(({ icon: Icon, label, value }) => (
+            <div key={label} className="flex flex-col items-center py-4 gap-1">
+              <Icon className="w-4 h-4 text-gray-400" />
+              <span className="text-lg font-bold text-gray-900 dark:text-white">{value}</span>
+              <span className="text-xs text-gray-500">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Token Usage Bar */}
+        <div className="p-4 border-b border-black/5 dark:border-white/10">
+          <div className="flex justify-between text-xs text-gray-500 mb-2">
+            <span>AI лимит месяца</span>
+            <span style={{ color: usageColor }}>{usagePercent}%</span>
+          </div>
+          <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${usagePercent}%`, background: usageColor }}
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">
+            {profile.tokens_used_this_month?.toLocaleString()} / {profile.tokens_limit === -1 ? "∞" : profile.tokens_limit?.toLocaleString()}
+          </p>
+        </div>
+
+        {/* Profile Fields */}
+        <div className="p-4 space-y-3">
+          {editing ? (
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Имя</span>
+                <input
+                  className="mt-1 w-full px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 dark:bg-gray-700 text-sm"
+                  value={editForm.full_name}
+                  onChange={e => setEditForm(f => ({ ...f, full_name: e.target.value }))}
+                  placeholder="Иван Иванов"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Телефон</span>
+                <input
+                  className="mt-1 w-full px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 dark:bg-gray-700 text-sm"
+                  value={editForm.phone}
+                  onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))}
+                  placeholder="+7 900 000 00 00"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Школа</span>
+                <input
+                  className="mt-1 w-full px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 dark:bg-gray-700 text-sm"
+                  value={editForm.school}
+                  onChange={e => setEditForm(f => ({ ...f, school: e.target.value }))}
+                  placeholder="Школа №1"
+                />
+              </label>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={saveProfile}
+                  disabled={savingProfile}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-medium transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingProfile ? "Сохраняем..." : "Сохранить"}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 rounded-xl text-sm transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {[
+                { icon: Mail, label: profile.email },
+                { icon: Phone, label: profile.phone || "—" },
+                { icon: School, label: profile.school || "—" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                  <Icon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Change Password Card */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-black/5 dark:border-white/10 p-4">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+          <Lock className="w-4 h-4 text-gray-400" />
+          Сменить пароль
+        </h2>
+        <div className="space-y-2">
+          {[
+            { key: "old_password", placeholder: "Текущий пароль" },
+            { key: "new_password", placeholder: "Новый пароль" },
+            { key: "confirm", placeholder: "Подтвердить пароль" },
+          ].map(({ key, placeholder }) => (
+            <input
+              key={key}
+              type="password"
+              placeholder={placeholder}
+              className="w-full px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 dark:bg-gray-700 text-sm"
+              value={pwdForm[key as keyof typeof pwdForm]}
+              onChange={e => setPwdForm(f => ({ ...f, [key]: e.target.value }))}
+            />
+          ))}
+          <button
+            onClick={changePassword}
+            disabled={savingPwd || !pwdForm.old_password || !pwdForm.new_password}
+            className="w-full py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-colors"
+          >
+            {savingPwd ? "Меняем..." : "Изменить пароль"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

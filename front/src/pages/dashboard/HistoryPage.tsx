@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { History, Star, Brain, LayoutGrid, FileText, Calculator, Search, Filter, Loader2, Play } from "lucide-react";
+import { History, Star, Brain, LayoutGrid, FileText, Calculator, Search, Filter, Loader2, Play, Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { TableSkeleton } from "@/components/common/TableSkeleton";
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
+import { HistoryDetailsModal } from "@/components/history/HistoryDetailsModal";
 
 type HistoryItem = {
   id: number;
@@ -26,6 +27,7 @@ const HistoryPage = () => {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterFav, setFilterFav] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -42,12 +44,10 @@ const HistoryPage = () => {
   }, []);
 
   const toggleFavorite = async (id: number) => {
-    // optimistic update
     setItems(items.map(item => item.id === id ? { ...item, is_favorite: item.is_favorite === 1 ? 0 : 1 } : item));
     try {
       await api.post(`/generate/history/${id}/favorite`);
     } catch (e) {
-      // revert on fail
       setItems(items.map(item => item.id === id ? { ...item, is_favorite: item.is_favorite === 1 ? 0 : 1 } : item));
     }
   };
@@ -142,36 +142,39 @@ const HistoryPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: i * 0.05 }}
-                  className="bg-card border border-border p-4 rounded-2xl flex items-center gap-4 hover:border-primary/40 transition-colors"
+                  className="bg-card border border-border p-4 rounded-2xl flex items-center gap-4 hover:border-primary/40 transition-colors cursor-pointer"
+                  onClick={() => setSelectedItem(item)}
                 >
                    <div className="w-10 h-10 rounded-xl bg-muted flex flex-shrink-0 items-center justify-center">
                      {getTypeIcon(item.generator_type)}
                    </div>
                    <div className="flex-1 min-w-0">
                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground font-sans truncate">{item.topic}</h3>
+                        <h3 className="font-semibold text-foreground font-sans truncate">{item.topic || "Без темы"}</h3>
                      </div>
                      <p className="text-xs text-muted-foreground font-sans mt-0.5">
                        {getTypeName(item.generator_type)} • {new Date(item.created_at).toLocaleString("ru-RU")}
                      </p>
                    </div>
-                   <div className="flex items-center gap-2">
+                   <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                      <button
-                       onClick={() => toggleFavorite(item.id)}
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         toggleFavorite(item.id);
+                       }}
                        className={`p-2.5 rounded-xl transition-colors ${item.is_favorite === 1 ? "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20" : "hover:bg-muted text-muted-foreground"}`}
                      >
                        <Star className={`w-4 h-4 ${item.is_favorite === 1 ? "fill-current" : ""}`} />
                      </button>
                      <Button 
                         variant="ghost" 
-                        className="rounded-xl px-4 gap-2 hover:bg-primary/10 hover:text-primary transition-colors text-muted-foreground font-sans"
-                        onClick={() => {
-                          // Logic to view or load this history item would go here
-                          // Navigating back to generator with context, or opening a modal.
-                          navigate("/generator");
+                        className="rounded-xl px-4 gap-2 hover:bg-primary/10 hover:text-primary transition-colors text-foreground font-sans"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedItem(item);
                         }}
                      >
-                       <Play className="w-4 h-4" /> Использовать
+                       <Eye className="w-4 h-4" /> См. результат
                      </Button>
                    </div>
                 </motion.div>
@@ -180,6 +183,12 @@ const HistoryPage = () => {
           )}
         </div>
       </div>
+
+      <HistoryDetailsModal 
+        isOpen={selectedItem !== null} 
+        item={selectedItem} 
+        onClose={() => setSelectedItem(null)} 
+      />
     </div>
   );
 };

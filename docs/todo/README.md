@@ -25,14 +25,14 @@ ClassPlay — SaaS-платформа для учителей: AI-генерат
 |------|----------|-----------|--------|
 | [01-security-reliability.md](./01-security-reliability.md) | Безопасность и надёжность | 🔴 Высокий | ✅ Готово |
 | [02-ux-onboarding.md](./02-ux-onboarding.md) | UX / Онбординг / Дашборд | 🟡 Средний | ⏳ В плане |
-| [03-dark-theme.md](./03-dark-theme.md) | Тёмная тема | 🟡 Средний | 🟠 В процессе (CSS ок) |
-| [04-generation-history.md](./04-generation-history.md) | История генераций и Избранное | 🟡 Средний | ⏳ В плане |
-| [05-content-editor.md](./05-content-editor.md) | Редактор результата + Шаблоны | 🟡 Средний | ⏳ В плане |
+| [03-dark-theme.md](./03-dark-theme.md) | Тёмная тема | 🟡 Средний | ✅ Готово (Tailwind + ThemeContext) |
+| [04-generation-history.md](./04-generation-history.md) | История генераций и Избранное | 🟡 Средний | ✅ Готово |
+| [05-content-editor.md](./05-content-editor.md) | Редактор результата + Шаблоны | 🟡 Средний | 🟠 В процессе (Редактор есть) |
 | [06-batch-generation.md](./06-batch-generation.md) | Batch-генерация | 🟠 Ниже среднего | ⏳ В плане |
 | [07-import-export.md](./07-import-export.md) | Импорт слов + Google Drive | 🟠 Ниже среднего | ⏳ В плане |
-| [08-b2b-tools.md](./08-b2b-tools.md) | B2B: Школьный дашборд + Invite + CSV | 🟡 Средний | 🟠 Частично |
+| [08-b2b-tools.md](./08-b2b-tools.md) | B2B: Школьный дашборд + Invite + CSV | 🟡 Средний | 🟠 Частично (Admin Panel есть) |
 | [09-tech-debt.md](./09-tech-debt.md) | Технический долг (i18n, тесты, Sentry) | 🔴 Высокий | ✅ Готово |
-| [10-demo-mode.md](./10-demo-mode.md) | Demo без регистрации + Лендинг доработка | 🟡 Средний | ⏳ В плане |
+| [10-demo-mode.md](./10-demo-mode.md) | Demo без регистрации + Лендинг доработка | 🟡 Средний | ✅ Готово (Demo mode работает) |
 
 ---
 

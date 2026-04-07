@@ -20,6 +20,8 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "@/context/ThemeContext";
 import BulkImportModal from "./BulkImportModal";
 import OrgStatsModal from "./OrgStatsModal";
+import TeacherModal, { TeacherFormData } from "@/components/admin/TeacherModal";
+import OrgModal, { OrgFormData } from "@/components/admin/OrgModal";
 import * as docx from "docx";
 import { saveAs } from "file-saver";
 
@@ -452,7 +454,7 @@ const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { tea
 };
 
 const TeachersView = ({
-  teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal, isLoading
+  teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal, isLoading, onRefresh
 }: {
   teachers: Teacher[];
   searchQuery: string;
@@ -461,11 +463,27 @@ const TeachersView = ({
   showResetModal: number | null;
   setShowResetModal: (v: number | null) => void;
   isLoading: boolean;
+  onRefresh: () => void;
 }) => {
   const { t } = useTranslation();
-  // Local filtering removed, handled by backend
   const filtered = teachers;
   const [tmpPwd] = useState(() => Math.random().toString(36).slice(2, 8).toUpperCase());
+  const [modal, setModal] = useState<{isOpen: boolean, data?: TeacherFormData}>({isOpen: false});
+
+  const handleSave = async (data: TeacherFormData) => {
+    if (data.id) await adminService.updateTeacher(data.id, data);
+    else await adminService.createTeacher(data);
+    onRefresh();
+    toast.success("Saved successfully");
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Вы уверены, что хотите удалить этого учителя?")) {
+      await adminService.deleteTeacher(id);
+      onRefresh();
+      toast.success("Deleted");
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -486,7 +504,7 @@ const TeachersView = ({
           onCSV={() => exportTeachersCSV(teachers, t)}
           onPDF={() => exportTeachersDOCX(teachers, t)}
         />
-        <Button className="gap-2 rounded-xl font-sans">
+        <Button className="gap-2 rounded-xl font-sans" onClick={() => setModal({ isOpen: true })}>
           <Plus className="w-4 h-4" /> {t("admin_add_teacher")}
         </Button>
       </div>
@@ -542,11 +560,11 @@ const TeachersView = ({
                     <td className="px-5 py-4"><StatusBadge status={t.status} /></td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1">
+                        <button onClick={() => setModal({ isOpen: true, data: { ...t, full_name: t.name, email: t.login, tokens_limit: 100000, password: "", phone: "" } as any })} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Редактировать">
+                          <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
                         <button onClick={() => setShowResetModal(t.id)} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Сбросить пароль">
                           <Key className="w-3.5 h-3.5 text-muted-foreground" />
-                        </button>
-                        <button className="p-2 rounded-lg hover:bg-muted transition-colors" title="Войти как...">
-                          <Eye className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
                         <button
                           onClick={() => toggleBlock(t.id)}
@@ -556,6 +574,9 @@ const TeachersView = ({
                           {t.status === "blocked"
                             ? <Unlock className="w-3.5 h-3.5 text-success" />
                             : <Lock className="w-3.5 h-3.5 text-destructive" />}
+                        </button>
+                        <button onClick={() => handleDelete(t.id)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors" title="Удалить">
+                          <X className="w-3.5 h-3.5 text-destructive" />
                         </button>
                       </div>
                     </td>
@@ -596,12 +617,27 @@ const TeachersView = ({
               <p className="text-xs text-muted-foreground font-sans mb-4">{t("admin_pwd_hint")}</p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 rounded-xl font-sans" onClick={() => setShowResetModal(null)}>Отмена</Button>
-                <Button className="flex-1 rounded-xl font-sans" onClick={() => setShowResetModal(null)}>Подтвердить</Button>
+                <Button className="flex-1 rounded-xl font-sans" onClick={async () => {
+                  try {
+                    await adminService.resetTeacherPassword(showResetModal, tmpPwd);
+                    toast.success("Пароль успешно изменён");
+                    setShowResetModal(null);
+                  } catch (e) {
+                    toast.error("Ошибка при сбросе пароля");
+                  }
+                }}>Подтвердить</Button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <TeacherModal 
+        isOpen={modal.isOpen} 
+        onClose={() => setModal({ isOpen: false })} 
+        onSave={handleSave} 
+        initialData={modal.data} 
+      />
     </div>
   );
 };
@@ -611,6 +647,22 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
   const lang = i18n.language;
   const [importOrg, setImportOrg] = useState<{ id: number, name: string } | null>(null);
   const [statsOrg, setStatsOrg] = useState<number | null>(null);
+  const [modal, setModal] = useState<{isOpen: boolean, data?: OrgFormData}>({isOpen: false});
+
+  const handleSave = async (data: OrgFormData) => {
+    if (data.id) await adminService.updateOrganization(data.id, data);
+    else await adminService.createOrganization(data as any);
+    onRefresh();
+    toast.success("Saved correctly");
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Вы уверены?")) {
+      await adminService.deleteOrganization(id);
+      onRefresh();
+      toast.success("Organization deleted");
+    }
+  };
   
   return (
     <div className="space-y-4">
@@ -619,7 +671,7 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
           onCSV={() => exportOrgsCSV(orgs, t)}
           onPDF={() => exportOrgsDOCX(orgs, t)}
         />
-        <Button className="gap-2 rounded-xl font-sans"><Plus className="w-4 h-4" /> {t("admin_new_org")}</Button>
+        <Button className="gap-2 rounded-xl font-sans" onClick={() => setModal({ isOpen: true })}><Plus className="w-4 h-4" /> {t("admin_new_org")}</Button>
       </div>
       <div className="grid gap-4">
         {isLoading ? (
@@ -671,10 +723,13 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
                       className="rounded-xl font-sans h-8 text-xs gap-1 text-primary hover:bg-primary/10 border-primary/20"
                       onClick={() => setImportOrg({ id: org.id, name: org.name })}
                     >
-                      <Upload className="w-3 h-3" /> CSV Импорт Учителей
+                      <Upload className="w-3 h-3" /> CSV Импорт
                     </Button>
-                    <Button variant="outline" size="sm" className="rounded-xl font-sans h-8 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10">
-                      <Ban className="w-3 h-3" /> Блок
+                    <Button variant="outline" size="sm" onClick={() => setModal({ isOpen: true, data: org as any })} className="rounded-xl font-sans h-8 text-xs gap-1">
+                      <Settings className="w-3 h-3" /> Орг
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(org.id)} className="rounded-xl font-sans h-8 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10">
+                      <Ban className="w-3 h-3" /> Удалить
                     </Button>
                   </div>
                 </div>
@@ -683,6 +738,10 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
           ))
         )}
       </div>
+
+      <OrgModal isOpen={modal.isOpen} onClose={() => setModal({isOpen: false})} onSave={handleSave} initialData={modal.data} />
+      {importOrg && <BulkImportModal orgId={importOrg.id} orgName={importOrg.name} onClose={() => { setImportOrg(null); onRefresh(); }} />}
+      {statsOrg && <OrgStatsModal orgId={statsOrg} onClose={() => setStatsOrg(null)} />}
     </div>
   );
 };
@@ -1159,18 +1218,20 @@ const AdminPanel = () => {
   };
 
   useEffect(() => {
-    // Debounce search
     const timer = setTimeout(() => {
       fetchData();
     }, 500);
-
     return () => clearTimeout(timer);
   }, [page, searchQuery]);
 
-  const toggleBlock = (id: number) => {
-    setTeachers(prev =>
-      prev.map(t => t.id === id ? { ...t, status: t.status === "blocked" ? "active" : "blocked" } : t)
-    );
+  const toggleBlock = async (id: number) => {
+    try {
+      await adminService.toggleTeacherStatus(id);
+      fetchData();
+      toast.success("Статус изменен");
+    } catch {
+      toast.error("Ошибка при изменении статуса");
+    }
   };
 
   const sectionTitles: Record<Section, { title: string; sub: string }> = {
@@ -1292,6 +1353,7 @@ const AdminPanel = () => {
                   showResetModal={showResetModal}
                   setShowResetModal={setShowResetModal}
                   isLoading={isLoading}
+                  onRefresh={fetchData}
                 />
               )}
               {activeSection === "organizations" && <OrgsView orgs={orgs} isLoading={isLoading} onRefresh={fetchData} />}

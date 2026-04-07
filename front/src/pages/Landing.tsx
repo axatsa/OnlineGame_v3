@@ -1,24 +1,26 @@
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { useEffect, useState } from "react";
 import {
   ArrowRight, Sparkles, BookOpen, Users, Gamepad2,
-  CheckCircle2, Star, Zap, Globe, LogOut, User, Settings
+  CheckCircle2, Star, Zap, Globe, LogOut, User, Settings, Medal, Crown, Gift
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, delay: i * 0.12, ease: "easeOut" }
+    transition: { duration: 0.7, delay: i * 0.12, ease: "easeOut" as const }
   })
 };
 
 export default function Landing() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const [navScrolled, setNavScrolled] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -28,18 +30,23 @@ export default function Landing() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const toggleLanguage = () => {
+    const nextLang = i18n.language === 'ru' ? 'uz' : 'ru';
+    i18n.changeLanguage(nextLang);
+  };
+
   const features = [
-    { icon: Sparkles, title: "AI Генератор", desc: "Создавайте контент для уроков за секунды с помощью искусственного интеллекта", zone: "emerald" },
-    { icon: Gamepad2, title: "Мини-игры", desc: "6 интерактивных игр для вовлечения студентов: Jeopardy, Memory, Crossword и другие", zone: "amber" },
-    { icon: BookOpen, title: "Библиотека", desc: "Храните и управляйте всеми созданными материалами в одном месте", zone: "sky" },
-    { icon: Users, title: "Классы", desc: "Управляйте несколькими классами и отслеживайте прогресс каждого студента", zone: "fuchsia" },
+    { icon: Sparkles, title: t("land_f1_title", "ИИ-Генераторы"), desc: t("land_f1_desc"), zone: "emerald" },
+    { icon: Gamepad2, title: t("land_f2_title", "Интерактивные Игры"), desc: t("land_f2_desc"), zone: "amber" },
+    { icon: BookOpen, title: t("land_f3_title", "Персональные Книги"), desc: t("land_f3_desc"), zone: "sky" },
+    { icon: Users, title: t("land_f6_title", "Управление Классами"), desc: t("land_f6_desc"), zone: "fuchsia" },
   ];
 
   const stats = [
     { value: "6+", label: "Мини-игр" },
     { value: "AI", label: "Генератор" },
     { value: "∞", label: "Материалов" },
-    { value: "100%", label: "Бесплатно" },
+    { value: t("land_stat_gen", "10k+"), label: "Создано" },
   ];
 
   return (
@@ -58,6 +65,14 @@ export default function Landing() {
         </button>
 
         <div className="flex items-center gap-4">
+          <button 
+            onClick={toggleLanguage}
+            className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-black/5 transition-colors text-sm font-medium text-slate-600"
+          >
+            <Globe className="w-4 h-4" />
+            {i18n.language === 'ru' ? 'RU' : 'UZ'}
+          </button>
+          
           {user ? (
             <div className="relative">
               <button
@@ -73,7 +88,7 @@ export default function Landing() {
                   className="absolute right-0 top-14 w-56 bg-white rounded-2xl shadow-2xl border border-black/5 p-2 flex flex-col gap-1"
                 >
                   <div className="px-4 py-3 border-b border-black/5">
-                    <p className="font-semibold text-sm text-slate-900">{user.name || user.email}</p>
+                    <p className="font-semibold text-sm text-slate-900">{(user as any).name || user.email}</p>
                     <p className="text-xs text-slate-400">{user.email}</p>
                   </div>
                   <button onClick={() => navigate("/teacher")} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 rounded-xl text-sm text-slate-700 transition-colors">
@@ -89,15 +104,15 @@ export default function Landing() {
             <>
               <button
                 onClick={() => navigate("/demo")}
-                className="px-5 py-2.5 rounded-full text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-black/5 transition-colors"
+                className="px-5 py-2.5 rounded-full text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-black/5 transition-colors hidden sm:block"
               >
-                Демо
+                {t("land_hero_demo", "Демо")}
               </button>
               <button
                 onClick={() => navigate("/login")}
                 className="px-5 py-2.5 rounded-full text-sm font-semibold bg-slate-900 text-white hover:bg-slate-700 transition-colors shadow-sm"
               >
-                Войти
+                {t("land_login", "Войти")}
               </button>
             </>
           )}
@@ -105,33 +120,34 @@ export default function Landing() {
       </nav>
 
       {/* ──────────── ZONE 1: HERO (emerald) ──────────── */}
-      <section className="min-h-[90vh] w-full zone-emerald pt-36 px-6 lg:px-24 flex flex-col justify-center">
+      <section className="min-h-[90vh] w-full zone-emerald pt-36 px-6 lg:px-24 flex flex-col justify-center relative overflow-hidden">
         <motion.div
           initial="hidden"
           animate="visible"
-          className="max-w-5xl"
+          className="max-w-5xl z-10 relative"
         >
           <motion.div variants={fadeUp} custom={0} className="flex items-center gap-3 mb-10">
-            <img src="/logo_sticker.webp" alt="ClassPlay" className="w-16 h-16 rounded-2xl object-contain" />
-            <span className="text-sm font-semibold uppercase tracking-widest opacity-60">ClassPlay</span>
+            <span className="px-4 py-2 bg-white/50 backdrop-blur-sm border border-emerald-500/20 rounded-full text-sm font-bold text-emerald-800 tracking-wider">
+              {t("land_hero_badge", "✨ МАГИЯ ОБУЧЕНИЯ С ПОМОЩЬЮ ИИ")}
+            </span>
           </motion.div>
 
           <motion.h1
             variants={fadeUp}
             custom={1}
-            className="text-[13vw] sm:text-7xl md:text-9xl font-display font-medium tracking-tighter leading-[0.85] mb-8"
+            className="text-[11vw] sm:text-7xl md:text-9xl font-display font-medium tracking-tighter leading-[0.85] mb-8"
           >
-            Обучение,<br />
-            <span style={{ color: "var(--zone-emerald-muted)" }}>которое работает.</span>
+            {t("land_hero_title1", "Революция")}<br />
+            <span style={{ color: "var(--zone-emerald-muted)" }}>{t("land_hero_title2", "в Вашем Классе")}</span>
           </motion.h1>
 
           <motion.p
             variants={fadeUp}
             custom={2}
-            className="text-xl md:text-2xl max-w-2xl leading-relaxed mb-12"
+            className="text-xl md:text-2xl max-w-2xl leading-relaxed mb-12 font-medium"
             style={{ color: "var(--zone-emerald-muted)" }}
           >
-            AI-платформа для учителей: генерируйте материалы, запускайте игры и управляйте классами — всё в одном месте.
+            {t("land_hero_sub", "Хватит тратить часы на подготовку. Создавайте уроки, игры и персонализированные книги за считанные секунды.")}
           </motion.p>
 
           <motion.div variants={fadeUp} custom={3} className="flex flex-wrap gap-4">
@@ -140,14 +156,14 @@ export default function Landing() {
               className="px-8 py-5 rounded-full text-xl font-semibold flex items-center gap-3 hover:scale-105 transition-transform shadow-2xl"
               style={{ background: "var(--zone-emerald-text)", color: "var(--zone-emerald-bg)" }}
             >
-              Начать бесплатно <ArrowRight size={22} />
+              {t("land_hero_cta", "Попробовать бесплатно")} <ArrowRight size={22} />
             </button>
             <button
               onClick={() => navigate("/demo")}
-              className="px-8 py-5 rounded-full text-xl font-medium flex items-center gap-3 border-2 hover:bg-black/5 transition-colors"
+              className="px-8 py-5 rounded-full text-xl font-medium flex items-center gap-3 border-2 hover:bg-black/5 transition-colors bg-white/30 backdrop-blur-sm"
               style={{ borderColor: "var(--zone-emerald-text)", color: "var(--zone-emerald-text)" }}
             >
-              <Zap size={20} /> Попробовать демо
+              <Zap size={20} /> {t("land_hero_demo", "Смотреть демо")}
             </button>
           </motion.div>
         </motion.div>
@@ -181,10 +197,10 @@ export default function Landing() {
           className="max-w-5xl"
         >
           <h2 className="text-5xl md:text-7xl font-display font-medium tracking-tighter mb-6">
-            Всё что нужно
+             {t("land_features_title", "Все, что нужно учителю")}
           </h2>
-          <p className="text-xl max-w-xl mb-20" style={{ color: "var(--zone-amber-muted)" }}>
-            Один инструмент, чтобы планировать, создавать и проводить уроки.
+          <p className="text-xl max-w-xl mb-20 font-medium" style={{ color: "var(--zone-amber-muted)" }}>
+            {t("land_features_sub", "Одна платформа, бесконечные возможности.")}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-20">
@@ -198,11 +214,11 @@ export default function Landing() {
                 className="flex flex-col group cursor-pointer"
               >
                 <div className={`border-l-4 pl-8 transition-colors duration-300 group-hover:border-current border-current/20`}>
-                  <f.icon className="w-10 h-10 mb-6 opacity-70 group-hover:scale-110 transition-transform origin-left duration-500" />
+                  <f.icon className="w-10 h-10 mb-6 opacity-80 group-hover:scale-110 transition-transform origin-left duration-500" />
                   <h3 className="text-3xl md:text-4xl font-display font-medium tracking-tighter leading-tight mb-4">
                     {f.title}
                   </h3>
-                  <p className="text-lg leading-relaxed opacity-70">{f.desc}</p>
+                  <p className="text-lg leading-relaxed font-medium opacity-80">{f.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -219,14 +235,14 @@ export default function Landing() {
           className="max-w-5xl"
         >
           <h2 className="text-5xl md:text-7xl font-display font-medium tracking-tighter mb-20">
-            Как это работает
+            {t("land_res_title1", "Увидьте")} {t("land_res_title2", "Результат")}
           </h2>
 
           <div className="flex flex-col gap-16">
             {[
-              { n: "01", title: "Создайте класс", desc: "Добавьте класс, пригласите студентов. Всё хранится в вашем аккаунте." },
-              { n: "02", title: "Сгенерируйте материал", desc: "Опишите тему — AI создаст задания, викторины и игры за секунды." },
-              { n: "03", title: "Запустите урок", desc: "Используйте интерактивные игры прямо на уроке для максимального вовлечения." },
+              { n: "01", title: t("land_res_acc", "Высокая Точность"), desc: t("land_res_acc_desc", "Каждое задание проверяется нашим алгоритмом.") },
+              { n: "02", title: t("land_res_print", "Готово к Печати"), desc: t("land_res_print_desc", "Оптимизировано под формат A4.") },
+              { n: "03", title: t("land_org_title", "Для Организаций"), desc: t("land_org_desc", "Подходит как для частных репетиторов, так и для целых школ.") },
             ].map((step, i) => (
               <motion.div
                 key={step.n}
@@ -241,7 +257,7 @@ export default function Landing() {
                 </span>
                 <div className="flex-1 group-hover:translate-x-2 transition-transform duration-300">
                   <h3 className="text-3xl md:text-5xl font-display font-medium tracking-tighter mb-4">{step.title}</h3>
-                  <p className="text-xl opacity-60">{step.desc}</p>
+                  <p className="text-xl font-medium opacity-70">{step.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -249,7 +265,131 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* ──────────── ZONE 5: CTA (fuchsia) ──────────── */}
+      {/* ──────────── ZONE 5: PRICING PLANS ──────────── */}
+      {/* We use a neutral/slate look with hints of color to make plans pop */}
+      <section className="bg-slate-50 py-32 px-6 lg:px-24">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-6xl mx-auto"
+        >
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-display font-semibold tracking-tighter text-slate-900 mb-6">
+              {t("land_price_title", "Тарифы для любого масштаба")}
+            </h2>
+            <p className="text-xl text-slate-500 max-w-2xl mx-auto">
+              {t("land_price_sub", "От индивидуальных занятий до государственных учреждений. Выберите лучший план для вас.")}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Plan 1: Free */}
+            <div className="bg-white rounded-[2.5rem] p-8 border border-black/5 shadow-xl shadow-slate-200/50 flex flex-col hover:-translate-y-2 transition-transform duration-300">
+              <div className="flex-1">
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-6">
+                  <Gift className="w-6 h-6 text-slate-600" />
+                </div>
+                <h3 className="text-3xl font-display font-semibold mb-2">{t("land_p1_title", "Бесплатно")}</h3>
+                <p className="text-slate-500 mb-8 font-medium">Креативность без ограничений, базовые инструменты всегда под рукой.</p>
+                
+                <h4 className="text-5xl font-display font-semibold mb-8">$0<span className="text-xl text-slate-400 font-normal"> / мес</span></h4>
+                
+                <ul className="space-y-4 mb-8">
+                  {[
+                    t("land_p1_f1", "10 ИИ-генераций в месяц"),
+                    t("land_p1_f2", "Базовый доступ к играм"),
+                    t("land_p1_f3", "Поддержка сообщества"),
+                    t("land_p1_f4", "1 место учителя")
+                  ].map((feat, idx) => (
+                    <li key={idx} className="flex items-center gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      <span className="text-slate-600 font-medium">{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button 
+                onClick={() => navigate("/login")}
+                className="w-full py-4 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:border-slate-800 hover:text-slate-900 transition-colors"
+              >
+                {t("land_start", "Начать сейчас")}
+              </button>
+            </div>
+
+            {/* Plan 2: Pro Teacher */}
+            <div className="bg-slate-900 text-white rounded-[2.5rem] p-8 shadow-2xl shadow-slate-900/40 relative flex flex-col hover:-translate-y-2 transition-transform duration-300 scale-100 md:scale-105 z-10">
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-fuchsia-500 via-emerald-500 to-sky-500 rounded-t-[2.5rem]" />
+              <div className="flex-1 mt-2">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-6">
+                  <Medal className="w-6 h-6 text-amber-400" />
+                </div>
+                <h3 className="text-3xl font-display font-semibold mb-2">{t("land_p2_title", "Pro Учитель")}</h3>
+                <p className="text-slate-400 mb-8 font-medium">Бесконечные генерации и продвинутые инструменты для современного учителя.</p>
+                
+                <h4 className="text-5xl font-display font-semibold mb-8">$15<span className="text-xl text-slate-500 font-normal"> / мес</span></h4>
+                
+                <ul className="space-y-4 mb-8">
+                  {[
+                    t("land_p2_f1", "Безлимитные генерации"),
+                    t("land_p2_f2", "Полная библиотека игр"),
+                    t("land_p2_f3", "Создание ИИ-книг"),
+                    t("land_p2_f4", "Продвинутая аналитика класса"),
+                    t("land_p2_f5", "Приоритетная поддержка")
+                  ].map((feat, idx) => (
+                    <li key={idx} className="flex items-center gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      <span className="text-slate-200 font-medium">{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button 
+                onClick={() => navigate("/login")}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-400 to-sky-500 text-slate-900 font-bold hover:opacity-90 transition-opacity"
+              >
+                {t("land_start", "Начать сейчас")}
+              </button>
+            </div>
+
+            {/* Plan 3: For Schools */}
+            <div className="bg-white rounded-[2.5rem] p-8 border border-black/5 shadow-xl shadow-slate-200/50 flex flex-col hover:-translate-y-2 transition-transform duration-300">
+              <div className="flex-1">
+                <div className="w-12 h-12 rounded-2xl bg-fuchsia-100 flex items-center justify-center mb-6">
+                  <Crown className="w-6 h-6 text-fuchsia-600" />
+                </div>
+                <h3 className="text-3xl font-display font-semibold mb-2">{t("land_p3_title", "Для Школ")}</h3>
+                <p className="text-slate-500 mb-8 font-medium">Решение для всего образовательного учреждения с администрированием.</p>
+                
+                <h4 className="text-5xl font-display font-semibold mb-8">{t("land_p3_price", "$49")}<span className="text-xl text-slate-400 font-normal"> / мес</span></h4>
+                
+                <ul className="space-y-4 mb-8">
+                  {[
+                    t("land_p3_f1", "Все функции Pro-плана"),
+                    t("land_p3_f2", "До 10 мест для учителей"),
+                    t("land_p3_f3", "Панель администратора"),
+                    t("land_p3_f4", "Массовый импорт классов"),
+                    t("land_p3_f6", "Работа по договору")
+                  ].map((feat, idx) => (
+                    <li key={idx} className="flex items-center gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-fuchsia-500" />
+                      <span className="text-slate-600 font-medium">{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button 
+                onClick={() => navigate("/login")}
+                className="w-full py-4 rounded-xl border-2 border-fuchsia-200 text-fuchsia-700 font-bold hover:border-fuchsia-600 transition-colors"
+              >
+                {t("land_cta_btn", "Связаться с нами")}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ──────────── ZONE 6: CTA (fuchsia) ──────────── */}
       <section className="zone-fuchsia py-40 px-6 lg:px-24">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -260,15 +400,15 @@ export default function Landing() {
         >
           <div className="flex items-center gap-3 mb-8">
             <Star className="w-8 h-8" style={{ color: "var(--zone-fuchsia-muted)" }} />
-            <span className="text-sm font-semibold uppercase tracking-widest opacity-60">Начать сейчас</span>
+            <span className="text-sm font-semibold uppercase tracking-widest opacity-80">{t("land_start", "Начать сейчас")}</span>
           </div>
           <h2 className="text-5xl md:text-8xl font-display font-medium tracking-tighter leading-[0.9] mb-12">
-            Готовы изменить<br />ваши уроки?
+             Готовы изменить<br />ваши уроки?
           </h2>
           <div className="flex flex-wrap gap-6 mb-16">
-            {["AI генератор", "6 игр", "Управление классами", "Бесплатно"].map(item => (
-              <div key={item} className="flex items-center gap-2 text-lg">
-                <CheckCircle2 className="w-5 h-5" style={{ color: "var(--zone-fuchsia-muted)" }} />
+            {["ИИ-Генератор", "Интерактив", "Аналитика", "Безлимит"].map(item => (
+              <div key={item} className="flex items-center gap-2 text-xl font-medium">
+                <CheckCircle2 className="w-6 h-6" style={{ color: "var(--zone-fuchsia-muted)" }} />
                 <span>{item}</span>
               </div>
             ))}
@@ -290,13 +430,14 @@ export default function Landing() {
             <img src="/logo_sticker.webp" alt="ClassPlay" className="w-8 h-8 rounded-lg object-contain opacity-70" />
             <span className="font-display font-bold text-slate-500 tracking-tight">ClassPlay</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
             <Globe className="w-4 h-4" />
-            <span>Создано для учителей</span>
+            <span>{t("land_foot_desc", "Самая мощная в мире ИИ-платформа, созданная специально для современного образования.")}</span>
           </div>
-          <p className="text-sm text-slate-400">© 2026 ClassPlay. Все права защищены.</p>
+          <p className="text-sm text-slate-400 font-medium">{t("land_copy", "© 2026 ClassPlay Inc. Все права защищены.")}</p>
         </div>
       </footer>
     </div>
   );
 }
+

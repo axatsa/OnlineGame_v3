@@ -12,6 +12,13 @@ class OrganizationBase(BaseModel):
 class OrganizationCreate(OrganizationBase):
     pass
 
+class OrganizationUpdate(BaseModel):
+    name: Optional[str] = None
+    contact_person: Optional[str] = None
+    license_seats: Optional[int] = None
+    expires_at: Optional[datetime] = None
+    status: Optional[str] = None
+
 class OrganizationResponse(OrganizationBase):
     id: int
     used_seats: int
@@ -42,6 +49,19 @@ class CreateTeacherRequest(BaseModel):
     email: str
     password: str
     full_name: str
+    school: Optional[str] = None
+    phone: Optional[str] = None
+    tokens_limit: Optional[int] = 100000
+
+class UpdateTeacherRequest(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    school: Optional[str] = None
+    phone: Optional[str] = None
+    tokens_limit: Optional[int] = None
+
+class ResetPasswordRequest(BaseModel):
+    new_password: str
 
 class TokenUsageStats(BaseModel):
     user_id: int

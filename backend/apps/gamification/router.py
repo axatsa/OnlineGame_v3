@@ -11,7 +11,7 @@ from typing import List
 router = APIRouter()
 
 # --- PROFILE & STATS ---
-profile_router = APIRouter(prefix="/api/gamification", tags=["gamification"])
+profile_router = APIRouter(prefix="/gamification", tags=["gamification"])
 
 @profile_router.get("/profile", response_model=StudentProfileResponse)
 def get_profile(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
@@ -50,7 +50,7 @@ def get_leaderboard(db: Session = Depends(get_db), user: User = Depends(get_curr
 router.include_router(profile_router)
 
 # --- ACTIVITY ---
-activity_router = APIRouter(prefix="/api/activity", tags=["activity"])
+activity_router = APIRouter(prefix="/activity", tags=["activity"])
 
 @activity_router.post("/complete")
 def complete_activity(req: ActivityCompletionRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
@@ -74,7 +74,7 @@ def complete_activity(req: ActivityCompletionRequest, db: Session = Depends(get_
 router.include_router(activity_router)
 
 # --- SHOP ---
-shop_router = APIRouter(prefix="/api/shop", tags=["shop"])
+shop_router = APIRouter(prefix="/shop", tags=["shop"])
 
 @shop_router.get("/items", response_model=List[ShopItemResponse])
 def get_shop_items(db: Session = Depends(get_db)):

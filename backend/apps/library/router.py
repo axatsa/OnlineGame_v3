@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-library_router = APIRouter(prefix="/api/library", tags=["library"])
+library_router = APIRouter(prefix="/library", tags=["library"])
 
 @library_router.post("/generate", response_model=BookResponse)
 async def gen_storybook(
@@ -142,7 +142,7 @@ def delete_book(book_id: int, db: Session = Depends(get_db), user: User = Depend
 
 router.include_router(library_router)
 
-resources_router = APIRouter(prefix="/api/resources", tags=["resources"])
+resources_router = APIRouter(prefix="/resources", tags=["resources"])
 
 @resources_router.get("/", response_model=List[SavedResourceResponse])
 def get_resources(db: Session = Depends(get_db), user: User = Depends(get_current_user)):

@@ -9,7 +9,7 @@ from datetime import timedelta, datetime
 from jose import jwt
 from passlib.context import CryptContext
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

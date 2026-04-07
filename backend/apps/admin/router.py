@@ -21,7 +21,7 @@ from apps.admin.schemas import (
 )
 from apps.auth.dependencies import require_admin, get_current_user
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["admin"])
 
 from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

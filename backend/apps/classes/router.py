@@ -5,7 +5,7 @@ from database import get_db
 from apps.classes.models import ClassGroup
 from apps.classes.schemas import ClassCreate, ClassResponse
 
-router = APIRouter(prefix="/api/classes", tags=["classes"])
+router = APIRouter(prefix="/classes", tags=["classes"])
 
 @router.get("/", response_model=List[ClassResponse])
 def get_classes(db: Session = Depends(get_db)):

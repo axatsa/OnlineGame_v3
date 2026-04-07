@@ -13,7 +13,7 @@ import json
 from config import RATE_LIMIT_PER_HOUR
 from rate_limiter import limiter
 
-router = APIRouter(prefix="/api/generate", tags=["generator"])
+router = APIRouter(prefix="/generate", tags=["generator"])
 
 def log_usage(db: Session, user_id: int, feature: str, tokens: int):
     usage = TokenUsage(user_id=user_id, feature_name=feature, tokens_total=tokens)

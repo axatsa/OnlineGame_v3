@@ -2,7 +2,8 @@
 
 **Приоритет:** 🟠 Ниже среднего (Sprint 3)  
 **Оценка:** ~2–3 дня  
-**Исполнитель:** Frontend + Backend
+**Исполнитель:** Frontend + Backend  
+**Статус:** ❌ Не начато
 
 ---
 
@@ -16,10 +17,10 @@
 
 ### 6.1 Backend: Batch-эндпоинт
 
-**Файл:** `backend/app/routers/generate_batch.py`
+**Файл:** `backend/apps/generator/router.py`
 
 **Что делать:**
-- Новый POST `/api/generate/batch`
+- Новый POST `/api/v1/generate/batch`
 - Принимает: `feature`, `params` (те же что обычно), `count` (2–5)
 - Запускает `asyncio.gather()` для параллельной генерации всех вариантов
 - Квота токенов: считать всё суммой
@@ -51,7 +52,7 @@ async def batch_generate(request: BatchRequest, user: User = Depends(...)):
 
 ### 6.3 ZIP-архив скачивания
 
-**Файл:** `backend/app/utils/docx_batch.py`
+**Файл:** `backend/apps/generator/batch_utils.py`
 
 **Что делать:**
 - Использовать библиотеку `zipfile` (стандартная)

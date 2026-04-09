@@ -2,7 +2,8 @@
 
 **Приоритет:** 🟡 Средний (Sprint 3)  
 **Оценка:** ~5–7 дней  
-**Исполнитель:** Frontend + Backend
+**Исполнитель:** Frontend + Backend  
+**Статус:** 🟠 В процессе — редактор ЕСТЬ, шаблонов нет
 
 ---
 
@@ -39,7 +40,7 @@ questions.map((q, i) => (
 
 ### 5.2 Шаблоны заданий
 
-**Файлы:** `backend/app/models.py` (Templates), `front/src/pages/Templates.tsx`
+**Файлы:** `backend/apps/generator/models.py` и `router.py`, `front/src/pages/templates/Templates.tsx`
 
 **Модель:**
 ```python
@@ -58,10 +59,10 @@ class Template(Base):
 
 **API:**
 ```
-GET  /api/templates?feature=quiz          → список шаблонов
-POST /api/templates                       → сохранить текущие параметры как шаблон
-POST /api/templates/{id}/apply            → заполнить форму параметрами шаблона
-DELETE /api/templates/{id}               → удалить (только свои)
+GET  /api/v1/templates?feature=quiz          → список шаблонов
+POST /api/v1/templates                       → сохранить текущие параметры как шаблон
+POST /api/v1/templates/{id}/apply            → заполнить форму параметрами шаблона
+DELETE /api/v1/templates/{id}               → удалить (только свои)
 ```
 
 **Системные шаблоны** (добавить через seed):
@@ -79,6 +80,8 @@ DELETE /api/templates/{id}               → удалить (только сво
 
 - [x] Редактор открывается после генерации любого контента
 - [x] Изменения сохраняются до скачивания DOCX
+- [ ] Модель `Template` создана в БД
+- [ ] API шаблонов реализован (GET/POST/DELETE)
 - [ ] Шаблоны отображаются в каждом генераторе
 - [ ] Можно создать свой шаблон и потом загрузить его
 - [ ] Системные шаблоны есть минимум 6 штук

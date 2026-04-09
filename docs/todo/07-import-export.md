@@ -2,7 +2,8 @@
 
 **Приоритет:** 🟠 Ниже среднего (Sprint 4)  
 **Оценка:** ~3–4 дня  
-**Исполнитель:** Frontend + Backend
+**Исполнитель:** Frontend + Backend  
+**Статус:** ❌ Не начато
 
 ---
 
@@ -16,7 +17,7 @@
 
 ### 7.1 Импорт своих слов для кроссворда / филворда
 
-**Файлы:** `front/src/pages/generators/CrosswordGenerator.tsx`, `front/src/pages/generators/PhilwordGenerator.tsx`
+**Файлы:** генераторы в `front/src/pages/tools/`
 
 **Что делать:**
 

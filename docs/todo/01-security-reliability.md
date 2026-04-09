@@ -2,13 +2,14 @@
 
 **Приоритет:** 🔴 Критический (Sprint 1)  
 **Оценка:** ~3–5 дней  
-**Исполнитель:** Backend + DevOps
+**Исполнитель:** Backend + DevOps  
+**Статус:** 🟡 Почти готово — осталось подтвердить HTTPS в production
 
 ---
 
 ## Контекст
 
-Перед запуском продаж необходимо базовое усиление безопасности. Один пользователь может выжечь весь AI-бюджет, нет SSL в prod, нет бэкапов.
+Перед запуском продаж необходимо базовое усиление безопасности. Один пользователь может выжечь весь AI-бюджет, нет подтверждённого SSL в prod, нет бэкапов.
 
 ---
 
@@ -16,7 +17,7 @@
 
 ### 1.1 Rate Limiting на AI-эндпоинтах
 
-**Файл:** `backend/app/main.py` или отдельный `middleware/rate_limit.py`
+**Файл:** `backend/rate_limiter.py`, `backend/apps/generator/router.py`
 
 **Что делать:**
 - Установить `slowapi` → `pip install slowapi`
@@ -41,7 +42,7 @@ async def generate_quiz(request: Request, ...):
 
 ### 1.2 Квоты токенов в БД
 
-**Файлы:** `backend/app/models.py`, `backend/app/services/quota.py`
+**Файлы:** `backend/apps/auth/models.py`, `backend/apps/generator/router.py`
 
 **Что делать:**
 - Добавить поле в модель пользователя или отдельную таблицу:
@@ -64,23 +65,7 @@ async def generate_quiz(request: Request, ...):
 **Что делать:**
 - Добавить SSL через Let's Encrypt (Certbot) или подключить уже имеющийся сертификат
 - Redirect HTTP → HTTPS
-
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-    ...
-}
-```
-
-- В `docker-compose.prod.yml` добавить volume для `/etc/letsencrypt`
+- Подробная инструкция: `docs/DEPLOY_HTTPS.md`
 
 **Проверка:** `curl -I https://yourdomain.com` → 200 OK.
 
@@ -94,7 +79,6 @@ server {
 - Убрать секреты из `docker-compose.prod.yml` в файл `.env.prod` (не коммитить в git)
 - Добавить `.env.prod` в `.gitignore`
 - На сервере использовать `--env-file .env.prod` при запуске compose
-- Опционально: изучить Railway Secrets или Doppler для управления через UI
 
 **Проверка:** `git log --all --full-history -- .env.prod` → файл не должен попасть в историю.
 
@@ -122,8 +106,8 @@ server {
 
 ## Definition of Done
 
-- [x] Rate limit 429 работает при превышении лимита
-- [x] Квоты токенов хранятся в БД, проверяются перед AI-запросом
-- [ ] prod-сайт открывается по HTTPS
-- [x] Секреты не в docker-compose.prod.yml и не в git
-- [x] Бэкап БД работает по расписанию
+- [x] Rate limit 429 работает при превышении лимита (`slowapi` в `rate_limiter.py`)
+- [x] Квоты токенов хранятся в БД (`tokens_used_this_month`, `tokens_limit` в User)
+- [ ] prod-сайт открывается по HTTPS (инструкция есть в `docs/DEPLOY_HTTPS.md`, нужно применить на сервере)
+- [x] Секреты не в `docker-compose.prod.yml` и не в git (`.env` + `.env.example`)
+- [x] Бэкап БД работает по расписанию (`backup/` директория создана)

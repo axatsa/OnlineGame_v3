@@ -2,7 +2,8 @@
 
 **Приоритет:** 🟡 Средний (Sprint 2)  
 **Оценка:** ~4–6 дней  
-**Исполнитель:** Frontend + Backend
+**Исполнитель:** Frontend + Backend  
+**Статус:** ❌ Не начато — нет ни флага в БД, ни UI компонента
 
 ---
 
@@ -25,7 +26,7 @@
   3. **Попробуй генератор** — кнопка запустить первый AI-генератор
   4. **Запусти игру** — кнопка перейти к играм
 - В БД добавить флаг `onboarding_completed: bool = False` в таблицу users
-- API: `PATCH /api/users/me/onboarding-complete` → устанавливает флаг
+- API: `PATCH /api/v1/users/me/onboarding-complete` → устанавливает флаг
 - Показывать модал если `user.onboarding_completed === false`
 - Кнопка «Пропустить» тоже вызывает этот API
 
@@ -40,13 +41,13 @@
 
 ### 2.2 Dashboard с реальной статистикой
 
-**Файлы:** `front/src/pages/Dashboard.tsx`, `backend/app/routers/stats.py`
+**Файлы:** `front/src/pages/dashboard/TeacherDashboard.tsx`, `backend/apps/generator/router.py`
 
 **Что делать:**
 
 **Backend — новый роут:**
 ```
-GET /api/stats/me
+GET /api/v1/stats/me
 ```
 Ответ:
 ```json
@@ -71,19 +72,14 @@ GET /api/stats/me
 - График активности по дням — простой bar chart (можно использовать `recharts`)
 - Топ-3 используемых функции
 
-**Для трекинга:** при каждой генерации писать в таблицу `generation_logs`:
-```sql
-id, user_id, feature_name, tokens_used, created_at
-```
-
-**Проверка:** После 5 генераций статистика отображается корректно.
+**Примечание:** Таблица `generation_logs` уже существует в `apps/generator/models.py`. Данные уже пишутся.
 
 ---
 
 ## Definition of Done
 
 - [ ] Онбординг показывается при первом входе
-- [ ] Флаг onboarding_completed сохраняется в БД
-- [ ] Dashboard показывает реальные цифры
+- [ ] Флаг `onboarding_completed` сохраняется в БД (`users` таблица)
+- [ ] Dashboard показывает реальные цифры из `generation_logs`
 - [ ] График активности по дням работает
 - [ ] Нет заглушек / нулей там, где есть данные

@@ -61,6 +61,7 @@ def get_me(user: User = Depends(get_current_user)):
         "created_at": str(getattr(user, 'created_at', None)),
         "tokens_limit": user.tokens_limit,
         "tokens_used_this_month": user.tokens_used_this_month,
+        "onboarding_completed": getattr(user, 'onboarding_completed', False),
     }
 
 @router.patch("/me")
@@ -139,3 +140,9 @@ def register_with_invite(req: RegisterWithInviteRequest, db: Session = Depends(g
         "token_type": "bearer",
         "user": new_user
     }
+
+@router.post("/onboarding-complete")
+def onboarding_complete(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    user.onboarding_completed = True
+    db.commit()
+    return {"message": "Onboarding completed"}

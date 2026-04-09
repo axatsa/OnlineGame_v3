@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { motion, Variants } from "framer-motion";
+import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import {
   ArrowRight, Sparkles, BookOpen, Users, Gamepad2,
-  CheckCircle2, Star, Zap, Globe, LogOut, User, Settings, Medal, Crown, Gift
+  CheckCircle2, Star, Zap, Globe, LogOut, User, Settings, Medal, Crown, Gift,
+  MessageSquare, HelpCircle, ChevronRight, Quote, Plus, Minus
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -23,6 +24,23 @@ export default function Landing() {
   const { t, i18n } = useTranslation();
   const [navScrolled, setNavScrolled] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const testimonials = [
+    { name: "Айгуль М.", role: "Учитель математики", school: "Алматы", text: "Раньше тратила 2 часа на составление тестов. Теперь — 5 минут. ИИ понимает специфику наших программ!", rating: 5 },
+    { name: "Дмитрий К.", role: "Учитель истории", school: "Ташкент", text: "Дети в восторге от игр на смарт-борде. Jeopardy — главный хит класса, теперь это любимый день недели.", rating: 5 },
+    { name: "Наталья С.", role: "Завуч", school: "Гимназия №3", text: "Купили лицензию для всей школы. Учителя освободились от рутины и больше времени уделяют детям. Окупилось за месяц.", rating: 5 },
+    { name: "Камила Ю.", role: "Учитель английского", school: "Private School", text: "AI кроссворды — любимое задание детей каждую пятницу. Генерация на разных языках работает безупречно.", rating: 5 },
+  ];
+
+  const faqs = [
+    { q: "Работает ли на казахском?", a: "Сейчас поддерживаются Русский и Узбекский. Казахский в планах на Q3 2026." },
+    { q: "Сколько стоит для школы?", a: "План School — $49/мес за 10 учителей. Для более крупных школ — индивидуальный расчёт." },
+    { q: "Нужен ли смарт-борд для игр?", a: "Нет, игры работают в любом браузере. Смарт-борд улучшает опыт, но не обязателен." },
+    { q: "Могу ли я отменить подписку?", a: "Да, в любой момент из личного кабинета. Деньги за неиспользованный период возвращаем." },
+    { q: "Безопасны ли данные учеников?", a: "Мы не храним данные учеников. Учитель вводит только темы уроков или загружает список имен без фамилий." },
+    { q: "Есть ли приложение?", a: "Пока только веб-версия, полностью оптимизированная для планшетов, ПК и смарт-бордов." },
+  ];
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 50);
@@ -266,7 +284,6 @@ export default function Landing() {
       </section>
 
       {/* ──────────── ZONE 5: PRICING PLANS ──────────── */}
-      {/* We use a neutral/slate look with hints of color to make plans pop */}
       <section className="bg-slate-50 py-32 px-6 lg:px-24">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -292,16 +309,9 @@ export default function Landing() {
                 </div>
                 <h3 className="text-3xl font-display font-semibold text-slate-900 mb-2">{t("land_p1_title", "Бесплатно")}</h3>
                 <p className="text-slate-500 mb-8 font-medium">Креативность без ограничений, базовые инструменты всегда под рукой.</p>
-                
                 <h4 className="text-5xl font-display font-semibold text-slate-900 mb-8">$0<span className="text-xl text-slate-400 font-normal"> / мес</span></h4>
-                
                 <ul className="space-y-4 mb-8">
-                  {[
-                    t("land_p1_f1", "10 ИИ-генераций в месяц"),
-                    t("land_p1_f2", "Базовый доступ к играм"),
-                    t("land_p1_f3", "Поддержка сообщества"),
-                    t("land_p1_f4", "1 место учителя")
-                  ].map((feat, idx) => (
+                  {[ t("land_p1_f1", "10 ИИ-генераций в месяц"), t("land_p1_f2", "Базовый доступ к играм"), t("land_p1_f3", "Поддержка сообщества"), t("land_p1_f4", "1 место учителя") ].map((feat, idx) => (
                     <li key={idx} className="flex items-center gap-3">
                       <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                       <span className="text-slate-600 font-medium">{feat}</span>
@@ -326,17 +336,9 @@ export default function Landing() {
                 </div>
                 <h3 className="text-3xl font-display font-semibold mb-2">{t("land_p2_title", "Pro Учитель")}</h3>
                 <p className="text-slate-400 mb-8 font-medium">Бесконечные генерации и продвинутые инструменты для современного учителя.</p>
-                
                 <h4 className="text-5xl font-display font-semibold mb-8">$15<span className="text-xl text-slate-500 font-normal"> / мес</span></h4>
-                
                 <ul className="space-y-4 mb-8">
-                  {[
-                    t("land_p2_f1", "Безлимитные генерации"),
-                    t("land_p2_f2", "Полная библиотека игр"),
-                    t("land_p2_f3", "Создание ИИ-книг"),
-                    t("land_p2_f4", "Продвинутая аналитика класса"),
-                    t("land_p2_f5", "Приоритетная поддержка")
-                  ].map((feat, idx) => (
+                  {[ t("land_p2_f1", "Безлимитные генерации"), t("land_p2_f2", "Полная библиотека игр"), t("land_p2_f3", "Создание ИИ-книг"), t("land_p2_f4", "Продвинутая аналитика класса"), t("land_p2_f5", "Приоритетная поддержка") ].map((feat, idx) => (
                     <li key={idx} className="flex items-center gap-3">
                       <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                       <span className="text-slate-200 font-medium">{feat}</span>
@@ -360,17 +362,9 @@ export default function Landing() {
                 </div>
                 <h3 className="text-3xl font-display font-semibold text-slate-900 mb-2">{t("land_p3_title", "Для Школ")}</h3>
                 <p className="text-slate-500 mb-8 font-medium">Решение для всего образовательного учреждения с администрированием.</p>
-                
                 <h4 className="text-5xl font-display font-semibold text-slate-900 mb-8">{t("land_p3_price", "$49")}<span className="text-xl text-slate-400 font-normal"> / мес</span></h4>
-                
                 <ul className="space-y-4 mb-8">
-                  {[
-                    t("land_p3_f1", "Все функции Pro-плана"),
-                    t("land_p3_f2", "До 10 мест для учителей"),
-                    t("land_p3_f3", "Панель администратора"),
-                    t("land_p3_f4", "Массовый импорт классов"),
-                    t("land_p3_f6", "Работа по договору")
-                  ].map((feat, idx) => (
+                  {[ t("land_p3_f1", "Все функции Pro-плана"), t("land_p3_f2", "До 10 мест для учителей"), t("land_p3_f3", "Панель администратора"), t("land_p3_f4", "Массовый импорт классов"), t("land_p3_f6", "Работа по договору") ].map((feat, idx) => (
                     <li key={idx} className="flex items-center gap-3">
                       <CheckCircle2 className="w-5 h-5 text-fuchsia-500" />
                       <span className="text-slate-600 font-medium">{feat}</span>
@@ -387,6 +381,98 @@ export default function Landing() {
             </div>
           </div>
         </motion.div>
+      </section>
+
+      {/* ──────────── ZONE 5.5: TESTIMONIALS ──────────── */}
+      <section id="testimonials" className="py-32 px-6 lg:px-24 bg-white overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row justify-between items-end gap-8 mb-20"
+          >
+            <div className="max-w-xl">
+              <div className="flex items-center gap-2 text-emerald-600 font-bold mb-4 uppercase tracking-wider text-sm">
+                <Quote className="w-5 h-5" /> {t("land_testimonials_badge", "Отзывы учителей")}
+              </div>
+              <h2 className="text-4xl md:text-6xl font-display font-semibold tracking-tighter text-slate-900">
+                Тысячи учителей уже экономят время
+              </h2>
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-slate-50 p-8 rounded-[32px] border border-black/5 hover:border-emerald-500/20 transition-all group"
+              >
+                <div className="flex gap-1 mb-6">
+                  {[...Array(t.rating)].map((_, i) => <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-xl text-slate-700 leading-relaxed italic mb-8">"{t.text}"</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-100 to-sky-100 flex items-center justify-center font-bold text-emerald-700">
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">{t.name}</h4>
+                    <p className="text-sm text-slate-500">{t.role} • {t.school}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────── ZONE 5.6: FAQ ──────────── */}
+      <section id="faq" className="py-32 px-6 lg:px-24 bg-slate-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-display font-semibold tracking-tighter text-slate-900 mb-6">
+              Часто задаваемые вопросы
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, i) => (
+              <div key={i} className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-sm">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full p-6 text-left flex items-center justify-between group"
+                >
+                  <span className="text-lg font-bold text-slate-800 group-hover:text-emerald-600 transition-colors">
+                    {faq.q}
+                  </span>
+                  <div className={`p-2 rounded-xl transition-all ${openFaq === i ? "bg-emerald-500 text-white rotate-180" : "bg-slate-100 text-slate-400"}`}>
+                    <ChevronRight className="w-5 h-5" />
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {openFaq === i && (
+                    <motion.div
+                      key={`faq-${i}`}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-6 pb-6 text-slate-600 leading-relaxed font-sans border-t border-black/5 pt-6">
+                        {faq.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ──────────── ZONE 6: CTA (fuchsia) ──────────── */}
@@ -440,4 +526,3 @@ export default function Landing() {
     </div>
   );
 }
-

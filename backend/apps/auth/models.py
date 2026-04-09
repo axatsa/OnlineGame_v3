@@ -15,6 +15,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     phone = Column(String, nullable=True)
     school = Column(String, nullable=True)
+    onboarding_completed = Column(Boolean, default=False)
 
     # Token quota tracking
     tokens_used_this_month = Column(Integer, default=0)

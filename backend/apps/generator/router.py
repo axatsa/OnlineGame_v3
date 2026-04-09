@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import func, cast, Date
 from database import get_db
 from apps.generator.models import TokenUsage, GenerationLog
 from apps.classes.models import ClassGroup
@@ -10,6 +11,7 @@ from services.openai_service import generate_math_problems, generate_crossword_w
 from apps.auth.dependencies import get_current_user
 from typing import Optional, List
 import json
+from datetime import datetime, timedelta
 from config import RATE_LIMIT_PER_HOUR
 from rate_limiter import limiter
 
@@ -219,5 +221,52 @@ def get_public_history(log_id: int, db: Session = Depends(get_db)):
         "topic": log.topic,
         "content": log.content,
         "created_at": log.created_at.isoformat()
+    }
+
+@router.get("/stats/me")
+def get_personal_stats(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    now = datetime.utcnow()
+    month_start = datetime(now.year, now.month, 1)
+    
+    # 1. Total & Monthly count
+    total = db.query(GenerationLog).filter(GenerationLog.user_id == user.id).count()
+    monthly = db.query(GenerationLog).filter(
+        GenerationLog.user_id == user.id,
+        GenerationLog.created_at >= month_start
+    ).count()
+    
+    # 2. Activity by day (last 14 days)
+    forty_days_ago = now - timedelta(days=14)
+    # Using cast to Date for grouping by day in PostgreSQL/SQLite
+    activity = db.query(
+        cast(GenerationLog.created_at, Date).label('day'),
+        func.count(GenerationLog.id).label('count')
+    ).filter(
+        GenerationLog.user_id == user.id,
+        GenerationLog.created_at >= forty_days_ago
+    ).group_by(cast(GenerationLog.created_at, Date)).all()
+    
+    activity_data = [{"date": str(a.day), "count": a.count} for a in activity]
+    
+    # 3. Top features
+    top_features = db.query(
+        GenerationLog.generator_type,
+        func.count(GenerationLog.id).label('count')
+    ).filter(GenerationLog.user_id == user.id).group_by(GenerationLog.generator_type).order_by(func.count(GenerationLog.id).desc()).limit(5).all()
+    
+    feature_data = [{"name": f.generator_type, "count": f.count} for f in top_features]
+    
+    # 4. Games launched (for Jeopardy type)
+    games = db.query(GenerationLog).filter(
+        GenerationLog.user_id == user.id,
+        GenerationLog.generator_type == 'jeopardy'
+    ).count()
+    
+    return {
+        "total_generations": total,
+        "generations_this_month": monthly,
+        "games_launched": games,
+        "activity_by_day": activity_data,
+        "top_features": feature_data
     }
 

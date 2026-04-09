@@ -8,6 +8,7 @@ interface User {
     email: string;
     role: "super_admin" | "teacher";
     full_name: string;
+    onboarding_completed: boolean;
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
     token: string | null;
     login: (token: string, user: User) => void;
     logout: () => void;
+    updateUser: (updates: Partial<User>) => void;
     isLoading: boolean;
 }
 
@@ -71,8 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         navigate("/");
     };
 
+    const updateUser = (updates: Partial<User>) => {
+        if (!user) return;
+        const updatedUser = { ...user, ...updates };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

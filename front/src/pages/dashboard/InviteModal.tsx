@@ -8,7 +8,7 @@ import { adminService } from "@/api/adminService";
 
 interface Invite {
   id: number;
-  token: str;
+  token: string;
   expires_at: string;
   max_uses: number;
   uses_count: number;

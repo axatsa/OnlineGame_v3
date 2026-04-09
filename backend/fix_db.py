@@ -10,7 +10,8 @@ def fix_schema():
         ("tokens_used_this_month", "INTEGER DEFAULT 0"),
         ("tokens_limit", "INTEGER DEFAULT 100000"),
         ("tokens_reset_at", "TIMESTAMP"),
-        ("organization_id", "INTEGER REFERENCES organizations(id)")
+        ("organization_id", "INTEGER REFERENCES organizations(id)"),
+        ("onboarding_completed", "BOOLEAN DEFAULT FALSE")
     ]
     
     with engine.connect() as conn:

@@ -473,7 +473,7 @@ const TeachersView = ({
 
   const handleSave = async (data: TeacherFormData) => {
     if (data.id) await adminService.updateTeacher(data.id, data);
-    else await adminService.createTeacher(data);
+    else await adminService.createTeacher(data as any);
     onRefresh();
     toast.success("Saved successfully");
   };
@@ -750,7 +750,14 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
       </div>
 
       <OrgModal isOpen={modal.isOpen} onClose={() => setModal({isOpen: false})} onSave={handleSave} initialData={modal.data} />
-      {importOrg && <BulkImportModal orgId={importOrg.id} orgName={importOrg.name} onClose={() => { setImportOrg(null); onRefresh(); }} />}
+      {importOrg && (
+        <BulkImportModal 
+          orgId={importOrg.id} 
+          orgName={importOrg.name} 
+          onClose={() => setImportOrg(null)} 
+          onSuccess={() => { onRefresh(); }} 
+        />
+      )}
       {statsOrg && <OrgStatsModal orgId={statsOrg} onClose={() => setStatsOrg(null)} />}
       {inviteOrg && <InviteModal orgId={inviteOrg.id} orgName={inviteOrg.name} onClose={() => setInviteOrg(null)} />}
     </div>

@@ -42,3 +42,31 @@ class GenerationLogResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TemplateCreate(BaseModel):
+    feature: str
+    name: str
+    description: str
+    params: dict
+    is_system: bool = False
+
+class TemplateResponse(BaseModel):
+    id: int
+    user_id: Optional[int]
+    feature: str
+    name: str
+    description: str
+    params: dict
+    is_system: bool
+
+    class Config:
+        from_attributes = True
+
+
+class BatchRequest(BaseModel):
+    tool_type: str  # math, quiz, assignment
+    count: int      # number of variants
+    params: dict    # parameters for the specific tool
+    language: str = "Russian"
+    class_id: Optional[int] = None
+

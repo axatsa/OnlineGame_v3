@@ -2,7 +2,7 @@
 import React, { useRef, RefObject, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, ChevronDown, Check, Plus, Save, Brain, Trophy, FileText } from "lucide-react";
+import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, ChevronDown, Check, Plus, Save, Brain, Trophy, FileText, BookmarkPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,6 +102,10 @@ const Generator = () => {
   const [generated, setGenerated] = useState(false);
   const [generatedProblems, setGeneratedProblems] = useState<{ q: string, a: string }[]>([]);
 
+  // Batch states
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [batchCount, setBatchCount] = useState("3");
+
   // Crossword state
   const [crosswordData, setCrosswordData] = useState<CrosswordGrid | null>(null);
   const [rawCrosswordWords, setRawCrosswordWords] = useState<any[]>([]);
@@ -132,6 +136,39 @@ const Generator = () => {
 
     try {
       const langLabel = lang === "uz" ? "Uzbek" : lang === "en" ? "English" : "Russian";
+
+      if (isBatchMode) {
+        let params: any = {};
+        if (genType === "math") params = { topic: mathTopic, count: parseInt(questionCount), difficulty };
+        else if (genType === "quiz") params = { topic: quizTopic, count: parseInt(quizCount) };
+        else if (genType === "assignment") params = { subject: assignSubject, topic: assignTopic, count: parseInt(assignCount) };
+        else {
+          toast.error("Crosswords do not support batch generation yet.");
+          setIsGenerating(false);
+          return;
+        }
+
+        const res = await api.post("/generate/batch", {
+          tool_type: genType,
+          count: parseInt(batchCount) || 3,
+          params: params,
+          language: langLabel,
+          class_id: activeClassId
+        }, { responseType: 'blob' });
+
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        const filename = `batch_${genType}_${new Date().toISOString().split('T')[0]}.zip`;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        
+        toast.success("Batch ZIP generated and downloading!");
+        setIsGenerating(false);
+        return;
+      }
 
       if (genType === "math") {
         const payload = {
@@ -203,10 +240,74 @@ const Generator = () => {
 
   // Edit & Save State
   const [showEdit, setShowEdit] = useState(false);
-  const [editContent, setEditContent] = useState("");
+  const [editContent, setEditContent] = useState<any>(null);
   const [saveTitle, setSaveTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  // Template State
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [templateTitle, setTemplateTitle] = useState("");
+
+  const fetchTemplates = async () => {
+    try {
+      const res = await api.get(`/generate/templates?feature=${genType}`);
+      setTemplates(res.data);
+    } catch (err) {}
+  };
+
+  React.useEffect(() => {
+    fetchTemplates();
+  }, [genType]);
+
+  const loadTemplate = (tmpl: any) => {
+    const p = tmpl.params;
+    if (genType === "math") {
+      if(p.topic) setMathTopic(p.topic);
+      if(p.count) setQuestionCount(String(p.count));
+      if(p.difficulty) setDifficulty(p.difficulty);
+    } else if (genType === "crossword") {
+      if(p.topic) setCrosswordTopic(p.topic);
+      if(p.word_count) setWordCount(String(p.word_count));
+    } else if (genType === "quiz") {
+      if(p.topic) setQuizTopic(p.topic);
+      if(p.count) setQuizCount(String(p.count));
+    } else if (genType === "assignment") {
+      if(p.subject) setAssignSubject(p.subject);
+      if(p.topic) setAssignTopic(p.topic);
+      if(p.count) setAssignCount(String(p.count));
+    }
+    toast.success("Шаблон загружен!");
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateTitle.trim()) {
+      toast.error("Введите название шаблона");
+      return;
+    }
+    try {
+      const params = genType === "math" ? {topic: mathTopic, count: parseInt(questionCount), difficulty} :
+                    genType === "crossword" ? {topic: crosswordTopic, word_count: parseInt(wordCount)} :
+                    genType === "quiz" ? {topic: quizTopic, count: parseInt(quizCount)} :
+                    {subject: assignSubject, topic: assignTopic, count: parseInt(assignCount)};
+      
+      await api.post("/generate/templates", {
+          feature: genType,
+          name: templateTitle,
+          description: "",
+          params: params,
+          is_system: false
+      });
+      toast.success("Шаблон сохранен!");
+      setShowTemplateDialog(false);
+      setTemplateTitle("");
+      fetchTemplates();
+    } catch(e) {
+      toast.error("Ошибка сохранения шаблона");
+    }
+  };
+
 
   const puzzleRef = useRef<HTMLDivElement>(null);
   const answerRef = useRef<HTMLDivElement>(null);
@@ -554,22 +655,13 @@ const Generator = () => {
 
   const openEdit = () => {
     if (genType === "math") {
-      setEditContent(JSON.stringify(generatedProblems, null, 2));
+      setEditContent(generatedProblems);
     } else if (genType === "crossword" && crosswordData) {
-      // For crossword, we edit the word list mostly, but let's expose the whole object structure for advanced users
-      // or maybe just the words? Let's do words + grid size if possible, but grid is auto-generated.
-      // Re-generating layout from edited words is better. 
-      // But here we are editing the *result* state.
-      // Let's just allow editing the words list for now if we want to re-generate layout?
-      // actually, the user wants to edit the CONTENT.
-      // If I edit the grid directly, it's hard.
-      // Let's allow editing the words text.
-      // But for simplicity of "universal" editing, let's just JSON dump the data.
-      setEditContent(JSON.stringify(crosswordData, null, 2));
+      setEditContent(crosswordData);
     } else if (genType === "quiz" && quizData) {
-      setEditContent(JSON.stringify(quizData, null, 2));
+      setEditContent(quizData);
     } else if (genType === "assignment" && assignmentData) {
-      setEditContent(JSON.stringify(assignmentData, null, 2));
+      setEditContent(assignmentData);
     } else {
       return;
     }
@@ -1007,6 +1099,75 @@ const Generator = () => {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Batch Generation Toggle */}
+          {genType !== "crossword" && (
+            <div className="mt-8 pt-6 border-t border-border/50 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Пакетная генерация</h3>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Создать несколько вариантов</p>
+                </div>
+                <button
+                  onClick={() => setIsBatchMode(!isBatchMode)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isBatchMode ? 'bg-primary' : 'bg-muted'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isBatchMode ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
+              </div>
+
+              {isBatchMode && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="space-y-2 pt-2"
+                >
+                  <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Количество вариантов (ZIP)</Label>
+                  <div className="flex items-center gap-2">
+                    {[2, 3, 5, 10].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setBatchCount(String(n))}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${batchCount === String(n) ? "bg-primary/10 text-primary border-primary/40" : "bg-card text-muted-foreground border-border"}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          )}
+
+          {/* Templates Section */}
+          <div className="mt-8 pt-6 border-t border-border/50">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-foreground">Шаблоны</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowTemplateDialog(true)} className="h-8 text-xs gap-1 text-primary hover:text-primary">
+                <BookmarkPlus className="w-3.5 h-3.5" /> Сохранить как шаблон
+              </Button>
+            </div>
+            {templates.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {templates.map(t => (
+                  <button 
+                    key={t.id} 
+                    onClick={() => loadTemplate(t)}
+                    className="p-3 text-left rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-muted transition-all"
+                  >
+                    <div className="text-sm font-medium text-foreground truncate">{t.name}</div>
+                    {t.is_system && <div className="text-[10px] text-primary mt-1 uppercase tracking-wider font-semibold">Системный</div>}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg border border-dashed border-border text-center">
+                Нет доступных шаблонов
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Generate Button */}
@@ -1529,8 +1690,29 @@ const Generator = () => {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog >
-    </div >
+      </Dialog>
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Сохранить как шаблон</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Название шаблона</Label>
+              <Input
+                placeholder="Например: 5 класс Дроби"
+                value={templateTitle}
+                onChange={(e) => setTemplateTitle(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTemplateDialog(false)} className="rounded-xl">Отмена</Button>
+            <Button onClick={handleSaveTemplate} className="rounded-xl">Сохранить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

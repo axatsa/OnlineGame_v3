@@ -2,18 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, Date
 from database import get_db
-from apps.generator.models import TokenUsage, GenerationLog
+from apps.generator.models import TokenUsage, GenerationLog, Template
 from apps.classes.models import ClassGroup
 from apps.auth.models import User
-from apps.generator.schemas import MathRequest, CrosswordRequest, QuizRequest, AssignmentRequest, JeopardyRequest, GenerationLogResponse
+from apps.generator.schemas import MathRequest, CrosswordRequest, QuizRequest, AssignmentRequest, JeopardyRequest, GenerationLogResponse, TemplateCreate, TemplateResponse, BatchRequest
 from apps.generator.services import check_token_quota, increment_token_usage, get_quota_info
 from services.openai_service import generate_math_problems, generate_crossword_words, generate_quiz, generate_assignment, generate_jeopardy
 from apps.auth.dependencies import get_current_user
+from apps.generator.batch_utils import create_batch_zip
 from typing import Optional, List
 import json
+import io
 from datetime import datetime, timedelta
 from config import RATE_LIMIT_PER_HOUR
 from rate_limiter import limiter
+from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/generate", tags=["generator"])
 
@@ -270,3 +273,101 @@ def get_personal_stats(db: Session = Depends(get_db), user: User = Depends(get_c
         "top_features": feature_data
     }
 
+@router.get("/templates", response_model=List[TemplateResponse])
+def get_templates(feature: Optional[str] = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    query = db.query(Template).filter(
+        (Template.user_id == user.id) | (Template.is_system == True)
+    )
+    if feature:
+        query = query.filter(Template.feature == feature)
+    return query.all()
+
+@router.post("/templates", response_model=TemplateResponse)
+def create_template(req: TemplateCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    template = Template(
+        user_id=user.id if not req.is_system else None,
+        feature=req.feature,
+        name=req.name,
+        description=req.description,
+        params=req.params,
+        is_system=req.is_system if user.is_admin else False # Only admin can create system templates
+    )
+    db.add(template)
+    db.commit()
+    db.refresh(template)
+    return template
+
+@router.delete("/templates/{template_id}")
+def delete_template(template_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    template = db.query(Template).filter(Template.id == template_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    if template.is_system and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Cannot delete system templates")
+        
+    if not template.is_system and template.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this template")
+        
+    db.delete(template)
+    db.commit()
+    return {"message": "Template deleted"}
+
+@router.post("/batch")
+@limiter.limit(_rate_limit)
+def gen_batch(request: Request, req: BatchRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    check_token_quota(user, db)
+    grade, context = get_class_context(db, req.class_id)
+    
+    variants = []
+    total_tokens = 0
+    
+    for i in range(req.count):
+        if req.tool_type == "math":
+            res, tokens = generate_math_problems(
+                req.params.get("topic", ""),
+                req.params.get("count", 10),
+                req.params.get("difficulty", "medium"),
+                grade, context, req.language
+            )
+            if res: variants.append({"problems": res})
+            
+        elif req.tool_type == "quiz":
+            res, tokens = generate_quiz(
+                req.params.get("topic", ""),
+                req.params.get("count", 5),
+                req.language, grade, context
+            )
+            if res: variants.append({"questions": res})
+            
+        elif req.tool_type == "assignment":
+            res, tokens = generate_assignment(
+                req.params.get("subject", ""),
+                req.params.get("topic", ""),
+                req.params.get("count", 5),
+                req.language, grade, context
+            )
+            if res: variants.append({"content": res})
+            
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported tool type for batch generation")
+            
+        total_tokens += tokens
+
+    if not variants:
+        raise HTTPException(status_code=500, detail="Batch generation failed")
+
+    if total_tokens > 0:
+        log_usage(db, user.id, f"batch_{req.tool_type}", total_tokens)
+        increment_token_usage(user, total_tokens, db)
+        save_generation(db, user.id, f"batch_{req.tool_type}", req.params.get("topic", "Batch"), {"variants_count": len(variants)})
+
+    zip_buffer = create_batch_zip(variants, req.tool_type)
+    
+    filename = f"batch_{req.tool_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/x-zip-compressed",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

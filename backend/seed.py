@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
 from apps.classes.models import ClassGroup
 from apps.auth.models import User, AuditLog
-from apps.generator.models import TokenUsage
+from apps.generator.models import TokenUsage, Template
 from apps.gamification.models import StudentProfile, XPTransaction, CoinTransaction, DailyProgress, SeasonStats, ShopItem, Purchase
 from apps.library.models import SavedResource
 from apps.admin.models import Organization, Payment
@@ -45,6 +45,23 @@ def seed():
         print("Classes seeded.")
     else:
         print("Classes already exist.")
+
+    # 3. Seed System Templates
+    existing_templates = db.query(Template).filter(Template.is_system == True).count()
+    if existing_templates == 0:
+        print("Seeding system templates...")
+        system_templates = [
+            Template(feature="quiz", name="Биология 9 класс — ОГЭ", description="Подготовка к ОГЭ по биологии", params={"topic": "Подготовка к ОГЭ по биологии", "count": 10}, is_system=True),
+            Template(feature="quiz", name="История 11 класс — ЕГЭ", description="Подготовка к ЕГЭ по истории", params={"topic": "Подготовка к ЕГЭ по истории (20 век)", "count": 10}, is_system=True),
+            Template(feature="math", name="3 класс — Дроби", description="Базовые примеры на дроби", params={"topic": "Сложение и вычитание дробей с одинаковым знаменателем", "count": 10, "difficulty": "Easy"}, is_system=True),
+            Template(feature="math", name="5 класс — Уравнения", description="Уравнения с одной неизвестной", params={"topic": "Линейные уравнения с одной неизвестной", "count": 15, "difficulty": "Medium"}, is_system=True),
+            Template(feature="crossword", name="Животные мира", description="Кроссворд про животных", params={"topic": "Животные Африки и Азии", "word_count": 10}, is_system=True),
+            Template(feature="assignment", name="Английский — Present Simple", description="Грамматика", params={"subject": "English", "topic": "Present Simple Tense", "count": 5}, is_system=True),
+        ]
+        db.add_all(system_templates)
+        print("System templates seeded.")
+    else:
+        print("System templates already exist.")
 
     db.commit()
     db.close()

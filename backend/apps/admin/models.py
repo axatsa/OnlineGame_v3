@@ -46,3 +46,11 @@ class InviteToken(Base):
     is_active = Column(Integer, default=1) # 1 = active, 0 = revoked
 
     organization = relationship("Organization")
+
+class GlobalSetting(Base):
+    __tablename__ = "global_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, index=True)
+    value = Column(String)  # We'll store as string or JSON string
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

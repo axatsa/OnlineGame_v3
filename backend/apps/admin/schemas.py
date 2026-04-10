@@ -130,3 +130,19 @@ class FinancialStats(BaseModel):
     active_subscriptions: int
     pending_payments: int
     recent_payments: List[PaymentResponse]
+
+# ── B2B: Global Settings ──────────────────────────────────────
+
+class GlobalSettingBase(BaseModel):
+    key: str
+    value: str
+
+class GlobalSettingUpdate(BaseModel):
+    value: str
+
+class GlobalSettingResponse(GlobalSettingBase):
+    id: int
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

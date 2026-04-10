@@ -10,7 +10,7 @@ from database import get_db
 
 from apps.auth.models import User, AuditLog
 from apps.generator.models import TokenUsage
-from apps.admin.models import Organization, Payment, InviteToken
+from apps.admin.models import Organization, Payment, InviteToken, GlobalSetting
 
 from apps.auth.schemas import UserResponse, AuditLogResponse
 from apps.admin.schemas import (
@@ -18,7 +18,7 @@ from apps.admin.schemas import (
     PaymentResponse, PaymentCreate,
     CreateTeacherRequest, UpdateTeacherRequest, ResetPasswordRequest,
     TokenUsageStats, OrgStatsResponse, TeacherStatItem, BulkImportResponse, ImportedTeacher,
-    InviteCreate, InviteResponse, FinancialStats
+    InviteCreate, InviteResponse, FinancialStats, GlobalSettingResponse, GlobalSettingUpdate
 )
 from apps.auth.dependencies import require_admin, get_current_user
 
@@ -392,3 +392,31 @@ def get_audit_logs(
     admin: User = Depends(require_admin)
 ):
     return db.query(AuditLog).order_by(AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
+
+# ── Global Settings ───────────────────────────────────────────
+
+@router.get("/settings/{key}", response_model=GlobalSettingResponse)
+def get_setting(key: str, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    setting = db.query(GlobalSetting).filter(GlobalSetting.key == key).first()
+    if not setting:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    return setting
+
+@router.post("/settings", response_model=GlobalSettingResponse)
+def set_setting(req: GlobalSettingResponse if False else dict, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    # Using dict for flexibility since value can be anything
+    key = req.get("key")
+    value = req.get("value")
+    if not key:
+        raise HTTPException(status_code=400, detail="Key is required")
+    
+    setting = db.query(GlobalSetting).filter(GlobalSetting.key == key).first()
+    if setting:
+        setting.value = value
+    else:
+        setting = GlobalSetting(key=key, value=value)
+        db.add(setting)
+    
+    db.commit()
+    db.refresh(setting)
+    return setting

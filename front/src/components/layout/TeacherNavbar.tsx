@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    GraduationCap, ChevronDown, Check, Plus, Globe, User
+    GraduationCap, ChevronDown, Check, Plus, Globe, User, LogOut, Bell
 } from "lucide-react";
 import { useClass } from "@/context/ClassContext";
 import { useTranslation } from "react-i18next";
@@ -17,16 +17,30 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveN
     const { classes, activeClass, setActiveClassId } = useClass();
     const { t, i18n } = useTranslation();
     const lang = i18n.language;
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
 
     const [showClassPicker, setShowClassPicker] = useState(false);
     const [showLangMenu, setShowLangMenu] = useState(false);
     const [activeNav, setActiveNav] = useState(initialActiveNav || "Generators");
     const [scrolled, setScrolled] = useState(false);
+    const [announcement, setAnnouncement] = useState<{ text: string; enabled: boolean } | null>(null);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 10);
         window.addEventListener("scroll", onScroll);
+
+        const fetchAnnouncement = async () => {
+            try {
+                const res = await api.get("/auth/announcement");
+                if (res.data.enabled) {
+                    setAnnouncement(res.data);
+                }
+            } catch (e) {
+                console.error("Failed to fetch announcement", e);
+            }
+        };
+        fetchAnnouncement();
+
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
@@ -38,7 +52,33 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveN
     ] as const;
 
     return (
-        <header className={`sticky top-0 z-30 bg-card/90 backdrop-blur-xl border-b border-border transition-shadow duration-300 ${scrolled ? "shadow-md" : ""}`}>
+        <>
+            {/* Global Announcement Banner */}
+            <AnimatePresence>
+                {announcement && announcement.enabled && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="bg-gradient-to-r from-emerald-600 to-sky-600 text-white relative z-40"
+                    >
+                        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between text-xs sm:text-sm font-medium">
+                            <div className="flex items-center gap-2">
+                                <Bell className="w-4 h-4 text-emerald-100" />
+                                <span>{announcement.text}</span>
+                            </div>
+                            <button 
+                                onClick={() => setAnnouncement(null)}
+                                className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <header className={`sticky top-0 z-30 bg-card/90 backdrop-blur-xl border-b border-border transition-shadow duration-300 ${scrolled ? "shadow-md" : ""}`}>
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                 {/* Logo + Brand */}
                 <button
@@ -165,12 +205,23 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveN
                     <button
                         onClick={() => navigate("/profile")}
                         className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-sky-500 flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                        title={t("view_profile", "Профиль")}
                     >
                         <User className="w-5 h-5 text-white" />
+                    </button>
+
+                    {/* Logout */}
+                    <button
+                        onClick={logout}
+                        className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors shadow-sm"
+                        title={t("logout", "Выйти")}
+                    >
+                        <LogOut className="w-5 h-5 text-red-500" />
                     </button>
                 </div>
             </div>
         </header>
+        </>
     );
 };
 

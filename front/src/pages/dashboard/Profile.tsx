@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import {
   User, Mail, Phone, School, Lock, Edit3, Save, X,
-  Zap, BookOpen, BarChart2, Clock, QrCode, Copy, Check
+  Zap, BookOpen, BarChart2, Clock, QrCode, Copy, Check, LogOut
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 
 interface UserProfile {
@@ -31,6 +32,7 @@ export default function Profile() {
   const [pwdForm, setPwdForm] = useState({ old_password: "", new_password: "", confirm: "" });
   const [msg, setMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [copied, setCopied] = useState(false);
+  const { logout } = useAuth();
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPwd, setSavingPwd] = useState(false);
 
@@ -291,7 +293,19 @@ export default function Profile() {
           >
             {savingPwd ? "Меняем..." : "Изменить пароль"}
           </button>
+          </button>
         </div>
+      </div>
+
+      {/* Logout Action */}
+      <div className="pt-4">
+        <button
+          onClick={logout}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl text-sm font-semibold transition-colors border border-red-200"
+        >
+          <LogOut className="w-4 h-4" />
+          Выйти из аккаунта
+        </button>
       </div>
     </div>
   );

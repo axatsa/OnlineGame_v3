@@ -95,5 +95,16 @@ export const adminService = {
     revokeInvite: async (inviteId: number) => {
         const response = await api.delete(`/admin/invites/${inviteId}`);
         return response.data;
+    },
+
+    // ── Settings ──────────────────────────────────────────────
+    getSetting: async (key: string) => {
+        const response = await api.get(`/admin/settings/${key}`);
+        return response.data;
+    },
+
+    setSetting: async (key: string, value: string) => {
+        const response = await api.post("/admin/settings", { key, value });
+        return response.data;
     }
 };

@@ -1072,6 +1072,16 @@ const SystemView = ({
                   {alertEnabled ? "Активно" : "Выключено"}
                 </Button>
                 {alertEnabled && <Badge className="bg-success/10 text-success border-0 font-sans">Показывается</Badge>}
+                <Button 
+                  onClick={() => {
+                    adminService.setSetting("system_alert", systemAlert);
+                    adminService.setSetting("alert_enabled", String(alertEnabled));
+                    toast.success("Объявление сохранено");
+                  }}
+                  className="ml-auto rounded-xl font-sans h-9 bg-primary/10 text-primary hover:bg-primary/20"
+                >
+                   Сохранить изменения
+                </Button>
               </div>
             </div>
           </div>
@@ -1086,14 +1096,16 @@ const SystemView = ({
                 <Button
                   key={p}
                   variant={aiProvider === p ? "default" : "outline"}
-                  onClick={() => { }} // Hooked up in parent
-                  disabled
+                  onClick={() => {
+                    setAiProvider(p as any);
+                    adminService.setSetting("ai_provider", p);
+                    toast.success(`Переключено на ${p}`);
+                  }}
                   className="rounded-xl font-sans"
                 >
                   {p === "gemini" ? "Purple Gemini" : "Green OpenAI"}
                 </Button>
               ))}
-              <p className="text-[10px] text-muted-foreground mt-2 italic">Настройка изменяется во вкладке AI Мониторинг</p>
             </div>
           </div>
         </div>
@@ -1158,8 +1170,8 @@ const AdminPanel = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("gemini");
-  const [systemAlert, setSystemAlert] = useState("В субботу плановое обновление системы с 02:00 до 04:00.");
-  const [alertEnabled, setAlertEnabled] = useState(true);
+  const [systemAlert, setSystemAlert] = useState("");
+  const [alertEnabled, setAlertEnabled] = useState(false);
   const [showResetModal, setShowResetModal] = useState<number | null>(null);
 
   // Real Data State
@@ -1178,13 +1190,20 @@ const AdminPanel = () => {
     setIsLoading(true);
     try {
       const skip = (page - 1) * LIMIT;
-      const [teachersData, analyticsData, orgsData, paymentsData, logsData] = await Promise.all([
+      const [teachersData, analyticsData, orgsData, paymentsData, logsData, alertData, enabledData, providerData] = await Promise.all([
         adminService.getTeachers(skip, LIMIT, searchQuery),
         adminService.getAnalytics(),
         adminService.getOrganizations(skip, LIMIT),
         adminService.getPayments(skip, LIMIT),
-        adminService.getAuditLogs(skip, LIMIT)
+        adminService.getAuditLogs(skip, LIMIT),
+        adminService.getSetting("system_alert").catch(() => null),
+        adminService.getSetting("alert_enabled").catch(() => null),
+        adminService.getSetting("ai_provider").catch(() => null)
       ]);
+
+      if (alertData) setSystemAlert(alertData.value);
+      if (enabledData) setAlertEnabled(enabledData.value === "true");
+      if (providerData) setAiProvider(providerData.value as any);
 
       const analyticsMap = new Map((analyticsData as any).map((a: any) => [a.user_id, a]));
       const mappedTeachers: Teacher[] = (teachersData as any).map((u: any) => {

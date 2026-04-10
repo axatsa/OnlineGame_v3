@@ -4,7 +4,7 @@ from database import get_db
 from apps.auth.models import User
 from apps.auth.schemas import UserLogin, Token, ChangePasswordRequest
 from apps.admin.schemas import RegisterWithInviteRequest
-from apps.admin.models import InviteToken, Organization
+from apps.admin.models import InviteToken, Organization, GlobalSetting
 from apps.auth.dependencies import get_current_user
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta, datetime
@@ -146,3 +146,14 @@ def onboarding_complete(db: Session = Depends(get_db), user: User = Depends(get_
     user.onboarding_completed = True
     db.commit()
     return {"message": "Onboarding completed"}
+
+@router.get("/announcement")
+def get_announcement(db: Session = Depends(get_db)):
+    # We fetch the special key 'system_alert'
+    alert = db.query(GlobalSetting).filter(GlobalSetting.key == "system_alert").first()
+    enabled = db.query(GlobalSetting).filter(GlobalSetting.key == "alert_enabled").first()
+    
+    return {
+        "text": alert.value if alert else "",
+        "enabled": (enabled.value == "true") if enabled else False
+    }

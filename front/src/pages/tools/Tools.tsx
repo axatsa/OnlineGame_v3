@@ -21,17 +21,32 @@ const COLORS = [
   "#14b8a6", "#f59e0b", "#84cc16", "#6366f1",
 ];
 
-const RouletteWheel = ({ names, spinning, winner }: { names: string[]; spinning: boolean; winner: string | null }) => {
+const RouletteWheel = ({ names, spinning, winnerIndex }: { names: string[]; spinning: boolean; winnerIndex: number | null }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [rotation, setRotation] = useState(0);
   const animRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const startRotationRef = useRef(0);
   const targetRotation = useRef(0);
 
   useEffect(() => {
-    if (spinning) {
-      const extra = 2160 + Math.random() * 1080;
-      targetRotation.current = rotation + extra;
+    if (spinning && winnerIndex !== null) {
+      startRotationRef.current = rotation;
+      
+      const slice = 360 / names.length;
+      // The pointer is at 0 degrees (right side). 
+      // The segment W starts at rotation + W*slice and ends at rotation + (W+1)*slice.
+      // To have segment W at the pointer (0 degrees), the end of the animation must satisfy:
+      // (finalRotation + W*slice + slice/2) % 360 == 0
+      // So finalRotation = -(W*slice + slice/2) mod 360.
+      
+      const winnerAngle = winnerIndex * slice + slice / 2;
+      const finalLandingAngle = (360 - winnerAngle) % 360;
+      
+      // We want at least 5-8 full spins for drama
+      const fullSpins = 6 * 360;
+      targetRotation.current = startRotationRef.current + fullSpins + (finalLandingAngle - (startRotationRef.current % 360) + 360) % 360;
+      
       startTimeRef.current = null;
 
       const animate = (time: number) => {
@@ -39,16 +54,21 @@ const RouletteWheel = ({ names, spinning, winner }: { names: string[]; spinning:
         const elapsed = time - startTimeRef.current;
         const duration = 4000;
         const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing: ease-out cubic
         const eased = 1 - Math.pow(1 - progress, 3);
-        const currentRot = rotation + (targetRotation.current - rotation) * eased;
+        const currentRot = startRotationRef.current + (targetRotation.current - startRotationRef.current) * eased;
+        
         setRotation(currentRot);
-        if (progress < 1) animRef.current = requestAnimationFrame(animate);
+        if (progress < 1) {
+          animRef.current = requestAnimationFrame(animate);
+        }
       };
       animRef.current = requestAnimationFrame(animate);
     }
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spinning]);
+  }, [spinning, winnerIndex]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -93,10 +113,10 @@ const RouletteWheel = ({ names, spinning, winner }: { names: string[]; spinning:
         style={{ borderTop: "12px solid transparent", borderBottom: "12px solid transparent", borderRight: "24px solid #991B1B" }}
       />
       <canvas ref={canvasRef} width={320} height={320} className="rounded-full shadow-2xl" />
-      {winner && !spinning && (
+      {winnerIndex !== null && !spinning && (
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute inset-0 flex items-center justify-center">
           <div className="bg-primary text-primary-foreground font-bold font-serif text-lg px-6 py-3 rounded-2xl shadow-lg text-center">
-            🎉 {winner}
+            🎉 {names[winnerIndex]}
           </div>
         </motion.div>
       )}
@@ -566,7 +586,7 @@ const Tools = () => {
   const [names, setNames] = useState<string[]>(["Alice", "Bob", "Charlie", "Diana"]);
   const [inputName, setInputName] = useState("");
   const [spinning, setSpinning] = useState(false);
-  const [winner, setWinner] = useState<string | null>(null);
+  const [winnerIndex, setWinnerIndex] = useState<number | null>(null);
 
   const addName = () => {
     if (inputName.trim() && !spinning) { setNames((prev) => [...prev, inputName.trim()]); setInputName(""); }
@@ -574,8 +594,13 @@ const Tools = () => {
   const removeName = (i: number) => { if (!spinning) setNames((prev) => prev.filter((_, idx) => idx !== i)); };
   const spin = () => {
     if (names.length < 2 || spinning) return;
-    setSpinning(true); setWinner(null);
-    setTimeout(() => { setWinner(names[Math.floor(Math.random() * names.length)]); setSpinning(false); }, 4100);
+    setSpinning(true);
+    setWinnerIndex(null);
+    const chosenIdx = Math.floor(Math.random() * names.length);
+    setWinnerIndex(chosenIdx);
+    setTimeout(() => {
+      setSpinning(false);
+    }, 4100);
   };
 
   const tabs: { id: Tool; icon: React.ReactNode; label: string }[] = [
@@ -647,7 +672,7 @@ const Tools = () => {
               </div>
               <div className="flex-1 flex items-center justify-center py-8">
                 {names.length >= 2 ? (
-                  <RouletteWheel names={names} spinning={spinning} winner={winner} />
+                  <RouletteWheel names={names} spinning={spinning} winnerIndex={winnerIndex} />
                 ) : (
                   <div className="text-center text-muted-foreground font-sans">
                     <Dices className="w-16 h-16 mx-auto mb-4 opacity-30" />

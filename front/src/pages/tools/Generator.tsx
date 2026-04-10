@@ -75,6 +75,7 @@ const Generator = () => {
   const lang = i18n.language;
   const [showClassPicker, setShowClassPicker] = useState(false);
   const [genType, setGenType] = useState<GeneratorType>("math");
+  const [targetLang, setTargetLang] = useState(lang === "uz" ? "Uzbek" : lang === "en" ? "English" : "Russian");
 
   // Math fields
   const [mathTopic, setMathTopic] = useState("");
@@ -135,7 +136,7 @@ const Generator = () => {
     setAssignmentData(null);
 
     try {
-      const langLabel = lang === "uz" ? "Uzbek" : lang === "en" ? "English" : "Russian";
+      const langLabel = targetLang;
 
       if (isBatchMode) {
         let params: any = {};
@@ -910,6 +911,15 @@ const Generator = () => {
               </div>
             )}
 
+
+            {/* Generation Language Switcher */}
+            <SegmentedControl
+              label={t("language_label", "Язык генерации")}
+              options={["Russian", "Uzbek", "English"]}
+              value={targetLang}
+              onChange={setTargetLang}
+              segId="targetLang"
+            />
 
             {/* Type Switcher */}
             <div className="grid grid-cols-2 gap-2">

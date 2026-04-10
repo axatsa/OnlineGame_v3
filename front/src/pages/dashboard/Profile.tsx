@@ -5,6 +5,17 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell 
+} from "recharts";
+import { BarChart3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface UserProfile {
   id: number;
@@ -22,6 +33,8 @@ interface Stats {
   total_resources: number;
   total_tokens: number;
   active_classes: number;
+  activity_by_day?: { date: string; count: number }[];
+  top_features?: { name: string; count: number }[];
 }
 
 export default function Profile() {
@@ -55,15 +68,18 @@ export default function Profile() {
 
   const loadStats = async () => {
     try {
-      const [res, classRes, historyRes] = await Promise.allSettled([
+      const [res, classRes, historyRes, fullStatsRes] = await Promise.allSettled([
         api.get("/generator/usage-stats"),
         api.get("/classes/"),
         api.get("/history/"),
+        api.get("/generate/stats/me"),
       ]);
       setStats({
         total_resources: historyRes.status === "fulfilled" ? (historyRes.value.data?.items?.length || historyRes.value.data?.length || 0) : 0,
         total_tokens: res.status === "fulfilled" ? (res.value.data?.tokens_used_this_month || 0) : 0,
         active_classes: classRes.status === "fulfilled" ? (classRes.value.data?.length || 0) : 0,
+        activity_by_day: fullStatsRes.status === "fulfilled" ? fullStatsRes.value.data?.activity_by_day : [],
+        top_features: fullStatsRes.status === "fulfilled" ? fullStatsRes.value.data?.top_features : [],
       });
     } catch {}
   };
@@ -264,6 +280,50 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      {/* Analytics Chart */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-black/5 dark:border-white/10 p-6">
+        <h3 className="text-sm font-bold flex items-center gap-3 mb-6">
+          <BarChart3 className="w-4 h-4 text-emerald-500" /> Активность за 2 недели
+        </h3>
+        <div className="h-[200px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+               <BarChart data={stats?.activity_by_day || []}>
+                 <XAxis dataKey="date" hide />
+                 <YAxis hide />
+                 <Tooltip 
+                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                   labelStyle={{ display: 'none' }}
+                 />
+                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                   {(stats?.activity_by_day || []).map((entry, index) => (
+                     <Cell key={`cell-${index}`} fill={index === (stats?.activity_by_day?.length || 0) - 1 ? '#10b981' : '#10b98140'} />
+                   ))}
+                 </Bar>
+               </BarChart>
+            </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Popular Features */}
+      {stats?.top_features && stats.top_features.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-black/5 dark:border-white/10 p-6">
+           <h3 className="text-sm font-bold mb-6">Популярное у вас</h3>
+           <div className="space-y-3">
+              {stats.top_features.map((feat, i) => (
+                <div key={feat.name} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-black/5 dark:border-white/5">
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-600 flex items-center justify-center font-bold text-emerald-500 text-xs shadow-sm">
+                        {i + 1}
+                     </div>
+                     <span className="font-bold capitalize text-sm">{feat.name}</span>
+                   </div>
+                   <span className="text-xs font-medium text-gray-500">{feat.count} раз</span>
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
 
       {/* Change Password Card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-black/5 dark:border-white/10 p-4">

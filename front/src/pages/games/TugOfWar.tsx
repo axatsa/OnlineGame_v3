@@ -41,7 +41,7 @@ const TugOfWar = () => {
   const [status, setStatus] = useState<GameStatus>("setup");
   const [topic, setTopic] = useState("");
   // FIX #4: выбор языка вопросов
-  const [selectedLang, setSelectedLang] = useState<"ru" | "uz">(lang);
+  const [selectedLang, setSelectedLang] = useState<"ru" | "uz" | "en">(lang as any || "ru");
   // FIX #3: два разных вопроса для двух команд из одного пула
   const [blueQuestions, setBlueQuestions] = useState<{ q: string; options: string[]; a: string }[]>([]);
   const [redQuestions, setRedQuestions] = useState<{ q: string; options: string[]; a: string }[]>([]);
@@ -109,7 +109,7 @@ const TugOfWar = () => {
   }, [status]);
 
   const startGame = async () => {
-    const langStr = selectedLang === "uz" ? "in Uzbek language" : "in Russian language";
+    const langStr = selectedLang === "uz" ? "in Uzbek language" : selectedLang === "en" ? "in English language" : "in Russian language";
     const searchTopic = topic.trim() ? `${topic} (${langStr})` : `General Knowledge (${langStr})`;
     setStatus("loading");
     try {
@@ -233,12 +233,16 @@ const TugOfWar = () => {
                 <Label className="text-gray-700 font-sans text-sm">{t('game_questions_language')}</Label>
                 <div className="flex gap-2">
                   <button onClick={() => setSelectedLang("ru")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-sans border-2 transition-all ${selectedLang === "ru" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}>
-                    🇷🇺 Русский
+                    className={`flex-1 py-2 rounded-xl text-xs font-sans border-2 transition-all ${selectedLang === "ru" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                    🇷🇺 RU
                   </button>
                   <button onClick={() => setSelectedLang("uz")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-sans border-2 transition-all ${selectedLang === "uz" ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-600 border-gray-200 hover:border-green-300"}`}>
-                    🇺🇿 O'zbekcha
+                    className={`flex-1 py-2 rounded-xl text-xs font-sans border-2 transition-all ${selectedLang === "uz" ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-600 border-gray-200 hover:border-green-300"}`}>
+                    🇺🇿 UZ
+                  </button>
+                  <button onClick={() => setSelectedLang("en")}
+                    className={`flex-1 py-2 rounded-xl text-xs font-sans border-2 transition-all ${selectedLang === "en" ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-600 border-gray-200 hover:border-violet-300"}`}>
+                    🇺🇸 EN
                   </button>
                 </div>
               </div>

@@ -175,7 +175,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveN
                             className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors text-sm font-sans font-medium text-foreground"
                         >
                             <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                            {lang === "ru" ? "RU" : "UZ"}
+                            {lang.toUpperCase()}
                         </button>
                         <AnimatePresence>
                             {showLangMenu && (
@@ -184,16 +184,20 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveN
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                                     transition={{ duration: 0.12 }}
-                                    className="absolute right-0 top-10 bg-card border border-border rounded-2xl shadow-xl p-1.5 min-w-[130px] z-50"
+                                    className="absolute right-0 top-11 bg-card border border-border rounded-2xl shadow-xl p-1.5 min-w-[140px] z-50 flex flex-col gap-1"
                                 >
-                                    {(["ru", "uz"] as const).map(l => (
+                                    {[
+                                        { l: "ru", n: "🇷🇺 Русский" },
+                                        { l: "uz", n: "🇺🇿 O'zbekcha" },
+                                        { l: "en", n: "🇺🇸 English" }
+                                    ].map(({ l, n }) => (
                                         <button
                                             key={l}
                                             onClick={() => { i18n.changeLanguage(l); setShowLangMenu(false); }}
-                                            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-sans transition-colors flex items-center gap-2 ${lang === l ? "bg-emerald-50 text-emerald-700 font-semibold" : "hover:bg-muted text-foreground"}`}
+                                            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-sans transition-colors flex items-center justify-between ${lang === l ? "bg-emerald-50 text-emerald-700 font-semibold" : "hover:bg-muted text-foreground"}`}
                                         >
-                                            {l === "ru" ? "🇷🇺 Русский" : "🇺🇿 O'zbekcha"}
-                                            {lang === l && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                            <span>{n}</span>
+                                            {lang === l && <Check className="w-3.5 h-3.5" />}
                                         </button>
                                     ))}
                                 </motion.div>

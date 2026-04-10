@@ -20,7 +20,7 @@ const Jeopardy = () => {
   const lang = i18n.language as "ru" | "uz";
   const [status, setStatus] = useState<"setup" | "loading" | "playing">("setup");
   const [topic, setTopic] = useState("");
-  const [selectedLang, setSelectedLang] = useState<"ru" | "uz">(lang);
+  const [selectedLang, setSelectedLang] = useState<"ru" | "uz" | "en">(lang as any || "ru");
   const [teams, setTeams] = useState<{ name: string; score: number }[]>([
     { name: `${t('game_team1')}`, score: 0 },
     { name: `${t('game_team2')}`, score: 0 },
@@ -54,7 +54,7 @@ const Jeopardy = () => {
     setStatus("loading");
     try {
       // FIX #4: добавляем инструкцию по языку в тему
-      const langStr = selectedLang === "uz" ? "in Uzbek language" : "in Russian language";
+      const langStr = selectedLang === "uz" ? "in Uzbek language" : selectedLang === "en" ? "in English language" : "in Russian language";
       const res = await api.post("/generate/jeopardy", {
         topic: `${topic} (${langStr})`,
         class_id: activeClassId
@@ -129,12 +129,16 @@ const Jeopardy = () => {
                 <Label className="text-gray-700 font-sans font-medium">{t('game_questions_language')}</Label>
                 <div className="flex gap-2">
                   <button onClick={() => setSelectedLang("ru")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium font-sans border-2 transition-all ${selectedLang === "ru" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"}`}>
-                    🇷🇺 Русский
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium font-sans border-2 transition-all ${selectedLang === "ru" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"}`}>
+                    🇷🇺 RU
                   </button>
                   <button onClick={() => setSelectedLang("uz")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-medium font-sans border-2 transition-all ${selectedLang === "uz" ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-700 border-gray-200 hover:border-green-300"}`}>
-                    🇺🇿 O'zbekcha
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium font-sans border-2 transition-all ${selectedLang === "uz" ? "bg-green-600 text-white border-green-600" : "bg-white text-gray-700 border-gray-200 hover:border-green-300"}`}>
+                    🇺🇿 UZ
+                  </button>
+                  <button onClick={() => setSelectedLang("en")}
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium font-sans border-2 transition-all ${selectedLang === "en" ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-700 border-gray-200 hover:border-violet-300"}`}>
+                    🇺🇸 EN
                   </button>
                 </div>
               </div>

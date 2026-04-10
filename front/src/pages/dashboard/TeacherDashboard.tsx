@@ -121,6 +121,28 @@ const TeacherDashboard = () => {
               </AnimatePresence>
             </div>
             
+            <div className="relative">
+              <button onClick={() => setShowLangMenu(v => !v)} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors text-[10px] font-bold">
+                {lang.toUpperCase()}
+              </button>
+              <AnimatePresence>
+                {showLangMenu && (
+                  <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -4 }} className="absolute right-0 top-10 bg-card border border-border rounded-2xl shadow-xl p-1.5 min-w-[130px] z-50 flex flex-col gap-1">
+                    {[
+                      { l: "ru", n: "🇷🇺 Русский" },
+                      { l: "uz", n: "🇺🇿 O'zbekcha" },
+                      { l: "en", n: "🇺🇸 English" }
+                    ].map(({ l, n }) => (
+                      <button key={l} onClick={() => { i18n.changeLanguage(l); setShowLangMenu(false); }} className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between ${lang === l ? "bg-primary/10 text-primary font-bold" : "hover:bg-muted text-foreground"}`}>
+                        <span>{n}</span>
+                        {lang === l && <Check className="w-3 h-3" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            
             <button onClick={toggleTheme} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
               {isDark ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
             </button>
@@ -192,56 +214,8 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
-        {/* Second Row: Chart + Features */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="lg:col-span-2 bg-card rounded-[32px] p-8 border border-border shadow-sm flex flex-col">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-xl font-bold flex items-center gap-3">
-                  <BarChart3 className="w-6 h-6 text-primary" /> Активность за 2 недели
-                </h3>
-              </div>
-              <div className="h-[250px] w-full">
-                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats?.activity_by_day || []}>
-                      <XAxis dataKey="date" hide />
-                      <YAxis hide />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                        labelStyle={{ display: 'none' }}
-                      />
-                      <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                        {(stats?.activity_by_day || []).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={index === (stats?.activity_by_day?.length || 0) - 1 ? '#8b5cf6' : '#8b5cf640'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                 </ResponsiveContainer>
-              </div>
-           </motion.div>
-
-           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="bg-card rounded-[32px] p-8 border border-border shadow-sm flex flex-col">
-              <h3 className="text-xl font-bold mb-6">Популярное у вас</h3>
-              <div className="space-y-4">
-                 {(stats?.top_features || []).map((feat, i) => (
-                   <div key={feat.name} className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/50 group hover:border-primary/30 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-background flex items-center justify-center font-bold text-primary">
-                           {i + 1}
-                        </div>
-                        <span className="font-bold capitalize">{feat.name}</span>
-                      </div>
-                      <span className="text-sm font-medium text-muted-foreground mr-2">{feat.count} раз</span>
-                   </div>
-                 ))}
-                 {(stats?.top_features?.length || 0) === 0 && (
-                    <div className="text-center py-10 text-muted-foreground text-sm">Здесь появится ваша статистика</div>
-                 )}
-              </div>
-           </motion.div>
-        </div>
-
-        {/* Third Row: Bento Grid Navigation */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Second Row: Bento Grid Navigation */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           {cardsList.map((card, i) => (
             <motion.button
               key={card.title}

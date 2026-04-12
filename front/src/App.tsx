@@ -2,8 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ClassProvider } from "./context/ClassContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
@@ -31,25 +30,12 @@ import DemoGenerator from "./pages/DemoGenerator";
 
 const queryClient = new QueryClient();
 
-const AuthListener = () => {
-  const navigate = useNavigate();
-  useEffect(() => {
-    const handleAuthError = () => {
-      navigate("/login");
-    };
-    window.addEventListener("auth:unauthorized", handleAuthError);
-    return () => window.removeEventListener("auth:unauthorized", handleAuthError);
-  }, [navigate]);
-  return null;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthListener />
         <AuthProvider>
           <ClassProvider>
               <Routes>

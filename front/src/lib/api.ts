@@ -28,10 +28,7 @@ api.interceptors.response.use(
             console.warn("Token expired or invalid — redirecting to login");
             localStorage.removeItem("token");
             localStorage.removeItem("user");
-            // Диспатч события для AuthListener в App.tsx
             window.dispatchEvent(new Event("auth:unauthorized"));
-            // Редирект на логин
-            window.location.href = "/login";
         }
         return Promise.reject(error);
     }

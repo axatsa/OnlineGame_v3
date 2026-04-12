@@ -45,6 +45,7 @@ export function ClassProvider({ children }: { children: ReactNode }) {
   // Fetch classes
   const { data: classes = [], isLoading } = useQuery({
     queryKey: ["classes"],
+    enabled: !!localStorage.getItem("token"),
     queryFn: async () => {
       const res = await api.get("/classes/");
       if (!Array.isArray(res.data)) {

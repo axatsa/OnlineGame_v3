@@ -70,6 +70,11 @@ export const adminService = {
         return response.data;
     },
 
+    getFinancials: async () => {
+        const response = await api.get("/admin/financials");
+        return response.data;
+    },
+
     getOrgStats: async (orgId: number) => {
         const response = await api.get(`/admin/organizations/${orgId}/stats`);
         return response.data;

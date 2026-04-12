@@ -17,7 +17,7 @@
 | 05 | [05-content-editor.md](./05-content-editor.md) | Result editor, templates | Medium | Done |
 | 06 | [06-batch-generation.md](./06-batch-generation.md) | Batch generation (ZIP) | Low | Done |
 | 07 | [07-import-export.md](./07-import-export.md) | Custom word import, Google Drive | Low | Not started |
-| 08 | [08-b2b-tools.md](./08-b2b-tools.md) | Org–User link, invite system, CSV | Critical | Partial — critical DB bug unresolved |
+| 08 | [08-b2b-tools.md](./08-b2b-tools.md) | Org–User link, invite system, CSV | Critical | Done |
 | 09 | [09-tech-debt.md](./09-tech-debt.md) | i18n, Sentry, API versioning, tests | High | Mostly done — no automated tests |
 | 10 | [10-demo-mode.md](./10-demo-mode.md) | Demo mode, landing FAQ/reviews | Medium | Done |
 
@@ -25,12 +25,7 @@
 
 ## Critical Bugs (as of 2026-04-09)
 
-**`users` table is missing `organization_id` field.**  
-`get_org_stats` currently returns ALL teachers in the system instead of only those belonging to the requested organization. This is a data leak between clients. Must be fixed before any live demo.
-
-**AdminPanel financial metrics (MRR, ARR, churn, LTV) are hardcoded mock values** — not from the database.
-
-See [08-b2b-tools.md](./08-b2b-tools.md) for the fix plan.
+~~**Critical bugs resolved as of 2026-04-12.**~~ All Sprint 1 tasks are complete.
 
 ---
 

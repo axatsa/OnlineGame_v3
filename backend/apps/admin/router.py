@@ -345,6 +345,22 @@ def revoke_invite(invite_id: int, db: Session = Depends(get_db), admin: User = D
 
 # ── Payments ──────────────────────────────────────────────────
 
+@router.get("/payments", response_model=List[PaymentResponse])
+def get_payments(
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    payments = db.query(Payment).options(joinedload(Payment.organization)).order_by(Payment.date.desc()).offset(skip).limit(limit).all()
+    return [
+        PaymentResponse(
+            id=p.id, amount=p.amount, currency=p.currency, method=p.method,
+            status=p.status, period=p.period, date=p.date, organization_id=p.organization_id,
+            org_name=p.org_name
+        ) for p in payments
+    ]
+
 @router.get("/financials", response_model=FinancialStats)
 def get_financial_stats(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     # 1. Total Revenue (all paid)

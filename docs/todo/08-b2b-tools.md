@@ -109,11 +109,11 @@ Add client-side CSV parsing with Papa Parse:
 
 ## Definition of Done
 
-- [ ] `organization_id` added to `users` table
-- [ ] `get_org_stats` returns only teachers of the requested org
-- [ ] CSV import links teachers to the correct org
-- [ ] BulkImportModal shows CSV preview before upload
+- [x] `organization_id` added to `users` table
+- [x] `get_org_stats` returns only teachers of the requested org
+- [x] CSV import links teachers to the correct org
+- [x] BulkImportModal shows CSV preview before upload
 - [x] CSV import creates users and returns list with temporary passwords
 - [x] Duplicate emails are skipped with a warning message
-- [ ] InviteToken model, API endpoints, and frontend UI implemented
-- [ ] Registration via invite link works and links user to org
+- [x] InviteToken model, API endpoints, and frontend UI implemented
+- [x] Registration via invite link works and links user to org

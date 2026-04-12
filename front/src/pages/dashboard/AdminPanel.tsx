@@ -55,6 +55,13 @@ type Payment = {
   date: string; method: string; status: "paid" | "pending" | "failed"; period: string;
 };
 
+type FinancialStats = {
+  mrr: number;
+  total_revenue: number;
+  active_subscriptions: number;
+  pending_payments: number;
+};
+
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 const DAILY_TOKENS = [
   { day: "Mon", tokens: 2400 },
@@ -895,7 +902,7 @@ const AiMonitorView = ({
   );
 };
 
-const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading: boolean }) => {
+const FinancesView = ({ payments, financials, isLoading }: { payments: Payment[]; financials: FinancialStats; isLoading: boolean }) => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const mrrData = [
@@ -904,14 +911,14 @@ const FinancesView = ({ payments, isLoading }: { payments: Payment[]; isLoading:
     { month: "Oct", mrr: 2100 },
     { month: "Nov", mrr: 2400 },
     { month: "Dec", mrr: 2800 },
-    { month: "Jan", mrr: 3400 },
+    { month: "Jan", mrr: financials.mrr || 3400 },
   ];
 
-  const totalMRR = mrrData[mrrData.length - 1].mrr;
+  const totalMRR = financials.mrr || mrrData[mrrData.length - 1].mrr;
   const prevMRR = mrrData[mrrData.length - 2].mrr || 1; // avoid /0
   const mrrGrowth = (((totalMRR - prevMRR) / prevMRR) * 100).toFixed(1);
-  const totalPaid = payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0);
-  const pendingCount = payments.filter(p => p.status === "pending").length;
+  const totalPaid = financials.total_revenue || payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0);
+  const pendingCount = financials.pending_payments || payments.filter(p => p.status === "pending").length;
   const arr = totalMRR * 12;
 
   const payStatusMap: Record<string, { label: string; cls: string }> = {
@@ -1178,6 +1185,7 @@ const AdminPanel = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [financials, setFinancials] = useState<FinancialStats>({ mrr: 0, total_revenue: 0, active_subscriptions: 0, pending_payments: 0 });
   const [auditLogs, setAuditLogs] = useState<any[]>([]); // simplified type for logs
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1190,7 +1198,7 @@ const AdminPanel = () => {
     setIsLoading(true);
     try {
       const skip = (page - 1) * LIMIT;
-      const [teachersData, analyticsData, orgsData, paymentsData, logsData, alertData, enabledData, providerData] = await Promise.all([
+      const [teachersData, analyticsData, orgsData, paymentsData, logsData, alertData, enabledData, providerData, financialsData] = await Promise.all([
         adminService.getTeachers(skip, LIMIT, searchQuery),
         adminService.getAnalytics(),
         adminService.getOrganizations(skip, LIMIT),
@@ -1198,12 +1206,19 @@ const AdminPanel = () => {
         adminService.getAuditLogs(skip, LIMIT),
         adminService.getSetting("system_alert").catch(() => null),
         adminService.getSetting("alert_enabled").catch(() => null),
-        adminService.getSetting("ai_provider").catch(() => null)
+        adminService.getSetting("ai_provider").catch(() => null),
+        adminService.getFinancials().catch(() => null),
       ]);
 
       if (alertData) setSystemAlert(alertData.value);
       if (enabledData) setAlertEnabled(enabledData.value === "true");
       if (providerData) setAiProvider(providerData.value as any);
+      if (financialsData) setFinancials({
+        mrr: financialsData.mrr ?? 0,
+        total_revenue: financialsData.total_revenue ?? 0,
+        active_subscriptions: financialsData.active_subscriptions ?? 0,
+        pending_payments: financialsData.pending_payments ?? 0,
+      });
 
       const analyticsMap = new Map((analyticsData as any).map((a: any) => [a.user_id, a]));
       const mappedTeachers: Teacher[] = (teachersData as any).map((u: any) => {
@@ -1404,7 +1419,7 @@ const AdminPanel = () => {
                   isLoading={isLoading}
                 />
               )}
-              {activeSection === "finances" && <FinancesView payments={payments} isLoading={isLoading} />}
+              {activeSection === "finances" && <FinancesView payments={payments} financials={financials} isLoading={isLoading} />}
               {activeSection === "system" && (
                 <SystemView
                   aiProvider={aiProvider}

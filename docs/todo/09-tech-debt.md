@@ -1,91 +1,76 @@
-# 🔧 Задача 09: Технический долг
+# Task 09: Technical Debt
 
-**Приоритет:** 🔴 Высокий (Sprint 1–2, параллельно с другими)  
-**Оценка:** ~5–7 дней  
-**Исполнитель:** Frontend + Backend  
-**Статус:** 🟡 Почти готово — нет автотестов, остальное сделано
+**Priority:** High (Sprint 1–2, parallel)  
+**Status:** Mostly done — automated tests missing
 
 ---
 
-## Контекст
+## 9.1 i18n Unification
+**Status: Done**
 
-Накопленный технический долг замедляет разработку и ухудшает UX. Задачи этого раздела нужно делать постепенно, не блокируя остальные фичи.
-
----
-
-## Подзадачи
-
-### 9.1 Унификация i18n (мультиязычность)
-
-**Файлы:** `front/src/i18n.ts`, все компоненты
-
-**Статус:** ✅ Выполнено — используется `react-i18next`, переводы на RU/UZ.
-
-~~Проблема: Два параллельных решения — `LangContext` и `i18next`.~~  
-Решение принято: оставлен `i18next`, `LangContext` удалён.
+`react-i18next` is the single translation solution. `LangContext` was removed.  
+Translations available in RU and UZ.  
+All components use `useTranslation()` from `react-i18next`.
 
 ---
 
-### 9.2 Error Boundary на всех генераторах
+## 9.2 Error Boundaries
+**Status: Done**
 
-**Файл:** `front/src/components/ErrorBoundary.tsx`
-
-**Статус:** ✅ Выполнено — компонент создан, обёрнуты генераторы. Toast-уведомления вместо console.error.
-
----
-
-### 9.3 Фикс: activeClass при перезагрузке страницы
-
-**Файл:** `front/src/context/ClassContext.tsx`
-
-**Статус:** ✅ Выполнено — `activeClassId` сохраняется в `localStorage`, восстанавливается < 500ms.
+`ErrorBoundary` component in `front/src/components/common/`.  
+Wraps all generators. Shows toast notification instead of white screen on error.
 
 ---
 
-### 9.4 Покрытие тестами (минимум)
+## 9.3 Active Class Persistence
+**Status: Done**
 
-**Файлы:** `backend/tests/`
-
-**Статус:** ❌ Не выполнено — нет ни одного автотеста.
-
-**Что написать (приоритет):**
-
-**Backend:**
-- `test_quota_check.py` — проверка что при лимите 0 возвращается 402
-- `test_rate_limit.py` — 31 запрос → 429
-- `test_b2b.py` — создание инвайт-токена, регистрация по токену, привязка к org
-
-**Frontend:**
-- `ClassContext.test.tsx` — activeClass восстанавливается из localStorage
-- `QuizGenerator.test.tsx` — форма валидирует пустые поля
-
-**Инструменты:**
-- Backend: `pytest` + `httpx`
-- Frontend: `vitest` + `@testing-library/react`
+`activeClassId` stored in `localStorage` in `ClassContext.tsx`.  
+Restored in under 500ms on page reload.
 
 ---
 
-### 9.5 Логирование ошибок (Sentry)
+## 9.4 Automated Tests
+**Status: Not done — 0 tests exist**
 
-**Файлы:** `backend/main.py`, `front/src/main.tsx`
+### Backend (pytest + httpx)
 
-**Статус:** ✅ Выполнено — Sentry SDK подключён в `main.py` (backend), загружает `SENTRY_DSN` из env. Frontend также инициализирован.
+| File | What to test |
+|------|--------------|
+| `backend/tests/test_quota_check.py` | Token limit 0 → 402 response |
+| `backend/tests/test_rate_limit.py` | 31 requests in one hour → 429 |
+| `backend/tests/test_b2b.py` | Create invite token → register with it → user linked to org |
+
+### Frontend (vitest + @testing-library/react)
+
+| File | What to test |
+|------|--------------|
+| `ClassContext.test.tsx` | `activeClass` restored from localStorage on mount |
+| `QuizGenerator.test.tsx` | Form validation rejects empty fields |
 
 ---
 
-### 9.6 API версионирование
+## 9.5 Sentry
+**Status: Done**
 
-**Файл:** `backend/main.py`, все роутеры
+Backend: `sentry_sdk.init()` in `backend/main.py`, reads `SENTRY_DSN` from env (skipped if empty).  
+Frontend: `@sentry/react` initialized in `front/src/main.tsx` with `VITE_SENTRY_DSN`.
 
-**Статус:** ✅ Выполнено — все роуты включены с префиксом `/api/v1/`. Старые пути добавлены как deprecated alias для обратной совместимости.
+---
+
+## 9.6 API Versioning
+**Status: Done**
+
+All routes under `/api/v1/` prefix.  
+Old paths kept as deprecated aliases for backward compatibility.
 
 ---
 
 ## Definition of Done
 
-- [x] Только один способ переводов (`i18next`), `LangContext` удалён
-- [x] `ErrorBoundary` на всех генераторах, нет белых экранов
-- [x] При перезагрузке страницы `activeClass` восстанавливается < 500мс
-- [ ] Минимум 5 тестов из списка выше — зелёные (не начато!)
-- [x] Sentry настроен и получает ошибки в prod
-- [x] Все API-пути используют `/api/v1/`
+- [x] Single i18n solution (`react-i18next`)
+- [x] `ErrorBoundary` on all generators
+- [x] `activeClass` restored from localStorage on reload
+- [ ] At least 5 automated tests passing (not started)
+- [x] Sentry configured on both frontend and backend
+- [x] All API routes under `/api/v1/`

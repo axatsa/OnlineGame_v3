@@ -1,40 +1,39 @@
-# 🎮 Задача 10: Demo без регистрации + FAQ + Отзывы на лендинге
+# Task 10: Demo Mode & Landing Page
 
-**Приоритет:** 🟡 Средний (Sprint 2)  
-**Оценка:** ~3–4 дня  
-**Исполнитель:** Frontend  
-**Статус:** ✅ Выполнено  
+**Priority:** Medium (Sprint 2)  
+**Status:** Done
 
 ---
 
-## Контекст
+## What was built
 
-Лендинг оптимизирован для конверсии: добавлены реальные истории успеха (отзывы), FAQ для ответов на частые вопросы и SEO-оптимизация для соцсетей.
+### Demo Mode
 
----
+`/demo` route accessible without authentication.  
+IP-based rate limit: 5 requests per day.  
+When the limit is reached, a prompt encourages the user to register.  
+"Try it" button on the landing page routes to `/demo`.
 
-## Подзадачи
+File: `front/src/pages/DemoGenerator.tsx`
 
-### 10.1 Demo-режим без регистрации
-✅ Выполнено
+### Landing Page
 
-### 10.2 Отзывы учителей на лендинге
-✅ Выполнено (4 карточки с анимацией whileInView)
+**Teacher testimonials:** 4 cards with `whileInView` Framer Motion animation.
 
-### 10.3 FAQ секция на лендинге
-✅ Выполнено (Аккордеон на базе AnimatePresence)
+**FAQ:** Accordion using `AnimatePresence`.
 
-### 10.4 Мета-теги и SEO лендинга
-✅ Выполнено (Обновлен index.html с OG и Twitter тегами)
+**SEO / Open Graph:** Updated `front/index.html` with `og:title`, `og:description`, `og:image`, and Twitter card meta tags.
+
+Files: `front/src/pages/Landing.tsx`, `front/index.html`
 
 ---
 
 ## Definition of Done
 
-- [x] `/demo` доступна без авторизации
-- [x] Лимит 5 запросов в день по IP работает
-- [x] Кнопка «Попробовать» на лендинге ведёт на `/demo`
-- [x] Мотивация к регистрации при достижении лимита
-- [x] Секция отзывов добавлена на лендинг (минимум 4 карточки)
-- [x] FAQ-аккордеон работает на лендинге
-- [x] Open Graph мета-теги добавлены
+- [x] `/demo` accessible without login
+- [x] 5-request-per-day IP limit enforced
+- [x] "Try it" CTA on landing leads to `/demo`
+- [x] Registration prompt shown when demo limit is reached
+- [x] Testimonials section on landing (at least 4 cards)
+- [x] FAQ accordion on landing
+- [x] Open Graph meta tags in `index.html`

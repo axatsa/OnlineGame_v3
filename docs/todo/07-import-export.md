@@ -1,86 +1,57 @@
-# 📥 Задача 07: Импорт слов и Google Drive экспорт
+# Task 07: Custom Word Import & Google Drive Export
 
-**Приоритет:** 🟠 Ниже среднего (Sprint 4)  
-**Оценка:** ~3–4 дня  
-**Исполнитель:** Frontend + Backend  
-**Статус:** ❌ Не начато
+**Priority:** Low (Sprint 4)  
+**Status:** Not started
 
 ---
 
-## Контекст
+## 7.1 Custom Words for Crossword / Word Search
 
-Для кроссворда и филворда учителя часто хотят использовать свои слова (из учебника), а не AI-генерацию. Также полезна кнопка «Сохранить в Google Drive» рядом с Download DOCX.
+**Files:** `front/src/pages/tools/Generator.tsx`, `backend/apps/generator/router.py`
 
----
+### Frontend
 
-## Подзадачи
+Add a toggle "AI generation / My words" in the generator sidebar.
 
-### 7.1 Импорт своих слов для кроссворда / филворда
+- **Manual input:** textarea — words separated by commas or newlines
+- **CSV upload:** button to upload a file, parsed client-side with Papa Parse
 
-**Файлы:** генераторы в `front/src/pages/tools/`
-
-**Что делать:**
-
-**Вариант A — Ввод вручную:**
-- Добавить textarea: «Введите слова через запятую или с новой строки»
-- Переключатель: «AI-генерация» / «Свои слова»
-
-**Вариант B — Загрузка CSV:**
-- Кнопка «Загрузить CSV»
-- Формат файла: одно слово (и опционально определение) на строку
-  ```
-  кошка,домашнее животное
-  собака,лучший друг человека
-  ```
-- Парсинг на фронте через `FileReader` + `Papa Parse`
-- Передача в API вместо темы
-
-**Backend:**
-- Если в запросе есть `custom_words: list[str]` — пропустить AI, сразу строить сетку
-- В кроссворде: `custom_clues: dict[str, str]` (слово → определение)
-
----
-
-### 7.2 Google Drive экспорт
-
-**Файлы:** `front/src/utils/googleDrive.ts`, кнопка в каждом генераторе
-
-**Что делать:**
-- Использовать Google Drive API v3 через Google Identity Services (OAuth2)
-- При нажатии «Сохранить в Drive»:
-  1. Если пользователь не авторизован в Google → показать popup OAuth
-  2. Получить DOCX-файл (тот же blob что скачивается)
-  3. Загрузить через `multipart/form-data` в Drive API
-
-```typescript
-async function uploadToDrive(filename: string, blob: Blob) {
-  const token = await getGoogleToken(); // OAuth2
-  const metadata = { name: filename, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
-  const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  form.append('file', blob);
-  
-  await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: form,
-  });
-}
+CSV format:
+```
+cat,domestic animal
+dog,man's best friend
 ```
 
-**Требования:**
-- В Google Cloud Console: создать OAuth Client ID (Web application)
-- Scope: `https://www.googleapis.com/auth/drive.file`
-- Добавить `VITE_GOOGLE_CLIENT_ID` в `.env`
+### Backend
 
-**Fallback:** если клиент-id не настроен — кнопка не отображается.
+If the request contains `custom_words: list[str]` — skip AI, build the grid directly.  
+For crossword: also accept `custom_clues: dict[str, str]` (word → definition).
+
+---
+
+## 7.2 Google Drive Export
+
+**File:** `front/src/utils/googleDrive.ts`
+
+Add a "Save to Drive" button next to "Download DOCX" in the result editor.
+
+Flow:
+1. If user is not Google-authorized — show OAuth popup
+2. Get the DOCX blob (same as local download)
+3. Upload via `multipart/form-data` to Google Drive API v3
+
+Required setup:
+- Google Cloud Console: create an OAuth 2.0 Web Client ID
+- Scope: `https://www.googleapis.com/auth/drive.file`
+- Add `VITE_GOOGLE_CLIENT_ID` to `.env`
+- If `VITE_GOOGLE_CLIENT_ID` is not set — button is hidden
 
 ---
 
 ## Definition of Done
 
-- [ ] Кроссворд и Филворд принимают свои слова (textarea)
-- [ ] CSV загрузка работает и парсится корректно
-- [ ] Кнопка «Сохранить в Drive» есть рядом с «Скачать DOCX»
-- [ ] OAuth flow работает в браузере
-- [ ] Файл появляется в Google Drive после нажатия
+- [ ] Crossword and Word Search accept custom word input (textarea)
+- [ ] CSV upload parses and passes words to the generator
+- [ ] "Save to Drive" button appears in result editor
+- [ ] OAuth flow works in the browser
+- [ ] File appears in Google Drive after upload

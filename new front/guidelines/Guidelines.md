@@ -1,61 +1,57 @@
-**Add your own guidelines here**
-<!--
+# ClassPlay — UI Guidelines (new front)
 
-System Guidelines
+This is a prototype/alternative frontend built with a no-code UI tool (Figma Make).
 
-Use this file to provide the AI with rules and guidelines you want it to follow.
-This template outlines a few examples of things you can add. You can add your own sections and format it to suit your needs
+---
 
-TIP: More context isn't always better. It can confuse the LLM. Try and add the most important rules you need
+## Layout
 
-# General guidelines
+- Use flexbox and grid by default. Avoid absolute positioning unless there is no other option.
+- All layouts must be responsive. Target breakpoints: mobile 375px, tablet 768px, desktop 1280px.
+- Smartboard is the primary target — design for 1920×1080 touch screens with large interactive elements.
 
-Any general rules you want the AI to follow.
-For example:
+---
 
-* Only use absolute positioning when necessary. Opt for responsive and well structured layouts that use flexbox and grid by default
-* Refactor code as you go to keep code clean
-* Keep file sizes small and put helper functions and components in their own files.
+## Design Tokens
 
---------------
+**Colors:**
+- Primary: `#991B1B` (Deep Burgundy)
+- Sidebar background: `#0F172A` (Slate-900)
+- Page background: `#F8FAFC` (Slate-50)
+- Card surface: `#FFFFFF`
+- Border: `#E2E8F0`
 
-# Design system guidelines
-Rules for how the AI should make generations look like your company's design system
+**Typography:**
+- UI text: Inter, 14px base
+- Large headings: Merriweather (serif), loaded via Google Fonts
+- Date format: `Apr 9` (abbreviated month + day, no year unless cross-year)
 
-Additionally, if you select a design system to use in the prompt box, you can reference
-your design system's components, tokens, variables and components.
-For example:
+---
 
-* Use a base font-size of 14px
-* Date formats should always be in the format “Jun 10”
-* The bottom toolbar should only ever have a maximum of 4 items
-* Never use the floating action button with the bottom toolbar
-* Chips should always come in sets of 3 or more
-* Don't use a dropdown if there are 2 or fewer options
+## Components
 
-You can also create sub sections and add more specific details
-For example:
+**Buttons:**
+- Primary: filled Burgundy, used for the single main action per section
+- Secondary: outlined Burgundy, transparent background, for supporting actions
+- Tertiary: text-only, Burgundy color, for low-emphasis actions
+- Never show more than one primary button per section
 
+**Dropdowns vs Segmented Controls:**
+- Use segmented pill controls (not dropdowns) when there are 3–6 fixed options (e.g., grade level, difficulty)
+- Use a dropdown only when there are 7+ options or options are dynamic
 
-## Button
-The Button component is a fundamental interactive element in our design system, designed to trigger actions or navigate
-users through the application. It provides visual feedback and clear affordances to enhance user experience.
+**Chips / Tags:**
+- Always show chips in sets of 3 or more
+- Never use a chip group with fewer than 3 items — use a toggle or radio group instead
 
-### Usage
-Buttons should be used for important actions that users need to take, such as form submissions, confirming choices,
-or initiating processes. They communicate interactivity and should have clear, action-oriented labels.
+**Bottom Toolbar (mobile):**
+- Maximum 4 items
+- Never combine a floating action button with the bottom toolbar
 
-### Variants
-* Primary Button
-  * Purpose : Used for the main action in a section or page
-  * Visual Style : Bold, filled with the primary brand color
-  * Usage : One primary button per section to guide users toward the most important action
-* Secondary Button
-  * Purpose : Used for alternative or supporting actions
-  * Visual Style : Outlined with the primary color, transparent background
-  * Usage : Can appear alongside a primary button for less important actions
-* Tertiary Button
-  * Purpose : Used for the least important actions
-  * Visual Style : Text-only with no border, using primary color
-  * Usage : For actions that should be available but not emphasized
--->
+---
+
+## Code Style
+
+- Keep files small. Extract helper functions and sub-components into their own files.
+- Refactor as you go — do not let components grow beyond ~200 lines without splitting.
+- All component files: PascalCase. All utility files: camelCase.

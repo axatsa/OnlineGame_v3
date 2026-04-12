@@ -1,113 +1,68 @@
-# 🔒 Задача 01: Безопасность и надёжность
+# Task 01: Security & Reliability
 
-**Приоритет:** 🔴 Критический (Sprint 1)  
-**Оценка:** ~3–5 дней  
-**Исполнитель:** Backend + DevOps  
-**Статус:** 🟡 Почти готово — осталось подтвердить HTTPS в production
+**Priority:** Critical (Sprint 1)  
+**Status:** Mostly done — HTTPS in production not confirmed
 
 ---
 
-## Контекст
+## Subtasks
 
-Перед запуском продаж необходимо базовое усиление безопасности. Один пользователь может выжечь весь AI-бюджет, нет подтверждённого SSL в prod, нет бэкапов.
+### 1.1 Rate Limiting on AI endpoints
+**Status: Done**
 
----
+`slowapi` installed. Limit: 30 requests/hour per user on all `/generate/*` endpoints.  
+Returns HTTP 429 with message: `"Too many requests. Try again in X minutes."`
 
-## Подзадачи
-
-### 1.1 Rate Limiting на AI-эндпоинтах
-
-**Файл:** `backend/rate_limiter.py`, `backend/apps/generator/router.py`
-
-**Что делать:**
-- Установить `slowapi` → `pip install slowapi`
-- Добавить лимитер: например, **30 запросов к `/generate/*` в час на пользователя**
-- Вернуть 429 с понятным сообщением: `"Too many requests. Try again in X minutes."`
-
-```python
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
-
-@app.post("/api/generate/quiz")
-@limiter.limit("30/hour")
-async def generate_quiz(request: Request, ...):
-    ...
-```
-
-**Проверка:** Отправить 31 запрос подряд → должен вернуть 429.
+Files: `backend/rate_limiter.py`, `backend/apps/generator/router.py`
 
 ---
 
-### 1.2 Квоты токенов в БД
+### 1.2 Token Quotas in Database
+**Status: Done**
 
-**Файлы:** `backend/apps/auth/models.py`, `backend/apps/generator/router.py`
+`token_usage` table stores per-user monthly token consumption.  
+`check_token_quota(user_id)` is called before every AI request.  
+`tokens_used` is updated after each OpenAI/Gemini response using `usage.total_tokens`.  
+Quota resets monthly (checked on login if >30 days have passed, or via cron).
 
-**Что делать:**
-- Добавить поле в модель пользователя или отдельную таблицу:
-  ```python
-  tokens_used_this_month: int = 0
-  tokens_limit: int = 50000  # -1 = unlimited
-  ```
-- Написать `check_token_quota(user_id)` — вызывать перед каждым AI-запросом
-- Обновлять `tokens_used` после каждого ответа OpenAI/Gemini (из `usage.total_tokens`)
-- Сбрасывать в 0 каждый месяц (cron или при входе, если прошло >30 дней)
-
-**Проверка:** Выставить лимит 100 токенов вручную → убедиться, что следующий запрос возвращает 402.
+Returns HTTP 402 when quota is exhausted.
 
 ---
 
-### 1.3 HTTPS в Nginx (prod)
+### 1.3 HTTPS in Production
+**Status: Pending — must be applied to server**
 
-**Файл:** `nginx/nginx.prod.conf` (или аналог)
+Setup instructions: `docs/DEPLOY_HTTPS.md`  
+`docker-compose.prod.yml` uses Traefik for automatic Let's Encrypt certificates.  
+Action required: verify `TRAEFIK_EMAIL` is set and ports 80/443 are open.
 
-**Что делать:**
-- Добавить SSL через Let's Encrypt (Certbot) или подключить уже имеющийся сертификат
-- Redirect HTTP → HTTPS
-- Подробная инструкция: `docs/DEPLOY_HTTPS.md`
-
-**Проверка:** `curl -I https://yourdomain.com` → 200 OK.
+Verification: `curl -I https://classplay.uz` should return HTTP/2 200.
 
 ---
 
 ### 1.4 Secrets Management
+**Status: Done**
 
-**Файл:** `.env`, `docker-compose.prod.yml`
+Secrets are in `.env` / `.env.prod` (not in repo). `.env.example` is committed as a template.  
+`docker-compose.prod.yml` uses `env_file` instead of inline values.
 
-**Что делать:**
-- Убрать секреты из `docker-compose.prod.yml` в файл `.env.prod` (не коммитить в git)
-- Добавить `.env.prod` в `.gitignore`
-- На сервере использовать `--env-file .env.prod` при запуске compose
-
-**Проверка:** `git log --all --full-history -- .env.prod` → файл не должен попасть в историю.
+See `docs/SECRETS.md` for full reference.
 
 ---
 
-### 1.5 Автоматический бэкап PostgreSQL
+### 1.5 Automated PostgreSQL Backups
+**Status: Done**
 
-**Файл:** `backup/backup.sh` + cron на сервере
-
-**Что делать:**
-- Написать bash-скрипт:
-  ```bash
-  #!/bin/bash
-  DATE=$(date +%Y%m%d_%H%M%S)
-  docker exec postgres pg_dump -U $POSTGRES_USER $POSTGRES_DB > /backups/db_$DATE.sql
-  # Удалить файлы старше 7 дней
-  find /backups -name "*.sql" -mtime +7 -delete
-  ```
-- Добавить в crontab: `0 3 * * * /path/to/backup.sh`
-- Убедиться, что папка `/backups` смонтирована как volume или настроен rsync на S3/Backblaze
-
-**Проверка:** Запустить скрипт вручную → проверить наличие файла бэкапа и корректность восстановления через `psql`.
+`backup/` directory contains `backup.sh`.  
+Script: `pg_dump` → timestamped `.sql` file → deletes files older than 7 days.  
+Cron entry: `0 3 * * * /path/to/backup.sh`
 
 ---
 
 ## Definition of Done
 
-- [x] Rate limit 429 работает при превышении лимита (`slowapi` в `rate_limiter.py`)
-- [x] Квоты токенов хранятся в БД (`tokens_used_this_month`, `tokens_limit` в User)
-- [ ] prod-сайт открывается по HTTPS (инструкция есть в `docs/DEPLOY_HTTPS.md`, нужно применить на сервере)
-- [x] Секреты не в `docker-compose.prod.yml` и не в git (`.env` + `.env.example`)
-- [x] Бэкап БД работает по расписанию (`backup/` директория создана)
+- [x] Rate limit 429 returns when threshold exceeded
+- [x] Token quotas stored in DB, 402 returned on exhaustion
+- [ ] Production site accessible over HTTPS — needs manual verification on server
+- [x] Secrets not in `docker-compose.prod.yml` or git history
+- [x] DB backup runs on schedule

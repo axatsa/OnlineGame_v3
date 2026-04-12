@@ -1,302 +1,127 @@
-📘 Техническое задание
-Система прогресса и экономики студентов (ClassPlay)
-1. Цель системы
+# Gamification System — ClassPlay
 
-Создать геймифицированную систему прогресса студентов, которая:
+## Overview
 
-Повышает вовлечённость
+Student progress and economy system built into ClassPlay. Designed to increase engagement through XP, coins, leveling, and a shop — with built-in anti-abuse mechanics.
 
-Поощряет разнообразие активности
+Implemented in: `backend/apps/gamification/`
 
-Исключает фарм и злоупотребления
+---
 
-Позволяет школам и учебным центрам настраивать магазин наград
+## Roles
 
-Масштабируется без ручной модерации
+| Role | Capabilities |
+|------|-------------|
+| Student | Earn XP/coins, level up, buy items, join leaderboards |
+| Teacher | View student stats, create shop items (within allowed ranges), toggle seasonal rankings |
+| Organization | Manage classes, set season format (quarter/month), add students within license seats |
+| Platform Admin | Manage global formulas, control anti-abuse system, adjust limits |
 
-2. Роли
-2.1 Студент
+---
 
-Выполняет активности
+## XP (Experience Points)
 
-Получает XP и coins
+- Never spent, never reset
+- Used to calculate level
+- Base reward: **25 XP per activity**
+- Daily cap: **300 XP** (resets at 00:00 by organization timezone, default UTC+5 Tashkent)
 
-Повышает уровень
+## Coins (Currency)
 
-Покупает предметы
+- Earned through activities, spent in shop
+- Full transaction history stored
+- Base reward: **6 coins per activity**
+- Daily cap: **60 coins**
+- Cannot go negative
 
-Участвует в сезонных рейтингах
+---
 
-2.2 Преподаватель
+## Anti-Abuse System
 
-Видит статистику учеников
+### Diminishing Returns (per game per day)
 
-Видит формулы начислений
+| Attempt | Reward |
+|---------|--------|
+| 1st | 100% |
+| 2nd | 70% |
+| 3rd | 40% |
+| 4th | 10% |
+| 5th+ | 0% |
 
-Создаёт товары в магазине (в пределах допустимых диапазонов)
+Resets daily.
 
-Включает/выключает сезонный рейтинг
+### Variety Bonus
 
-2.3 Организация (школа/центр)
+- +5% XP for each unique activity type played that day
+- Max bonus: +20% per day
 
-Управляет классами
+---
 
-Выбирает формат сезона (четверть/месяц)
+## Leveling Formula
 
-Добавляет учеников (в рамках лимита тарифа)
+```
+XP_needed(level) = 100 × level^1.5
+```
 
-2.4 Администратор платформы
+- Level increases automatically when XP threshold is reached
+- Levels never decrease
 
-Управляет глобальными формулами
+---
 
-Контролирует анти-абуз систему
+## Season System
 
-Управляет лимитами
+**Global progress** (never resets): total level, total XP, achievements.
 
-3. Модель прогресса
-3.1 XP (опыт)
+**Seasonal progress** (resets per season):
+- Schools: quarter-based seasons
+- Learning centers: monthly seasons
+- Season includes: XP ranking, separate leaderboard, seasonal rewards
+- After season ends: ranking resets, global XP is preserved
 
-XP:
+---
 
-Не тратится
+## Leaderboard
 
-Не обнуляется
+- Displays top 3 + current student's position + 3 above and 3 below
+- Rankings are class-scoped only — no cross-school global rankings
 
-Используется для расчёта уровня
+---
 
-Базовое начисление:
+## Shop
 
-Среднее:
+### Item types
+- Digital (avatars, frames)
+- Privileges (within allowed scope)
+- Real rewards
 
-25 XP за активность
+### Rules
+- Prices set by teacher, platform enforces recommended ranges
+- Privileges cannot: cancel tests, grant infinite XP, break academic integrity
+- Purchases are irreversible — coins deducted, entry created in `purchases` table
 
-Ограничения:
+---
 
-Максимум 300 XP в сутки
+## Database Tables
 
-Лимит сбрасывается ежедневно в 00:00 по времени организации
+`student_profiles`, `xp_transactions`, `coin_transactions`, `daily_progress`, `season_stats`, `shop_items`, `purchases`
 
-3.2 Coins (валюта)
+All XP/coin grants go through the transaction model — no direct field updates.
 
-Coins:
+---
 
-Начисляются за активности
+## Service Layer
 
-Тратятся в магазине
+`backend/apps/gamification/services.py` — `GamificationService`
 
-Имеют историю транзакций
+Key methods:
+- `process_activity_completion(user_id, activity_type, activity_id)` — calculates rewards with diminishing returns and variety bonus, enforces daily caps, records transactions
+- Daily limit reset via cron at 00:00
 
-Базовое начисление:
+---
 
-6 coins за активность
+## Non-Goals (out of scope for current version)
 
-Ограничения:
-
-Максимум 60 coins в сутки
-
-Нельзя уходить в отрицательный баланс
-
-4. Анти-фарм система
-4.1 Убывающая награда при повторе одной игры в сутки
-
-Для одной и той же игры:
-
-1 попытка — 100% награды
-2 попытка — 70%
-3 попытка — 40%
-4 попытка — 10%
-5 и далее — 0%
-
-Сброс — ежедневно.
-
-4.2 Бонус за разнообразие
-
-Если студент выполняет разные типы активностей в день:
-
-+5% XP к каждой новой категории активности
-Максимальный бонус — +20% в день
-
-5. Формула уровня
-
-XP для следующего уровня:
-
-XP_needed = 100 × level^1.5
-
-Прогресс:
-
-Уровень увеличивается автоматически при достижении порога
-
-Уровень не может снижаться
-
-6. Сезонная система
-6.1 Глобальный прогресс
-
-Общий уровень
-
-Общий XP
-
-Достижения
-
-Никогда не обнуляется
-
-6.2 Сезонный прогресс
-
-Тип сезона определяется организацией:
-
-Школа → четверть
-Учебный центр → месяц
-
-Сезон включает:
-
-Рейтинг по XP за период
-
-Отдельную таблицу лидеров
-
-Сезонные награды
-
-По окончании сезона:
-
-Рейтинг обнуляется
-
-Глобальный XP сохраняется
-
-7. Лидерборд
-
-Отображение:
-
-Топ 3
-
-Позиция текущего ученика
-
-3 выше и 3 ниже
-
-Рейтинг — только внутри класса.
-
-Глобальные рейтинги запрещены.
-
-8. Магазин
-8.1 Типы товаров
-
-Цифровые (аватары, рамки)
-
-Привилегии (в пределах разрешённого)
-
-Реальные награды
-
-8.2 Ограничения
-
-Цена задаётся преподавателем
-
-Платформа устанавливает рекомендуемый диапазон
-
-Привилегии не могут:
-
-отменять контрольные
-
-давать бесконечный XP
-
-ломать академическую систему
-
-8.3 Покупка
-
-При покупке:
-
-Coins списываются
-
-Создаётся запись в purchases
-
-Действие необратимо
-
-9. Ограничения и защита
-
-Начисление XP и coins — только автоматически
-
-Ручное начисление запрещено (кроме админа)
-
-Все транзакции логируются
-
-Любое превышение лимита блокируется системой
-
-10. Отображение в профиле преподавателя
-
-В профиле преподавателя отображается:
-
-Формула XP
-
-Дневной лимит
-
-Потенциальный максимум:
-
-За сутки
-
-За неделю
-
-За месяц
-
-Расчёт строится автоматически.
-
-11. База данных (минимальный набор)
-
-Таблицы:
-
-users
-
-student_profiles
-
-organizations
-
-classes
-
-xp_transactions
-
-coin_transactions
-
-achievements
-
-student_achievements
-
-seasons
-
-season_stats
-
-shop_items
-
-purchases
-
-Все начисления — через транзакционную модель.
-
-12. Нефункциональные требования
-
-Масштабируемость на тысячи учеников
-
-Сброс лимитов через cron
-
-Поддержка разных таймзон организаций
-
-Защита от race-condition при начислении наград
-
-13. MVP-границы (что не входит в первую версию)
-
-Престиж-система
-
-Глобальные турниры
-
-PvP между школами
-
-Случайные награды
-
-Лутбоксы
-
-Итог
-
-Система:
-
-Защищена от фарма
-
-Устойчива к нестабильным ученикам
-
-Масштабируема
-
-Не поощряет зависимость
-
-Позволяет организациям управлять экономикой в рамках правил
+- Prestige system
+- Cross-school tournaments
+- PvP between organizations
+- Random rewards / lootboxes

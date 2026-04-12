@@ -1,28 +1,30 @@
-# 🧑‍🏫 Задача 02: UX / Онбординг и Dashboard
+# Task 02: UX — Onboarding & Dashboard
 
-**Приоритет:** 🟡 Средний (Sprint 2)  
-**Оценка:** ~4–6 дней  
-**Исполнитель:** Frontend + Backend  
-**Статус:** ✅ Выполнено  
+**Priority:** Medium (Sprint 2)  
+**Status:** Done
 
 ---
 
-## Контекст
+## What was built
 
-Новый пользователь после входа получает приветственный онбординг (4 шага) и переходит в дашборд с реальной статистикой генераций и графиком активности.
+**Onboarding:** 4-step modal shown on first login. Triggered in `TeacherDashboard.tsx` when `user.onboarding_completed === false`. Completion call: `POST /auth/onboarding-complete` — sets flag in `users` table.
 
----
+**Dashboard:** Shows real data from `generation_logs` via `GET /stats/me`. Activity chart uses Recharts (bars by day). No hardcoded placeholder numbers.
 
-## Подзадачи
-
-(Все подзадачи реализованы: OnboardingModal, флаг в БД, /stats/me, Recharts интеграция)
+**Files:**
+- `front/src/components/Onboarding/OnboardingModal.tsx`
+- `front/src/context/AuthContext.tsx` — updates user state after onboarding
+- `front/src/pages/dashboard/TeacherDashboard.tsx`
+- `backend/apps/auth/models.py` — `onboarding_completed: bool`
+- `backend/apps/auth/router.py` — `POST /auth/onboarding-complete`
+- `backend/apps/generator/router.py` — `GET /stats/me`
 
 ---
 
 ## Definition of Done
 
-- [x] Онбординг показывается при первом входе
-- [x] Флаг `onboarding_completed` сохраняется в БД (`users` таблица)
-- [x] Dashboard показывает реальные цифры из `generation_logs`
-- [x] График активности по дням работает
-- [x] Нет заглушек / нулей там, где есть данные
+- [x] Onboarding shown on first login
+- [x] `onboarding_completed` flag saved in DB
+- [x] Dashboard shows real stats from `generation_logs`
+- [x] Activity chart works
+- [x] No placeholder zeros where data exists

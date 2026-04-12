@@ -1,34 +1,41 @@
-# ✏️ Задача 05: Редактор результата и Шаблоны заданий
+# Task 05: Result Editor & Templates
 
-**Приоритет:** 🟡 Средний (Sprint 3)  
-**Оценка:** ~5–7 дней  
-**Исполнитель:** Frontend + Backend  
-**Статус:** ✅ Выполнено
+**Priority:** Medium (Sprint 3)  
+**Status:** Done
 
 ---
 
-## Контекст
+## What was built
 
-После генерации пользователь не может исправить ошибку в вопросе — нужно перегенерировать всё. Также нет готовых пресетов: каждый раз заполняют форму с нуля.
+### Inline Result Editor
 
----
+After generation, the user can edit the result before downloading.  
+Changes persist until the DOCX is downloaded.  
+Implemented in `front/src/pages/tools/ResultEditor.tsx`.
 
-## Подзадачи
+### Templates
 
-### 5.1 Inline-редактор результата
-✅ Выполнено
+`Template` model added to `backend/apps/generator/models.py`.  
+CRUD API in `backend/apps/generator/router.py`.  
+Templates visible in every generator in `Generator.tsx` — can load a saved template to pre-fill the form.  
+System templates (at least 6) seeded via `backend/seed.py`.
 
-### 5.2 Шаблоны заданий
-✅ Выполнено: модель `Template` добавлена, CRUD API реализовано в `router.py`, UI добавлен в `Generator.tsx`, системные шаблоны добавлены через `seed.py`.
+### API
+
+```
+GET    /api/v1/templates           — all templates for current user (+ system ones)
+POST   /api/v1/templates           — save new template
+DELETE /api/v1/templates/{id}      — delete template
+```
 
 ---
 
 ## Definition of Done
 
-- [x] Редактор открывается после генерации любого контента
-- [x] Изменения сохраняются до скачивания DOCX
-- [x] Модель `Template` создана в БД
-- [x] API шаблонов реализован (GET/POST/DELETE)
-- [x] Шаблоны отображаются в каждом генераторе
-- [x] Можно создать свой шаблон и потом загрузить его
-- [x] Системные шаблоны есть минимум 6 штук
+- [x] Editor opens after generation of any content type
+- [x] Edits are reflected in the downloaded DOCX
+- [x] `Template` model in DB
+- [x] Templates API (GET / POST / DELETE)
+- [x] Templates shown in each generator
+- [x] Custom templates can be created and loaded later
+- [x] At least 6 system templates exist

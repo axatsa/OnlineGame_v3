@@ -1,47 +1,78 @@
-
-
-# ClassPlay — SaaS Platform for Teachers & Admins
+# ClassPlay — UI Design System
 
 ## Design Foundation
-- **Color System**: Deep Burgundy (#991B1B) primary, Slate-900 (#0F172A) sidebar/headings, Slate-50 (#F8FAFC) backgrounds, white surfaces with subtle borders and soft shadows
-- **Typography**: Inter for UI text, serif font (Merriweather via Google Fonts) for large headings
-- **Touch-Friendly UI**: Large buttons, cards, and interactive elements optimized for Smartboard use
-- **Animations**: Framer Motion for page transitions, hover states, and loading spinners
-- **Thompson School logo** embedded as the app's branding asset
 
-## Screen 1: Login Screen (Split Layout)
-- Left half: Deep Burgundy background with geometric pattern overlay, large white "ClassPlay" logo centered
-- Right half: Clean white form with Email/Password inputs, large Burgundy "Sign In" button, and "Log in as Super Admin" link
-- Role-based routing: regular login → Teacher Dashboard, admin link → Super Admin Panel
+**Primary color:** Deep Burgundy `#991B1B`  
+**Sidebar / headings:** Slate-900 `#0F172A`  
+**Backgrounds:** Slate-50 `#F8FAFC` (page), white (card surfaces)  
+**Borders:** subtle, soft shadows  
+**Typography:** Inter (UI text), Merriweather (large headings, loaded via Google Fonts)  
+**Target device:** Smartboard — large touch targets, big buttons, readable at distance  
+**Animations:** Framer Motion for page transitions, hover states, loading spinners
 
-## Screen 2: Super Admin Panel (Dark Sidebar Layout)
-- **Dark Sidebar** (Slate-900): Navigation links for Overview, Students, Teachers, Settings with icons, collapsible on mobile
-- **Student Management Table**: Zebra-striped rows, columns for Name, Grade, Email, Status (green/red badges), Actions (edit/delete icons)
-- **"Add Student" button** (Burgundy) in top-right corner
-- Clean header with admin profile info
+---
 
-## Screen 3: Teacher Dashboard (Bento Grid Layout)
-- **Sticky white header**: Logo on left, navigation pills (Generators, Tools, Games) in center, profile avatar on right
-- **Hero section**: "Welcome back, [Teacher Name]" with serif heading
-- **3-column Bento Grid** with large, touch-friendly cards:
-  - "AI Generators" (Sparkles icon) — Create math & crosswords
-  - "Classroom Tools" (Dices icon) — Roulette & Timer
-  - "Games Library" (Gamepad icon) — Interactive Smartboard games
-- **"My Class" widget**: Shows AI context info (e.g., "Grade 3B, Loves Space")
+## Screen: Login
 
-## Screen 4: Generator Interface (Split Screen)
-- **Left settings panel**: Segmented pill-shaped controls (not dropdowns) for Grade (1–5), Subject, and Difficulty selection
-- **Right preview area**: Realistic A4 paper preview on gray background showing sample generated math problems
-- **Floating toolbar pill**: Print, Download, Edit action icons
-- "Generate" button with animated loading spinner state
+Split layout:
+- **Left half:** Deep Burgundy background with geometric pattern, large white "ClassPlay" logo centered
+- **Right half:** white form — email/password fields, Burgundy "Sign In" button, "Log in as Super Admin" link
 
-## Screen 5: Games Library (EduGames Style)
-- Grid of colorful game cards with cover image placeholders, title, star ratings, and large "PLAY" button
-- Framer Motion hover effect: subtle scale-up on card hover
-- Responsive grid layout
+Role routing: regular login → Teacher Dashboard, admin link → Super Admin Panel.
 
-## Navigation & State Management
-- All views managed via React Router with role-based state (no backend — mock data throughout)
-- Smooth Framer Motion page transitions between all screens
-- Sidebar collapsible on mobile for Admin view
+---
 
+## Screen: Super Admin Panel
+
+Dark sidebar layout (Slate-900):
+- Navigation: Overview, Students, Teachers, Settings — icons + labels
+- Collapsible on mobile
+
+Main content: teacher/student management tables with zebra-striped rows, status badges (Active / Blocked), edit/delete actions.
+
+"Add Teacher" / "Add Organization" buttons in Burgundy, top-right corner.
+
+---
+
+## Screen: Teacher Dashboard
+
+Sticky white header: logo left, navigation pills (Generators / Tools / Games) center, profile avatar right.
+
+Hero section: serif heading "Welcome back, [Name]".
+
+3-column Bento grid (large touch-friendly cards):
+- AI Generators — create math problems, quizzes, crosswords, assignments, Jeopardy
+- Classroom Tools — roulette, timer, other utilities
+- Games Library — interactive Smartboard games
+
+"My Class" widget: active class name and grade, quick stats.
+
+Activity chart (Recharts) below the grid.
+
+---
+
+## Screen: Generator Interface
+
+Split screen:
+- **Left:** settings panel with pill-shaped segmented controls (grade, subject, difficulty, language). Batch toggle + count selector.
+- **Right:** A4 paper preview on gray background showing sample output.
+
+Floating toolbar pill: Print / Download / Edit icons.
+
+"Generate" button with animated loading spinner during API call.
+
+---
+
+## Screen: Games Library
+
+Grid of game cards — cover image, title, "PLAY" button.  
+Framer Motion scale-up on card hover.  
+Available games: Tug of War, Jeopardy, Memory Matrix, Balance Scales, Word Search, Crossword.
+
+---
+
+## Navigation
+
+React Router with role-based routing (`teacher`, `super_admin`).  
+Protected routes via `ProtectedRoute` HOC.  
+Framer Motion page transitions between all screens.

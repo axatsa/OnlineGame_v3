@@ -1,12 +1,12 @@
-# Управление секретами в ClassPlay
+# Secrets Management — ClassPlay
 
-## ⚠️ Что НЕЛЬЗЯ коммитить в git
+## What NOT to commit
 
-- `.env` — переменные окружения с реальными ключами
-- `.env.prod` — production конфиг
-- Любые файлы с API-ключами, паролями, токенами
+- `.env` — local dev secrets
+- `.env.prod` — production secrets
+- Any file containing API keys, passwords, tokens, or certificates
 
-Убедись что в `.gitignore` есть:
+`.gitignore` must include:
 ```
 .env
 .env.prod
@@ -17,67 +17,74 @@
 
 ---
 
-## Переменные окружения
+## Environment Variables
 
-### Обязательные (backend)
+### Required (backend)
 
-| Переменная | Описание | Пример |
-|-----------|----------|--------|
-| `DATABASE_URL` | Строка подключения к PostgreSQL | `postgresql://user:pass@db:5432/classplay` |
-| `SECRET_KEY` | JWT подпись — сгенерировать через `openssl rand -hex 32` | `a3f8...` |
-| `OPENAI_API_KEY` | Ключ OpenAI | `sk-...` |
-| `GEMINI_API_KEY` | Ключ Google Gemini | `AIza...` |
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@db:5432/classplay` |
+| `SECRET_KEY` | JWT signing key — generate with `openssl rand -hex 32` | `a3f8...` |
+| `OPENAI_API_KEY` | OpenAI API key | `sk-...` |
+| `GEMINI_API_KEY` | Google Gemini API key | `AIza...` |
 
-### Опциональные (backend)
+### Optional (backend)
 
-| Переменная | Описание | По умолчанию |
-|-----------|----------|--------------|
-| `RATE_LIMIT_PER_HOUR` | Запросов к AI в час | `60` |
-| `DEFAULT_TOKEN_LIMIT` | Месячный лимит токенов | `100000` |
-| `ALGORITHM` | JWT алгоритм | `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Время жизни токена | `10080` (7 дней) |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RATE_LIMIT_PER_HOUR` | AI endpoint requests per hour per user | `60` |
+| `DEFAULT_TOKEN_LIMIT` | Monthly token quota per user | `100000` |
+| `ALGORITHM` | JWT algorithm | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT lifetime | `10080` (7 days) |
+| `SENTRY_DSN` | Sentry error tracking DSN | _(empty = disabled)_ |
 
----
+### Required (frontend)
 
-## На prod-сервере
-
-**Вариант 1 (простой): `.env.prod` файл**
-
-```bash
-# На сервере создать файл (НЕ в репозитории):
-nano /home/user/classplay/.env.prod
-
-# Запускать compose с ним:
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
-```
-
-**Вариант 2 (рекомендован): Railway / Render Secrets**
-
-В Railway Dashboard → Variables → добавить каждую переменную. Они никогда не попадают в git.
-
-**Вариант 3 (продвинутый): HashiCorp Vault или Doppler**
-
-```bash
-# Doppler (бесплатный тир):
-doppler setup
-doppler run -- docker compose up -d
-```
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Backend API base URL |
+| `VITE_SENTRY_DSN` | Sentry DSN for frontend |
 
 ---
 
-## Генерация SECRET_KEY
+## Generate SECRET_KEY
 
 ```bash
 openssl rand -hex 32
-# → скопировать вывод в .env как SECRET_KEY=...
 ```
+
+Copy the output into `.env` as `SECRET_KEY=<value>`.
 
 ---
 
-## Ротация ключей
+## Production Setup
 
-При компрометации ключа:
-1. Сгенерировать новый `SECRET_KEY`
-2. Обновить на сервере
-3. Перезапустить backend — все JWT станут невалидны (пользователи перелогинятся)
-4. Аналогично для API ключей OpenAI/Gemini — перегенерировать в консоли провайдера
+**Option A — env file on server** (simplest)
+
+```bash
+# On the server (NOT in the repo):
+nano /home/user/classplay/.env.prod
+
+# Run compose with it:
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+**Option B — Doppler** (recommended for teams)
+
+```bash
+doppler setup
+doppler run -- docker compose -f docker-compose.prod.yml up -d
+```
+
+**Option C — Railway / Render Dashboard**
+
+Add variables directly in the platform UI. They never touch git.
+
+---
+
+## Key Rotation
+
+When a key is compromised:
+
+1. **SECRET_KEY**: Generate new value → update on server → restart backend. All existing JWTs become invalid — users will need to re-login.
+2. **OPENAI_API_KEY / GEMINI_API_KEY**: Revoke in the provider console, generate a new one, update `.env.prod`, restart backend.

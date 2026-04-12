@@ -1,63 +1,63 @@
-# Настройка HTTPS (SSL) для ClassPlay на prod-сервере
+# HTTPS Setup for ClassPlay (Production)
 
-## Требования
-- Ubuntu 20.04+ / Debian
-- Docker + Docker Compose
-- Домен указывает на IP сервера (A-запись в DNS)
+## Prerequisites
+
+- Ubuntu 20.04+ or Debian
+- Docker + Docker Compose installed
+- Domain DNS A-record pointing to the server IP
 
 ---
 
-## Шаг 1: Установить Certbot
+## Option 1: Certbot + Nginx (manual)
+
+### Step 1 — Install Certbot
 
 ```bash
-sudo apt update
-sudo apt install -y certbot
+sudo apt update && sudo apt install -y certbot
 
-# Остановить nginx на время получения сертификата
+# Stop nginx to free port 80
 docker compose -f docker-compose.prod.yml stop nginx
 ```
 
-## Шаг 2: Получить сертификат
+### Step 2 — Obtain certificate
 
 ```bash
 sudo certbot certonly --standalone \
-  -d yourdomain.com \
-  -d www.yourdomain.com \
-  --email your@email.com \
+  -d classplay.uz \
+  -d www.classplay.uz \
+  --email admin@classplay.uz \
   --agree-tos \
   --no-eff-email
 ```
 
-Сертификаты будут в `/etc/letsencrypt/live/yourdomain.com/`.
+Certificates are saved to `/etc/letsencrypt/live/classplay.uz/`.
 
-## Шаг 3: Обновить nginx конфиг
+### Step 3 — Update nginx config
 
-Отредактировать `front/nginx.conf` или создать `nginx.prod.conf`:
+Create `front/nginx.prod.conf`:
 
 ```nginx
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name classplay.uz www.classplay.uz;
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name classplay.uz www.classplay.uz;
 
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/classplay.uz/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/classplay.uz/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
 
-    # Frontend
     location / {
         root /usr/share/nginx/html;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
 
-    # Backend API
     location /api/ {
         proxy_pass http://backend:8000;
         proxy_set_header Host $host;
@@ -68,39 +68,49 @@ server {
 }
 ```
 
-## Шаг 4: Обновить docker-compose.prod.yml
-
-Добавить volume для сертификатов в nginx-сервис:
+### Step 4 — Mount certs in docker-compose.prod.yml
 
 ```yaml
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"     # ← добавить
-    volumes:
-      - ./front/nginx.prod.conf:/etc/nginx/conf.d/default.conf
-      - /etc/letsencrypt:/etc/letsencrypt:ro    # ← добавить
-    depends_on:
-      - backend
+nginx:
+  image: nginx:alpine
+  ports:
+    - "80:80"
+    - "443:443"
+  volumes:
+    - ./front/nginx.prod.conf:/etc/nginx/conf.d/default.conf
+    - /etc/letsencrypt:/etc/letsencrypt:ro
+  depends_on:
+    - backend
 ```
 
-## Шаг 5: Автообновление сертификата
+### Step 5 — Auto-renew (crontab)
 
 ```bash
-# Добавить в crontab:
-0 3 1 * * certbot renew --pre-hook "docker compose -f /path/to/docker-compose.prod.yml stop nginx" \
-            --post-hook "docker compose -f /path/to/docker-compose.prod.yml start nginx"
+0 3 1 * * certbot renew \
+  --pre-hook "docker compose -f /home/user/classplay/docker-compose.prod.yml stop nginx" \
+  --post-hook "docker compose -f /home/user/classplay/docker-compose.prod.yml start nginx"
 ```
 
 ---
 
-## Проверка
+## Option 2: Traefik (current docker-compose.prod.yml)
+
+The production compose file uses Traefik for automatic SSL via Let's Encrypt.
+Labels on each service declare the routing rules. Traefik handles certificate issuance automatically on first request.
+
+No manual certbot setup needed — just ensure:
+1. Port 80 and 443 are open on the server
+2. DNS A-record points to server IP
+3. `TRAEFIK_EMAIL` is set in `.env.prod`
+
+---
+
+## Verification
 
 ```bash
-curl -I https://yourdomain.com
-# → HTTP/2 200 ✓
+curl -I https://classplay.uz
+# Expected: HTTP/2 200
 
-openssl s_client -connect yourdomain.com:443 -showcerts
-# → Certificate chain должен показать Let's Encrypt
+openssl s_client -connect classplay.uz:443 -showcerts
+# Expected: Let's Encrypt certificate chain
 ```

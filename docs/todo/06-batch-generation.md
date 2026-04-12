@@ -1,55 +1,34 @@
-# ⚡ Задача 06: Batch-генерация
+# Task 06: Batch Generation
 
-**Приоритет:** 🟠 Ниже среднего (Sprint 3)  
-**Оценка:** ~2–3 дня  
-**Исполнитель:** Frontend + Backend  
-**Статус:** ✅ Готово
+**Priority:** Low (Sprint 3)  
+**Status:** Done
 
 ---
 
-## Контекст
+## What was built
 
-Учителям часто нужно несколько вариантов одного задания (для разных рядов, для разных уровней). Сейчас можно кликать 5 раз вручную.
+Teachers can generate multiple variants of the same assignment in one click and download them as a ZIP archive.
 
----
+### Backend
 
-## Подзадачи
+Endpoint: `POST /api/v1/generate/batch`  
+Accepts: `tool_type`, `params`, `count` (2 / 3 / 5 / 10)  
+Returns: `StreamingResponse` with a ZIP archive.
 
-### 6.1 Backend: Batch-эндпоинт ✅
+ZIP creation is handled in `backend/apps/generator/batch_utils.py` — formats each variant as a text file and packs with `zipfile`.
 
-**Файл:** `backend/apps/generator/router.py`
+Batch generation counts toward the user's monthly token quota (total tokens, not per-request).
 
-**Реализовано:**
-- POST `/api/v1/generate/batch`
-- Принимает: `tool_type`, `params`, `count`
-- Возвращает StreamingResponse с ZIP-архивом
+### Frontend
 
----
-
-### 6.2 Frontend: UI для batch ✅
-
-**Файлы:** `Generator.tsx`
-
-**Реализовано:**
-- Переключатель «Пакетная генерация» в боковой панели
-- Выбор количества вариантов (2, 3, 5, 10)
-- Автоматическое скачивание ZIP-архива при нажатии «Генерировать»
-
----
-
-### 6.3 ZIP-архив скачивания ✅
-
-**Файл:** `backend/apps/generator/batch_utils.py`
-
-**Реализовано:**
-- Форматирование вариантов в текстовые файлы (с учетом структуры Math, Quiz, Assignment)
-- Упаковка в ZIP через `zipfile`
+In `Generator.tsx` sidebar: toggle "Batch generation" + variant count selector.  
+On submit: downloads ZIP automatically.
 
 ---
 
 ## Definition of Done
 
-- [x] Чекбокс «несколько вариантов» есть в Quiz, Math, Assignment
-- [x] Backend возвращает N вариантов
-- [x] ZIP-скачивание работает
-- [x] Batch учитывается в квоте токенов (суммарно)
+- [x] Batch toggle available in Quiz, Math, Assignment generators
+- [x] Backend returns N variants in a ZIP
+- [x] ZIP download works in the browser
+- [x] Token quota counts batch usage correctly

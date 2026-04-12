@@ -1,94 +1,56 @@
-# 📋 Задача 04: История генераций и Избранное
+# Task 04: Generation History & Favorites
 
-**Приоритет:** 🟡 Средний (Sprint 2)  
-**Оценка:** ~4–5 дней  
-**Исполнитель:** Frontend + Backend
-
----
-
-## Контекст
-
-Пользователи теряют созданные материалы после закрытия вкладки. Нужна история последних 20 генераций с быстрым доступом из сайдбара и возможность отметить важные материалы. 
+**Priority:** Medium (Sprint 2)  
+**Status:** Done
 
 ---
 
-## Подзадачи
+## What was built
 
-### 4.1 Backend: таблица и API истории
+Every successful generation is saved to `generation_logs` table automatically.  
+History is capped at 100 entries per user (oldest are deleted).
 
-**Файлы:** `backend/app/models.py`, `backend/app/routers/history.py`
+### Database model (`generation_logs`)
 
-**Модель:**
-```python
-class GenerationLog(Base):
-    __tablename__ = "generation_logs"
-    
-    id: int (PK)
-    user_id: int (FK → users)
-    feature: str          # "quiz", "math", "crossword", "assignment", "book"
-    title: str            # краткое название (тема задания/книги)
-    input_params: JSON    # что пользователь вводил
-    result_preview: str   # первые 200 символов результата
-    tokens_used: int
-    is_favorite: bool = False
-    created_at: datetime
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | int PK | — |
+| `user_id` | int FK | linked to `users` |
+| `feature` | str | `"quiz"`, `"math"`, `"crossword"`, `"assignment"`, `"book"` |
+| `title` | str | short label (topic/title) |
+| `input_params` | JSON | what the user submitted |
+| `result_preview` | str | first 200 chars of result |
+| `tokens_used` | int | — |
+| `is_favorite` | bool | default false |
+| `created_at` | datetime | — |
+
+### API
+
+```
+GET    /api/v1/history?limit=20&offset=0   — recent items
+GET    /api/v1/history/favorites           — favorites only
+POST   /api/v1/history/{id}/favorite       — mark as favorite
+DELETE /api/v1/history/{id}/favorite       — unmark
+DELETE /api/v1/history/{id}                — delete entry
+POST   /api/v1/history/{id}/regenerate     — re-run with same params
 ```
 
-**API:**
-```
-GET  /api/history?limit=20&offset=0     → список последних
-GET  /api/history/favorites             → только избранные
-POST /api/history/{id}/favorite         → добавить в избранное
-DELETE /api/history/{id}/favorite       → убрать из избранного
-DELETE /api/history/{id}               → удалить запись
-POST /api/history/{id}/regenerate      → повторить с теми же параметрами
-```
+### Frontend
 
----
+- History sidebar shows last 5 entries with feature icon and topic name
+- "All (N)" link opens `HistoryPage.tsx` with full list
+- Filters by type: Quiz / Math / Crossword / Assignment
+- Tabs: All / Favorites
+- Actions per item: Download, Regenerate, Favorite, Delete
 
-### 4.2 Автоматическое сохранение после генерации
-
-**Файлы:** каждый генератор в `backend/app/routers/generate_*.py`
-
-**Что делать:**
-- После успешной генерации — вызвать `save_to_history(user_id, feature, params, result_preview, tokens_used)`
-- Ограничить: хранить только последние 100 записей на пользователя (удалять старые)
-
----
-
-### 4.3 Frontend: History sidebar
-
-**Файлы:** `front/src/components/HistorySidebar/`, `front/src/hooks/useHistory.ts`
-
-**Что делать:**
-- Добавить секцию «Последние» в левый sidebar
-- Показывать последние 5 записей с иконкой фичи и названием темы
-- Ссылка «Все (20)» → открывает страницу/модал полной истории
-
-**Дизайн каждой записи:**
-```
-[иконка quiz] Викторина: "Животные" —  5 мин назад  [★]
-[иконка math] Математика: "Дроби 5кл" — вчера        [★]
-```
-
----
-
-### 4.4 Страница «Мои материалы»
-
-**Файл:** `front/src/pages/MyMaterials.tsx`
-
-**Что делать:**
-- Таблица/карточки всех 20 записей
-- Фильтр по типу: Квиз / Математика / Кроссворд / и т.д.
-- Переключатель: «Все» / «Избранное»
-- Кнопки: ⬇️ Скачать повторно, 🔁 Регенерировать, ★ Избранное, 🗑 Удалить
+Files: `front/src/pages/dashboard/HistoryPage.tsx`, `front/src/hooks/useHistory.ts`
 
 ---
 
 ## Definition of Done
 
-- [x] После каждой генерации запись появляется в истории
-- [x] Sidebar показывает последние записи или ссылку на страницу истории
-- [x] Страница «Мои материалы» фильтрует и сортирует
-- [x] Кнопка использования заполняет форму/модал
-- [x] Избранное сохраняется между сессиями
+- [x] Every generation is saved automatically
+- [x] Sidebar shows recent items
+- [x] History page has type filters and favorites tab
+- [x] Regenerate fills the generator form with previous params
+- [x] Favorites persist across sessions

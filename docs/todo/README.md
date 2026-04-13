@@ -16,9 +16,9 @@
 | 04 | [04-generation-history.md](./04-generation-history.md) | Generation history, favorites | Medium | Done |
 | 05 | [05-content-editor.md](./05-content-editor.md) | Result editor, templates | Medium | Done |
 | 06 | [06-batch-generation.md](./06-batch-generation.md) | Batch generation (ZIP) | Low | Done |
-| 07 | [07-import-export.md](./07-import-export.md) | Custom word import, Google Drive | Low | Not started |
+| 07 | [07-import-export.md](./07-import-export.md) | Custom word import, Google Drive | Low | 7.1 done — 7.2 (Google Drive) not started |
 | 08 | [08-b2b-tools.md](./08-b2b-tools.md) | Org–User link, invite system, CSV | Critical | Done |
-| 09 | [09-tech-debt.md](./09-tech-debt.md) | i18n, Sentry, API versioning, tests | High | Mostly done — no automated tests |
+| 09 | [09-tech-debt.md](./09-tech-debt.md) | i18n, Sentry, API versioning, tests | High | Done — 19 backend + 13 frontend tests passing |
 | 10 | [10-demo-mode.md](./10-demo-mode.md) | Demo mode, landing FAQ/reviews | Medium | Done |
 
 ---

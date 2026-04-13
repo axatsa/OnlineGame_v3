@@ -759,7 +759,7 @@ export default function Landing() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => navigate("/login")} style={{ width: "100%", padding: 14, borderRadius: 14, background: `linear-gradient(135deg, ${BLUE}, ${CORAL})`, color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", border: "none", boxShadow: `0 8px 24px rgba(14,165,233,0.45)` }}>
+              <button onClick={() => navigate("/checkout?plan=pro")} style={{ width: "100%", padding: 14, borderRadius: 14, background: `linear-gradient(135deg, ${BLUE}, ${CORAL})`, color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", border: "none", boxShadow: `0 8px 24px rgba(14,165,233,0.45)` }}>
                 {t("land_start", "Начать сейчас")}
               </button>
             </motion.div>
@@ -784,8 +784,8 @@ export default function Landing() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => navigate("/login")} style={{ width: "100%", padding: 14, borderRadius: 14, border: `2px solid rgba(14,165,233,0.25)`, background: "transparent", color: BLUE, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
-                {t("land_cta_btn", "Связаться с нами")}
+              <button onClick={() => navigate("/checkout?plan=school")} style={{ width: "100%", padding: 14, borderRadius: 14, border: `2px solid rgba(14,165,233,0.25)`, background: "transparent", color: BLUE, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                {t("land_cta_btn", "Оформить")}
               </button>
             </motion.div>
           </div>

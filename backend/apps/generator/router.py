@@ -89,10 +89,22 @@ def gen_math_demo(request: Request, req: MathRequest):
 @limiter.limit(_rate_limit)
 def gen_crossword(request: Request, req: CrosswordRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_token_quota(user, db)
+
+    if req.custom_words:
+        words = []
+        for entry in req.custom_words:
+            if ":" in entry:
+                word, clue = entry.split(":", 1)
+            else:
+                word, clue = entry, ""
+            words.append({"word": word.strip(), "clue": clue.strip()})
+        save_generation(db, user.id, "crossword", req.topic, {"words": words})
+        return {"words": words}
+
     grade, context = get_class_context(db, req.class_id)
-        
+
     words, tokens = generate_crossword_words(req.topic, req.word_count, req.language, grade, context)
-    
+
     if words is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
 
@@ -100,7 +112,7 @@ def gen_crossword(request: Request, req: CrosswordRequest, db: Session = Depends
         log_usage(db, user.id, "crossword", tokens)
         increment_token_usage(user, tokens, db)
         save_generation(db, user.id, "crossword", req.topic, {"words": words})
-        
+
     return {"words": words or []}
 
 @router.post("/quiz")

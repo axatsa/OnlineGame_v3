@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class MathRequest(BaseModel):
     topic: str
@@ -13,6 +13,7 @@ class CrosswordRequest(BaseModel):
     language: str
     word_count: int
     class_id: Optional[int] = None
+    custom_words: Optional[List[str]] = None
 
 class QuizRequest(BaseModel):
     topic: str

@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-04-13T10:22:29.678Z",
+  "projectRoot": "/Users/axat/Projects/OnlineGame_v3",
+  "structure": {
+    "hasPackageJson": false,
+    "hasTsConfig": false,
+    "hasClaudeConfig": true,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1776075749678
+}

@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ClassProvider } from "./context/ClassContext";
@@ -27,8 +28,9 @@ import Library from "./pages/library/Library";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import DemoGenerator from "./pages/DemoGenerator";
-
-const queryClient = new QueryClient();
+import Checkout from "./pages/payment/Checkout";
+import PaymentSuccess from "./pages/payment/PaymentSuccess";
+import PaymentFail from "./pages/payment/PaymentFail";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -104,6 +106,11 @@ const App = () => (
                 <Route path="/games/scales" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Balance scales error"><BalanceScales /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/games/word-search" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Word search error"><WordSearch /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/games/crossword" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Crossword error"><Crossword /></ErrorBoundary></ProtectedRoute>} />
+
+                {/* Payment Routes */}
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/fail" element={<PaymentFail />} />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>

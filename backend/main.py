@@ -16,6 +16,7 @@ from apps.generator.models import TokenUsage, GenerationLog
 from apps.gamification.models import StudentProfile, XPTransaction, CoinTransaction, DailyProgress, SeasonStats, ShopItem, Purchase
 from apps.library.models import SavedResource, GeneratedBook
 from apps.admin.models import Organization, Payment, InviteToken, GlobalSetting
+from apps.payments.models import UserPayment, UserSubscription
 
 from apps.auth.router import router as auth_router
 from apps.classes.router import router as classes_router
@@ -23,6 +24,7 @@ from apps.generator.router import router as generator_router
 from apps.gamification.router import router as gamification_router
 from apps.library.router import router as library_router
 from apps.admin.router import router as admin_router
+from apps.payments.router import router as payments_router
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -70,6 +72,7 @@ app.include_router(generator_router, prefix="/api/v1")
 app.include_router(gamification_router, prefix="/api/v1")
 app.include_router(library_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
+app.include_router(payments_router, prefix="/api/v1")
 
 # Deprecated aliases for backward compatibility
 app.include_router(auth_router, deprecated=True)

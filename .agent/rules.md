@@ -16,3 +16,9 @@ If required information is missing or ambiguous — stop and request clarificati
 
 ## 5. Explain Decisions
 For any non-trivial action, briefly explain reasoning and expected outcome.
+
+# Memory Index
+
+- [Always use Prompt Caching] — Global rule: all requests must use Prompt Caching (`cache_control: ephemeral`)
+
+- Answer without fluff: straight to the point, no intros, no filler, no repetition. Never say "certainly", "great question", "let's explore" or similar. Start with the answer immediately.

@@ -31,22 +31,23 @@ Restored in under 500ms on page reload.
 ---
 
 ## 9.4 Automated Tests
-**Status: Not done — 0 tests exist**
+**Status: Done — 19 backend + 13 frontend tests passing**
 
-### Backend (pytest + httpx)
+### Backend (pytest)
 
-| File | What to test |
-|------|--------------|
-| `backend/tests/test_quota_check.py` | Token limit 0 → 402 response |
-| `backend/tests/test_rate_limit.py` | 31 requests in one hour → 429 |
-| `backend/tests/test_b2b.py` | Create invite token → register with it → user linked to org |
+| File | What to test | Status |
+|------|--------------|--------|
+| `backend/tests/test_quota_check.py` | Token limit 0 → 402 response | Done (6 tests) |
+| `backend/tests/test_rate_limit.py` | Requests exceeding limit → 429 | Done (5 tests) |
+| `backend/tests/test_b2b.py` | Create invite token → register with it → user linked to org | Done (4 tests) |
+| `backend/tests/test_gamification.py` | XP/coins, daily cap, level calculation | Done (3 tests) |
 
 ### Frontend (vitest + @testing-library/react)
 
-| File | What to test |
-|------|--------------|
-| `ClassContext.test.tsx` | `activeClass` restored from localStorage on mount |
-| `QuizGenerator.test.tsx` | Form validation rejects empty fields |
+| File | What to test | Status |
+|------|--------------|--------|
+| `ClassContext.test.tsx` | `activeClass` restored from localStorage on mount | Done (4 tests) |
+| `QuizGenerator.test.tsx` | Form validation rejects empty fields | Done (8 tests) |
 
 ---
 
@@ -71,6 +72,6 @@ Old paths kept as deprecated aliases for backward compatibility.
 - [x] Single i18n solution (`react-i18next`)
 - [x] `ErrorBoundary` on all generators
 - [x] `activeClass` restored from localStorage on reload
-- [ ] At least 5 automated tests passing (not started)
+- [x] At least 5 automated tests passing (19 backend + 13 frontend)
 - [x] Sentry configured on both frontend and backend
 - [x] All API routes under `/api/v1/`

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import api from "@/lib/api";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import { queryClient } from "@/lib/queryClient";
 
 interface User {
     id: number;
@@ -68,7 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = () => {
-        localStorage.clear(); // Clear everything to be safe
+        localStorage.clear();
+        queryClient.clear(); // Wipe React Query cache so next user never sees previous user's data
         setToken(null);
         setUser(null);
         navigate("/");

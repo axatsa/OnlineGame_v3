@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 import { useClass } from "@/context/ClassContext";
 import { useTranslation } from "react-i18next";
@@ -85,6 +86,8 @@ const Generator = () => {
   // Crossword fields
   const [crosswordTopic, setCrosswordTopic] = useState("");
   const [wordCount, setWordCount] = useState("10");
+  const [crosswordMode, setCrosswordMode] = useState<"ai" | "custom">("ai");
+  const [customWordsText, setCustomWordsText] = useState("");
 
   // Quiz fields
   const [quizTopic, setQuizTopic] = useState("");
@@ -203,12 +206,25 @@ const Generator = () => {
         const res = await api.post("/generate/assignment", payload);
         setAssignmentData(res.data.result);
       } else {
-        const payload = {
-          topic: crosswordTopic,
-          word_count: parseInt(wordCount) || 10,
-          language: langLabel,
-          class_id: activeClassId
-        };
+        let payload: any;
+        if (crosswordMode === "custom") {
+          const parsedLines = customWordsText
+            .split("\n")
+            .map((l) => l.trim())
+            .filter((l) => l.length > 0);
+          payload = {
+            custom_words: parsedLines,
+            language: langLabel,
+            class_id: activeClassId
+          };
+        } else {
+          payload = {
+            topic: crosswordTopic,
+            word_count: parseInt(wordCount) || 10,
+            language: langLabel,
+            class_id: activeClassId
+          };
+        }
         const res = await api.post("/generate/crossword", payload);
         // Backend returns { words: [{word, clue}, ...] }
         setRawCrosswordWords(res.data.words);
@@ -232,7 +248,10 @@ const Generator = () => {
 
   const canGenerate =
     (genType === "math" && mathTopic.trim().length > 0) ||
-    (genType === "crossword" && crosswordTopic.trim().length > 0) ||
+    (genType === "crossword" && (
+      (crosswordMode === "ai" && crosswordTopic.trim().length > 0) ||
+      (crosswordMode === "custom" && customWordsText.trim().length > 0)
+    )) ||
     (genType === "quiz" && quizTopic.trim().length > 0) ||
     // Assignment: требуем только topic (subject автоопределяется)
     (genType === "assignment" && assignTopic.trim().length > 0);
@@ -1004,28 +1023,52 @@ const Generator = () => {
                 exit={{ opacity: 0, x: -10 }}
                 className="space-y-5"
               >
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
-                  <Input
-                    placeholder={t("genTopicPlaceholder")}
-                    value={crosswordTopic}
-                    onChange={(e) => setCrosswordTopic(e.target.value)}
-                    className="h-11 rounded-xl font-sans"
-                  />
-                </div>
+                <SegmentedControl
+                  label="Режим"
+                  options={["AI", t("custom_words") || "Свои слова"]}
+                  value={crosswordMode === "ai" ? "AI" : (t("custom_words") || "Свои слова")}
+                  onChange={(v) => setCrosswordMode(v === "AI" ? "ai" : "custom")}
+                  segId="crossword-mode"
+                />
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
-                  <Input
-                    type="number"
-                    min="5"
-                    max="20"
-                    placeholder="10"
-                    value={wordCount}
-                    onChange={(e) => setWordCount(e.target.value)}
-                    className="h-11 rounded-xl font-sans"
-                  />
-                </div>
+                {crosswordMode === "ai" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genTopic")}</Label>
+                      <Input
+                        placeholder={t("genTopicPlaceholder")}
+                        value={crosswordTopic}
+                        onChange={(e) => setCrosswordTopic(e.target.value)}
+                        className="h-11 rounded-xl font-sans"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("genCount")}</Label>
+                      <Input
+                        type="number"
+                        min="5"
+                        max="20"
+                        placeholder="10"
+                        value={wordCount}
+                        onChange={(e) => setWordCount(e.target.value)}
+                        className="h-11 rounded-xl font-sans"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {crosswordMode === "custom" && (
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder={"кот:домашнее животное\nсобака:друг человека\nрыба"}
+                      value={customWordsText}
+                      onChange={(e) => setCustomWordsText(e.target.value)}
+                      className="rounded-xl font-sans min-h-[140px] resize-y"
+                    />
+                    <p className="text-xs text-muted-foreground">Каждое слово на новой строке. Формат: слово:подсказка</p>
+                  </div>
+                )}
               </motion.div>
             )}
 

@@ -17,8 +17,15 @@ const Login = () => {
 
   useEffect(() => {
     if (user) {
-      if (user.role === "super_admin") navigate("/admin");
-      else navigate("/teacher");
+      const redirectAfter = localStorage.getItem("redirectAfter");
+      if (redirectAfter) {
+        localStorage.removeItem("redirectAfter");
+        navigate(redirectAfter);
+      } else if (user.role === "super_admin") {
+        navigate("/admin");
+      } else {
+        navigate("/teacher");
+      }
     }
   }, [user, navigate]);
 

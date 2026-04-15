@@ -7,12 +7,12 @@ export const adminService = {
         return response.data;
     },
 
-    createTeacher: async (data: { email: string; password: string; full_name: string; school?: string; phone?: string; tokens_limit?: number }) => {
+    createTeacher: async (data: { email: string; password: string; full_name: string; school?: string; phone?: string; tokens_limit?: number; plan?: string }) => {
         const response = await api.post("/admin/teachers", data);
         return response.data;
     },
 
-    updateTeacher: async (id: number, data: { full_name?: string; email?: string; school?: string; phone?: string; tokens_limit?: number }) => {
+    updateTeacher: async (id: number, data: { full_name?: string; email?: string; school?: string; phone?: string; tokens_limit?: number; plan?: string }) => {
         const response = await api.patch(`/admin/teachers/${id}`, data);
         return response.data;
     },
@@ -29,6 +29,11 @@ export const adminService = {
 
     deleteTeacher: async (id: number) => {
         const response = await api.delete(`/admin/teachers/${id}`);
+        return response.data;
+    },
+
+    impersonateUser: async (id: number) => {
+        const response = await api.post(`/admin/impersonate/${id}`);
         return response.data;
     },
 

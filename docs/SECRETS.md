@@ -38,6 +38,21 @@
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT lifetime | `10080` (7 days) |
 | `SENTRY_DSN` | Sentry error tracking DSN | _(empty = disabled)_ |
 
+### Payment Credentials (Required for Production)
+
+> [!IMPORTANT]
+> Use UNIQUE credentials for this project. Do NOT reuse IDs from other projects (like "Testora") to avoid webhook conflicts.
+
+| Variable | Provider | Description |
+|----------|----------|-------------|
+| `PAYME_MERCHANT_ID` | Payme | ID of the merchant |
+| `PAYME_SECRET_KEY` | Payme | Merchant key (password) |
+| `CLICK_SERVICE_ID` | Click | ID of the service |
+| `CLICK_MERCHANT_ID` | Click | ID of the merchant cabinet |
+| `CLICK_SECRET_KEY` | Click | Secret key for signatures |
+| `PAYMENT_SIMULATE` | Internal | Set `true` to skip real payments |
+
+
 ### Required (frontend)
 
 | Variable | Description |

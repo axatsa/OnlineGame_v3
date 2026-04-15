@@ -42,9 +42,31 @@ def build_class_context_block(grade: str, context: str) -> str:
         )
     return "\n".join(parts)
 
-def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple[Any, int]:
-    """Helper to call OpenAI and return (content, total_tokens)"""
+async def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple[Any, int]:
+    """
+    Improved helper: Tries Gemini first (free with rotation), then falls back to OpenAI.
+    """
+    system_prompt = next((m["content"] for m in messages if m["role"] == "system"), "")
+    user_prompt = next((m["content"] for m in messages if m["role"] == "user"), "")
+
+    # ── TRY GEMINI FIRST (Optimization) ──────────────────────────────────────
+    from services import gemini_service
+    if gemini_service.key_manager.has_available_keys():
+        try:
+            logger.info("Universal AI Service: Trying Gemini first...")
+            result, tokens = await gemini_service.generate_content(
+                prompt=user_prompt,
+                system_instruction=system_prompt,
+                temperature=0.7
+            )
+            if result:
+                return result, tokens
+        except Exception as e:
+            logger.warning(f"Gemini pre-check failed, falling back to OpenAI: {e}")
+
+    # ── FALLBACK TO OPENAI ───────────────────────────────────────────────────
     try:
+        logger.info(f"Using OpenAI ({model}) as primary or fallback provider...")
         response = client.chat.completions.create(
             model=model,
             messages=messages,
@@ -135,7 +157,7 @@ def _sanitize_quiz_questions(questions: Any) -> List[Dict]:
     return sanitized
 
 
-def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[List[Dict[str, str]], int]:
+async def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[List[Dict[str, str]], int]:
     user_prompt = f"""
     Generate {count} math problems.
     Topic: {topic}
@@ -153,12 +175,12 @@ def generate_math_problems(topic: str, count: int, difficulty: str, grade: str =
     Return ONLY a JSON array of objects with 'q' and 'a' keys.
     Example: [{{"q": "[FRAC:2:5] + [FRAC:1:5] = ?", "a": "[FRAC:3:5]"}}, {{"q": "3 × 7 = ?", "a": "21"}}]
     """
-    return _get_completion([
+    return await _get_completion([
         {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
 
-def generate_crossword_words(topic: str, count: int, language: str = "Russian", grade: str = "", context: str = "") -> tuple:
+async def generate_crossword_words(topic: str, count: int, language: str = "Russian", grade: str = "", context: str = "") -> tuple:
     user_prompt = f"""
     Generate exactly {count} words and clues related to the topic "{topic}" in {language}.
     {build_class_context_block(grade, context)}
@@ -173,12 +195,12 @@ def generate_crossword_words(topic: str, count: int, language: str = "Russian", 
     Return ONLY a JSON array (no extra text):
     [{{"word": "APPLE", "clue": "A red or green fruit"}}]
     """
-    return _get_completion([
+    return await _get_completion([
         {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
 
-def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[List[Dict], int]:
+async def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[List[Dict], int]:
     user_prompt = f"""
     Generate {count} multiple-choice quiz questions in {language}.
     Topic: {topic}
@@ -209,7 +231,7 @@ def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", la
     WRONG: {{"options": ["Paris", "London", "Berlin", "Madrid"], "a": "Paris is correct"}}
     CORRECT: {{"options": ["Paris", "London", "Berlin", "Madrid"], "a": "Paris"}}
     """
-    result, tokens = _get_completion([
+    result, tokens = await _get_completion([
         {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
@@ -221,7 +243,7 @@ def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", la
     return result, tokens
 
 
-def generate_assignment(subject: str, topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[Dict, int]:
+async def generate_assignment(subject: str, topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[Dict, int]:
     user_prompt = f"""
     Create a detailed school assignment/worksheet.
     Subject: {subject}
@@ -252,12 +274,12 @@ def generate_assignment(subject: str, topic: str, count: int, grade: str = "", c
         ]
     }}
     """
-    return _get_completion([
+    return await _get_completion([
         {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])
 
-def generate_jeopardy(topic: str, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[Dict, int]:
+async def generate_jeopardy(topic: str, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[Dict, int]:
     user_prompt = f"""
     Create a Jeopardy game board.
     Topic: {topic}
@@ -285,7 +307,7 @@ def generate_jeopardy(topic: str, grade: str = "", context: str = "", language: 
         ]
     }}
     """
-    return _get_completion([
+    return await _get_completion([
         {"role": "system", "content": get_system_prompt(language)},
         {"role": "user", "content": user_prompt}
     ])

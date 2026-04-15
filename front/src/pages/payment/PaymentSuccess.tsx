@@ -1,7 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import api from "@/lib/api";
 
 const DARK = "#07101F";
 const BLUE = "#0EA5E9";
@@ -10,7 +12,35 @@ const CORAL = "#FF3D68";
 
 export default function PaymentSuccess() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { user } = useAuth();
+    
+    const [status, setStatus] = useState<"verifying" | "completed">("verifying");
+    const paymentId = searchParams.get("payment_id");
+
+    useEffect(() => {
+        if (!paymentId) {
+            setStatus("completed");
+            return;
+        }
+
+        const interval = setInterval(async () => {
+            try {
+                const res = await api.get(`/payments/${paymentId}`);
+                if (res.data.status === "completed") {
+                    setStatus("completed");
+                    clearInterval(interval);
+                } else if (res.data.status === "failed" || res.data.status === "cancelled") {
+                    clearInterval(interval);
+                    navigate("/payment/fail");
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [paymentId, navigate]);
 
     const handleContinue = () => {
         if (user?.role === "super_admin") navigate("/admin");
@@ -46,7 +76,17 @@ export default function PaymentSuccess() {
                         margin: "0 auto 28px",
                     }}
                 >
-                    <CheckCircle2 size={36} color={CYAN} />
+                >
+                    {status === "verifying" ? (
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        >
+                            <Loader2 size={36} color={CYAN} />
+                        </motion.div>
+                    ) : (
+                        <CheckCircle2 size={36} color={CYAN} />
+                    )}
                 </motion.div>
 
                 <h1 style={{
@@ -54,13 +94,16 @@ export default function PaymentSuccess() {
                     fontSize: 32, fontWeight: 800,
                     color: "#fff", marginBottom: 12, lineHeight: 1.1,
                 }}>
-                    Оплата прошла!
+                    {status === "verifying" ? "Ожидание банка..." : "Оплата прошла!"}
                 </h1>
                 <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 15, lineHeight: 1.6, marginBottom: 36 }}>
-                    Ваша подписка активирована. Теперь вам доступны все возможности платформы.
+                    {status === "verifying" 
+                        ? "Мы ждем подтверждения от платежной системы. Обычно это занимает несколько секунд."
+                        : "Ваша подписка активирована. Теперь вам доступны все возможности платформы."}
                 </p>
 
-                <motion.button
+                {status === "completed" && (
+                    <motion.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={handleContinue}
@@ -74,6 +117,7 @@ export default function PaymentSuccess() {
                 >
                     Перейти в личный кабинет <ArrowRight size={16} />
                 </motion.button>
+                )}
             </motion.div>
         </div>
     );

@@ -12,6 +12,7 @@ from apps.auth.models import User, AuditLog
 from apps.generator.models import TokenUsage
 from apps.admin.models import Organization, Payment, InviteToken, GlobalSetting
 from apps.payments.models import UserSubscription
+from apps.auth.router import create_access_token
 
 from apps.auth.schemas import UserResponse, AuditLogResponse
 from apps.admin.schemas import (
@@ -87,8 +88,23 @@ def update_teacher(user_id: int, req: UpdateTeacherRequest, db: Session = Depend
     if not user:
         raise HTTPException(status_code=404, detail="Teacher not found")
     
-    for field, value in req.dict(exclude_unset=True).items():
-        setattr(user, field, value)
+    update_data = req.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        if key == "plan":
+            sub = db.query(UserSubscription).filter(UserSubscription.user_id == user_id).first()
+            if sub:
+                sub.plan = value.lower()
+                sub.expires_at = datetime.utcnow() + timedelta(days=365) # standard 1 year for manual
+            else:
+                sub = UserSubscription(
+                    user_id=user_id,
+                    plan=value.lower(),
+                    expires_at=datetime.utcnow() + timedelta(days=365),
+                    is_active=True
+                )
+                db.add(sub)
+        elif hasattr(user, key):
+            setattr(user, key, value)
     
     db.commit()
     db.refresh(user)
@@ -454,3 +470,27 @@ def set_setting(req: GlobalSettingResponse if False else dict, db: Session = Dep
     db.commit()
     db.refresh(setting)
     return setting
+
+@router.post("/impersonate/{user_id}")
+def impersonate_user(user_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Generate token for the target user
+    access_token = create_access_token(data={"sub": user.email})
+    
+    log = AuditLog(action="Impersonate User", target=user.email, user_id=admin.id, log_type="info")
+    db.add(log)
+    db.commit()
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+            "full_name": user.full_name
+        }
+    }

@@ -25,6 +25,16 @@ class PaymentStatusResponse(BaseModel):
         from_attributes = True
 
 
+class SubscriptionResponse(BaseModel):
+    id: int
+    plan: str
+    expires_at: datetime
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
 # ── Payme JSON-RPC ──────────────────────────────────────────────
 
 class PaymeWebhookRequest(BaseModel):

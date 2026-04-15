@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Building2, BrainCircuit, Settings,
   Menu, X, LogOut, Shield, TrendingUp,
   AlertTriangle, CheckCircle2, Clock, Ban, Key, Bell,
-  Eye, Lock, Unlock,
+  Eye, Lock, Unlock, LogIn,
   DollarSign, Zap, Activity, Search, Plus,
   Filter, Download, Calendar, Cpu,
   ToggleLeft, ToggleRight, FileText,
@@ -43,6 +43,8 @@ type Section = "dashboard" | "teachers" | "organizations" | "ai-monitor" | "fina
 type Teacher = {
   id: number; name: string; login: string; school: string;
   status: string; lastLogin: string; plan: string; tokenUsage: number; ip: string;
+  is_active: boolean;
+  tokens_limit: number;
 };
 
 type Org = {
@@ -462,7 +464,7 @@ const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { tea
 };
 
 const TeachersView = ({
-  teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal, isLoading, onRefresh
+  teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal, isLoading, onRefresh, onImpersonate
 }: {
   teachers: Teacher[];
   searchQuery: string;
@@ -472,6 +474,7 @@ const TeachersView = ({
   setShowResetModal: (v: number | null) => void;
   isLoading: boolean;
   onRefresh: () => void;
+  onImpersonate: (id: number) => void;
 }) => {
   const { t } = useTranslation();
   const filtered = teachers;
@@ -567,8 +570,10 @@ const TeachersView = ({
                     </td>
                     <td className="px-5 py-4"><StatusBadge status={t.status} /></td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setModal({ isOpen: true, data: { ...t, full_name: t.name, email: t.login, tokens_limit: 100000, password: "", phone: "" } as any })} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Редактировать">
+                        <button onClick={() => onImpersonate(t.id)} className="p-2 rounded-lg hover:bg-primary/10 transition-colors" title="Войти как пользователь">
+                          <LogIn className="w-3.5 h-3.5 text-primary" />
+                        </button>
+                        <button onClick={() => setModal({ isOpen: true, data: { id: t.id, full_name: t.name, email: t.login, tokens_limit: t.tokens_limit, password: "", phone: "", plan: t.plan } as any })} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Редактировать">
                           <Settings className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
                         <button onClick={() => setShowResetModal(t.id)} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Сбросить пароль">
@@ -1172,7 +1177,7 @@ const AdminPanel = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
-  const { isDark, toggle: toggleTheme } = useTheme();
+  const { isDark, toggle: toggleTheme, login } = useAuth();
   const [activeSection, setActiveSection] = useState<Section>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1193,6 +1198,17 @@ const AdminPanel = () => {
   // Pagination & Search State
   const [page, setPage] = useState(1);
   const LIMIT = 50;
+
+  const handleImpersonate = async (id: number) => {
+    try {
+      const data = await adminService.impersonateUser(id);
+      login(data.access_token, data.user);
+      navigate("/dashboard");
+      toast.success("Вход в аккаунт выполнен");
+    } catch {
+      toast.error("Ошибка при входе в аккаунт");
+    }
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -1227,12 +1243,14 @@ const AdminPanel = () => {
           id: u.id,
           name: u.full_name || "Unknown",
           login: u.email,
-          school: "Online",
-          status: "active",
+          school: u.school || "Online",
+          status: u.is_active ? "active" : "blocked",
           lastLogin: stats?.last_active ? new Date(stats.last_active).toLocaleString("ru-RU") : "—",
-          plan: "Pro",
+          plan: u.plan || "free",
           tokenUsage: stats?.total_tokens || 0,
-          ip: "—"
+          ip: "—",
+          is_active: u.is_active,
+          tokens_limit: u.tokens_limit || 0
         };
       });
       setTeachers(mappedTeachers);
@@ -1406,6 +1424,7 @@ const AdminPanel = () => {
                   setShowResetModal={setShowResetModal}
                   isLoading={isLoading}
                   onRefresh={fetchData}
+                  onImpersonate={handleImpersonate}
                 />
               )}
               {activeSection === "organizations" && <OrgsView orgs={orgs} isLoading={isLoading} onRefresh={fetchData} />}

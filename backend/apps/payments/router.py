@@ -10,7 +10,7 @@ from apps.auth.models import User
 from apps.payments.models import UserPayment, UserSubscription
 from apps.payments.schemas import (
     InitiatePaymentRequest, InitiatePaymentResponse,
-    PaymentStatusResponse,
+    PaymentStatusResponse, SubscriptionResponse,
     PaymeWebhookRequest,
     ClickPrepareRequest, ClickCompleteRequest, ClickBaseResponse,
 )
@@ -120,7 +120,28 @@ def initiate_payment(
     return InitiatePaymentResponse(payment_id=payment.id, redirect_url=redirect_url)
 
 
+# ── Subscription status ────────────────────────────────────────
+
+@router.get("/subscription/me", response_model=Optional[SubscriptionResponse])
+def get_my_subscription(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    sub = db.query(UserSubscription).filter(UserSubscription.user_id == current_user.id).first()
+    if not sub:
+        return None
+
+    is_active = sub.expires_at > datetime.utcnow()
+    return SubscriptionResponse(
+        id=sub.id,
+        plan=sub.plan,
+        expires_at=sub.expires_at,
+        is_active=is_active
+    )
+
+
 # ── Payment status ─────────────────────────────────────────────
+
 
 @router.get("/{payment_id}", response_model=PaymentStatusResponse)
 def get_payment_status(

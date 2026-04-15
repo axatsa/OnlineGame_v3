@@ -37,3 +37,15 @@ To pass moderation by Payme/Click:
 1. **Simulation Phase**: Set `PAYMENT_SIMULATE=true` and verify the full user flow.
 2. **Sandbox Phase**: Use provider-specific test keys and cards.
 3. **Production Phase**: Switch to real keys and perform a small real transaction.
+
+## 7. Important: Multi-project restrictions
+
+Do **NOT** reuse `Merchant ID` or `Service ID` from other projects (e.g., "Testora").
+
+**Risks of reuse:**
+- **Webhook Collision**: Both service providers (Click/Payme) allow only ONE callback URL per service. If you point it to OnlineGame_v3, the other project's payments will break.
+- **Accounting**: Revenue will be mixed in the dashboard.
+- **Transaction ID Clashes**: If both projects use similar order numbering, payments will fail with "Duplicate transaction" errors.
+
+**Correct Action**: Create a separate "Service" or "Project" in the Click and Payme merchant cabinets for OnlineGame_v3 to get unique credentials and a separate callback URL.
+

@@ -60,6 +60,7 @@ class UpdateTeacherRequest(BaseModel):
     school: Optional[str] = None
     phone: Optional[str] = None
     tokens_limit: Optional[int] = None
+    plan: Optional[str] = None
 
 class ResetPasswordRequest(BaseModel):
     new_password: str

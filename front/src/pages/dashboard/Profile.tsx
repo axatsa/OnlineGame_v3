@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   User, Mail, Phone, School, Lock, Edit3, Save, X,
-  Zap, BookOpen, BarChart2, Clock, QrCode, Copy, Check, LogOut
+  Zap, BookOpen, BarChart2, Clock, QrCode, Copy, Check, LogOut,
+  Star, ChevronRight
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { 
@@ -29,6 +31,12 @@ interface UserProfile {
   tokens_used_this_month: number;
 }
 
+interface SubscriptionData {
+  plan: string;
+  expires_at: string;
+  is_active: boolean;
+}
+
 interface Stats {
   total_resources: number;
   total_tokens: number;
@@ -39,6 +47,7 @@ interface Stats {
 
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: "", phone: "", school: "" });
@@ -52,7 +61,15 @@ export default function Profile() {
   useEffect(() => {
     loadProfile();
     loadStats();
+    loadSubscription();
   }, []);
+
+  const loadSubscription = async () => {
+    try {
+      const res = await api.get("/payments/subscription/me");
+      setSubscription(res.data);
+    } catch {}
+  };
 
   const loadProfile = async () => {
     try {
@@ -214,6 +231,40 @@ export default function Profile() {
           <p className="text-xs text-gray-400 mt-1">
             {profile.tokens_used_this_month?.toLocaleString()} / {profile.tokens_limit === -1 ? "∞" : profile.tokens_limit?.toLocaleString()}
           </p>
+        </div>
+
+        {/* Subscription Status */}
+        <div className="p-4 border-b border-black/5 dark:border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${subscription?.is_active ? 'bg-amber-100 text-amber-500' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'}`}>
+              <Star className="w-5 h-5 fill-current" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">
+                {subscription?.is_active ? `План ${subscription.plan}` : "Бесплатный план"}
+              </p>
+              {subscription?.is_active ? (
+                <p className="text-xs text-gray-500">
+                  Активен до {new Date(subscription.expires_at).toLocaleDateString()}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500">
+                  Доступны базовые функции
+                </p>
+              )}
+            </div>
+          </div>
+          <Link
+            to="/checkout"
+            className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
+              subscription?.is_active 
+                ? "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600" 
+                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400"
+            }`}
+          >
+            {subscription?.is_active ? "Продлить" : "Улучшить"}
+            <ChevronRight className="w-3 h-3" />
+          </Link>
         </div>
 
         {/* Profile Fields */}

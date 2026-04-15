@@ -74,13 +74,6 @@ app.include_router(library_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(payments_router, prefix="/api/v1")
 
-# Deprecated aliases for backward compatibility
-app.include_router(auth_router, deprecated=True)
-app.include_router(classes_router, deprecated=True)
-app.include_router(generator_router, deprecated=True)
-app.include_router(gamification_router, deprecated=True)
-app.include_router(library_router, deprecated=True)
-app.include_router(admin_router, deprecated=True)
 
 @app.get("/")
 def read_root():

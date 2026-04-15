@@ -11,6 +11,7 @@ export interface TeacherFormData {
   school: string;
   phone: string;
   tokens_limit: number;
+  plan: string;
 }
 
 interface TeacherModalProps {
@@ -22,7 +23,7 @@ interface TeacherModalProps {
 
 export default function TeacherModal({ isOpen, onClose, onSave, initialData }: TeacherModalProps) {
   const [form, setForm] = useState<TeacherFormData>({
-    full_name: "", email: "", password: "", school: "", phone: "", tokens_limit: 100000
+    full_name: "", email: "", password: "", school: "", phone: "", tokens_limit: 100000, plan: "FREE"
   });
   const [saving, setSaving] = useState(false);
 
@@ -36,10 +37,11 @@ export default function TeacherModal({ isOpen, onClose, onSave, initialData }: T
           password: "", // Leave blank on edit
           school: initialData.school || "",
           phone: initialData.phone || "",
-          tokens_limit: initialData.tokens_limit ?? 100000
+          tokens_limit: initialData.tokens_limit ?? 100000,
+          plan: initialData.plan || "FREE"
         });
       } else {
-        setForm({ full_name: "", email: "", password: "", school: "", phone: "", tokens_limit: 100000 });
+        setForm({ full_name: "", email: "", password: "", school: "", phone: "", tokens_limit: 100000, plan: "FREE" });
       }
     }
   }, [isOpen, initialData]);
@@ -163,16 +165,31 @@ export default function TeacherModal({ isOpen, onClose, onSave, initialData }: T
                 </label>
               </div>
 
-              <label className="block">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Лимит токенов (AI)</span>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  value={form.tokens_limit}
-                  onChange={e => setForm(f => ({ ...f, tokens_limit: parseInt(e.target.value) || 0 }))}
-                />
-                <p className="text-[10px] text-muted-foreground mt-1">-1 означает безлимитный тариф</p>
-              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Лимит токенов (AI)</span>
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    value={form.tokens_limit}
+                    onChange={e => setForm(f => ({ ...f, tokens_limit: parseInt(e.target.value) || 0 }))}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">План / Тариф</span>
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none"
+                    value={form.plan}
+                    onChange={e => setForm(f => ({ ...f, plan: e.target.value }))}
+                  >
+                    <option value="FREE">FREE</option>
+                    <option value="PRO">PRO</option>
+                    <option value="SCHOOL">SCHOOL</option>
+                  </select>
+                </label>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">-1 в лимите означает безлимит. Смена плана создаст/обновит подписку.</p>
             </div>
 
             <div className="pt-4 flex gap-3">

@@ -12,6 +12,7 @@ from google.genai import types as genai_types
 import asyncio
 import base64
 import json
+import time
 import logging
 import re
 import traceback
@@ -20,21 +21,49 @@ import threading
 
 logger = logging.getLogger(__name__)
 
-from config import GEMINI_API_KEYS_LIST
+from config import GEMINI_API_KEYS_LIST, OPENAI_API_KEY
 
 class GeminiKeyManager:
     def __init__(self, keys: list[str]):
         self.keys = keys
         self.current_index = 0
+        self.cooldowns = {} # key -> timestamp when it becomes available
         self.lock = threading.Lock()
+        self.COOLDOWN_DURATION = 15 * 60 # 15 minutes
 
-    def get_next_key(self) -> str:
+    def get_next_key(self) -> Optional[str]:
         if not self.keys:
-            return ""
+            return None
+        
         with self.lock:
-            key = self.keys[self.current_index]
-            self.current_index = (self.current_index + 1) % len(self.keys)
-            return key
+            now = time.time()
+            num_keys = len(self.keys)
+            
+            # Try each key once, starting from current_index
+            for i in range(num_keys):
+                idx = (self.current_index + i) % num_keys
+                key = self.keys[idx]
+                until = self.cooldowns.get(key, 0)
+                if now >= until:
+                    # Found an available key — advance pointer past it for next call
+                    self.current_index = (idx + 1) % num_keys
+                    return key
+            
+            # All keys are in cooldown
+            return None
+
+    def mark_limited(self, key: str):
+        """Mark a key as rate-limited for 15 minutes."""
+        with self.lock:
+            until = time.time() + self.COOLDOWN_DURATION
+            self.cooldowns[key] = until
+            logger.warning(f"Key {key[:8]}... marked as LIMITED until {time.strftime('%H:%M:%S', time.localtime(until))}")
+
+    def has_available_keys(self) -> bool:
+        if not self.keys: return False
+        now = time.time()
+        with self.lock:
+            return any(now >= self.cooldowns.get(k, 0) for k in self.keys)
 
 key_manager = GeminiKeyManager(GEMINI_API_KEYS_LIST)
 
@@ -155,16 +184,28 @@ async def generate_storybook(
         except Exception as e:
             error_msg = str(e).lower()
             if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg or "too many requests" in error_msg:
-                logger.warning(f"Rate limit exceeded (429) on attempt {attempt + 1}. Retrying with next key...")
+                logger.warning(f"Rate limit exceeded (429) on attempt {attempt + 1}.")
+                key_manager.mark_limited(api_key)
                 continue
             else:
                 logger.error(f"Story generation failed on attempt {attempt + 1}: {e}")
-                # Don't break here, some other random error might be resolved by another key or a subsequent retry
                 continue
 
     if not story_data:
-        logger.error("Story generation failed after all retries.")
-        return None
+        if OPENAI_API_KEY:
+            logger.warning("All Gemini keys exhausted. FALLING BACK TO OPENAI for story text...")
+            from services.openai_service import generate_storybook as generate_storybook_oai
+            return await generate_storybook_oai(
+                title=title,
+                topic=topic,
+                age_group=age_group,
+                language=language,
+                genre=genre,
+                openai_api_key=OPENAI_API_KEY
+            )
+        else:
+            logger.error("Story generation failed after all retries and NO OpenAI key available.")
+            return None
 
     logger.info(f"Story parsed: {len(story_data['pages'])} pages")
 
@@ -223,13 +264,19 @@ async def _generate_image(prompt: str) -> Optional[str]:
             except Exception as e:
                 error_msg = str(e).lower()
                 if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg or "too many requests" in error_msg:
-                    logger.warning(f"Rate limit exceeded (429) for {model_name}. Breaking inner loop to try next key.")
+                    logger.warning(f"Rate limit exceeded (429) for {model_name}.")
+                    key_manager.mark_limited(api_key)
                     break # Break inner model loop, try outer loop (next key)
                 else:
                     logger.warning(f"Model {model_name} failed: {e}")
                     # traceback.print_exc()
 
-    logger.error("All image generation keys and models failed — returning None")
+    if OPENAI_API_KEY:
+        logger.warning(f"All Gemini keys and models failed for one image. FALLING BACK TO DALL-E 3...")
+        from services.openai_service import _generate_dalle_image, client as oai_client
+        return await _generate_dalle_image(oai_client, prompt)
+
+    logger.error("All image generation keys and models failed and No OpenAI fallback — returning None")
     return None
 
 
@@ -255,3 +302,93 @@ def _parse_json(text: str) -> Optional[dict]:
         except json.JSONDecodeError:
             pass
     return None
+
+async def generate_content(
+    prompt: str,
+    system_instruction: str = "You are a helpful educational assistant. Output ONLY valid JSON.",
+    model: str = "gemini-2.0-flash",
+    temperature: float = 0.7,
+    max_tokens: int = 4096,
+) -> tuple:
+    """
+    Generic content generation with rotation and OpenAI fallback.
+    Returns (json_data, estimated_tokens).
+    """
+    if not key_manager.keys:
+        logger.error("No Gemini API keys configured")
+        return None, 0
+
+    max_retries = len(key_manager.keys)
+    result_data = None
+    
+    for attempt in range(max_retries):
+        api_key = key_manager.get_next_key()
+        if not api_key: break
+        
+        client = genai.Client(api_key=api_key)
+        try:
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=model,
+                contents=prompt,
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=temperature,
+                    max_output_tokens=max_tokens,
+                ),
+            )
+            raw = response.text.strip()
+            result_data = _parse_json(raw)
+            if result_data:
+                # Estimate tokens (simplistic: chars / 4)
+                tokens = len(raw) // 4 + len(prompt) // 4
+                return result_data, tokens
+            
+            logger.error(f"Failed to parse JSON from Gemini response (attempt {attempt+1})")
+            continue
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg or "too many requests" in error_msg:
+                logger.warning(f"Rate limit exceeded (429) for Gemini on attempt {attempt+1}.")
+                key_manager.mark_limited(api_key)
+                continue
+            else:
+                logger.error(f"Gemini generation failed on attempt {attempt+1}: {e}")
+                continue
+
+    # ── FALLBACK TO OPENAI (direct call, no circular import) ─────────────────
+    if OPENAI_API_KEY:
+        logger.warning("All Gemini keys exhausted. FALLING BACK TO OPENAI for generic content...")
+        try:
+            from openai import OpenAI
+            import json as _json
+            oai = OpenAI(api_key=OPENAI_API_KEY)
+            response = await asyncio.to_thread(
+                oai.chat.completions.create,
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=temperature,
+            )
+            content = response.choices[0].message.content
+            usage = response.usage.total_tokens if response.usage else 0
+            # Try to parse JSON from the response
+            try:
+                return _json.loads(content), usage
+            except _json.JSONDecodeError:
+                import re as _re
+                m = _re.search(r"(\{.*\}|\[.*\])", content, _re.DOTALL)
+                if m:
+                    try:
+                        return _json.loads(m.group(1).strip()), usage
+                    except _json.JSONDecodeError:
+                        pass
+                logger.error("OpenAI fallback: could not parse JSON from response")
+                return None, usage
+        except Exception as e:
+            logger.error(f"OpenAI fallback failed: {e}")
+            return None, 0
+
+    return None, 0

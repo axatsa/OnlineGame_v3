@@ -47,11 +47,11 @@ _rate_limit = f"{RATE_LIMIT_PER_HOUR}/hour"
 
 @router.post("/math")
 @limiter.limit(_rate_limit)
-def gen_math(request: Request, req: MathRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def gen_math(request: Request, req: MathRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
     
-    problems, tokens = generate_math_problems(req.topic, req.count, req.difficulty, grade, context, req.language)
+    problems, tokens = await generate_math_problems(req.topic, req.count, req.difficulty, grade, context, req.language)
     
     if problems is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -65,13 +65,13 @@ def gen_math(request: Request, req: MathRequest, db: Session = Depends(get_db), 
 
 @router.post("/demo/math")
 @limiter.limit("5/day")
-def gen_math_demo(request: Request, req: MathRequest):
+async def gen_math_demo(request: Request, req: MathRequest):
     # Unauthenticated demo endpoint
     # We restrict difficulty and count to save tokens in demo mode
     # No DB saving, no token deduction, restricted params
     count = min(req.count, 5) # Max 5 problems for demo
     
-    problems, tokens = generate_math_problems(
+    problems, tokens = await generate_math_problems(
         req.topic, 
         count, 
         req.difficulty, 
@@ -87,7 +87,7 @@ def gen_math_demo(request: Request, req: MathRequest):
 
 @router.post("/crossword")
 @limiter.limit(_rate_limit)
-def gen_crossword(request: Request, req: CrosswordRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def gen_crossword(request: Request, req: CrosswordRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_token_quota(user, db)
 
     if req.custom_words:
@@ -103,7 +103,7 @@ def gen_crossword(request: Request, req: CrosswordRequest, db: Session = Depends
 
     grade, context = get_class_context(db, req.class_id)
 
-    words, tokens = generate_crossword_words(req.topic, req.word_count, req.language, grade, context)
+    words, tokens = await generate_crossword_words(req.topic, req.word_count, req.language, grade, context)
 
     if words is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -117,11 +117,11 @@ def gen_crossword(request: Request, req: CrosswordRequest, db: Session = Depends
 
 @router.post("/quiz")
 @limiter.limit(_rate_limit)
-def gen_quiz(request: Request, req: QuizRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def gen_quiz(request: Request, req: QuizRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
     
-    questions, tokens = generate_quiz(req.topic, req.count, grade, context, req.language)
+    questions, tokens = await generate_quiz(req.topic, req.count, grade, context, req.language)
     
     if questions is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -135,11 +135,11 @@ def gen_quiz(request: Request, req: QuizRequest, db: Session = Depends(get_db), 
 
 @router.post("/jeopardy")
 @limiter.limit(_rate_limit)
-def gen_jeopardy(request: Request, req: JeopardyRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def gen_jeopardy(request: Request, req: JeopardyRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
     
-    data, tokens = generate_jeopardy(req.topic, grade, context, req.language)
+    data, tokens = await generate_jeopardy(req.topic, grade, context, req.language)
     
     if data is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -153,11 +153,11 @@ def gen_jeopardy(request: Request, req: JeopardyRequest, db: Session = Depends(g
 
 @router.post("/assignment")
 @limiter.limit(_rate_limit)
-def gen_assignment(request: Request, req: AssignmentRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def gen_assignment(request: Request, req: AssignmentRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
     
-    assignment, tokens = generate_assignment(req.subject, req.topic, req.count, grade, context, req.language)
+    assignment, tokens = await generate_assignment(req.subject, req.topic, req.count, grade, context, req.language)
     
     if assignment is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -327,7 +327,7 @@ def delete_template(template_id: int, db: Session = Depends(get_db), user: User 
 
 @router.post("/batch")
 @limiter.limit(_rate_limit)
-def gen_batch(request: Request, req: BatchRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def gen_batch(request: Request, req: BatchRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
     
@@ -336,7 +336,7 @@ def gen_batch(request: Request, req: BatchRequest, db: Session = Depends(get_db)
     
     for i in range(req.count):
         if req.tool_type == "math":
-            res, tokens = generate_math_problems(
+            res, tokens = await generate_math_problems(
                 req.params.get("topic", ""),
                 req.params.get("count", 10),
                 req.params.get("difficulty", "medium"),
@@ -345,7 +345,7 @@ def gen_batch(request: Request, req: BatchRequest, db: Session = Depends(get_db)
             if res: variants.append({"problems": res})
             
         elif req.tool_type == "quiz":
-            res, tokens = generate_quiz(
+            res, tokens = await generate_quiz(
                 req.params.get("topic", ""),
                 req.params.get("count", 5),
                 req.language, grade, context
@@ -353,7 +353,7 @@ def gen_batch(request: Request, req: BatchRequest, db: Session = Depends(get_db)
             if res: variants.append({"questions": res})
             
         elif req.tool_type == "assignment":
-            res, tokens = generate_assignment(
+            res, tokens = await generate_assignment(
                 req.params.get("subject", ""),
                 req.params.get("topic", ""),
                 req.params.get("count", 5),

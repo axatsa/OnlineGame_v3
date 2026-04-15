@@ -2,12 +2,12 @@ import api from "@/lib/api";
 
 export const teacherService = {
     getClasses: async () => {
-        const response = await api.get("/teacher/classes");
+        const response = await api.get("/classes/");
         return response.data;
     },
 
     createClass: async (data: { name: string; grade: string }) => {
-        const response = await api.post("/teacher/classes", data);
+        const response = await api.post("/classes/", data);
         return response.data;
     },
 

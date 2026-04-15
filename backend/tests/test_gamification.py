@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from database import Base
 from apps.auth.models import User
 from apps.gamification.models import StudentProfile, XPTransaction, DailyProgress
+from apps.payments.models import UserPayment, UserSubscription
 from apps.gamification.services import (
     process_activity_completion, calculate_level, get_tashkent_now,
     XP_PER_ACTIVITY, COINS_PER_ACTIVITY, DAILY_XP_LIMIT, DAILY_COINS_LIMIT

@@ -20,7 +20,8 @@ from apps.admin.schemas import (
     PaymentResponse, PaymentCreate,
     CreateTeacherRequest, UpdateTeacherRequest, ResetPasswordRequest,
     TokenUsageStats, OrgStatsResponse, TeacherStatItem, BulkImportResponse, ImportedTeacher,
-    InviteCreate, InviteResponse, FinancialStats, GlobalSettingResponse, GlobalSettingUpdate
+    InviteCreate, InviteResponse, FinancialStats, GlobalSettingResponse, GlobalSettingUpdate,
+    BulkActionRequest
 )
 from apps.auth.dependencies import require_admin, get_current_user
 
@@ -158,13 +159,82 @@ def delete_teacher(user_id: int, db: Session = Depends(get_db), admin: User = De
         raise HTTPException(status_code=404, detail="Teacher not found")
     
     email = user.email
-    db.delete(user)
-    db.commit()
+    
+    # 1. Cleanup dependencies
+    # Imports inside to avoid circular deps if they exist
+    from apps.generator.models import TokenUsage, GenerationLog
+    from apps.payments.models import UserSubscription, UserPayment
+    
+    try:
+        db.query(TokenUsage).filter(TokenUsage.user_id == user_id).delete()
+        db.query(GenerationLog).filter(GenerationLog.user_id == user_id).delete()
+        db.query(UserSubscription).filter(UserSubscription.user_id == user_id).delete()
+        db.query(UserPayment).filter(UserPayment.user_id == user_id).delete()
+        
+        # Finally delete the user
+        db.delete(user)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete teacher: {str(e)}")
     
     log = AuditLog(action="Delete Teacher", target=email, user_id=admin.id, log_type="danger")
     db.add(log)
     db.commit()
-    return {"message": "Teacher deleted"}
+    return {"message": "Teacher deleted and all related records cleared"}
+
+@router.post("/teachers/bulk-block")
+def bulk_block_teachers(req: BulkActionRequest, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    users = db.query(User).filter(User.id.in_(req.user_ids), User.role == "teacher").all()
+    count = 0
+    for u in users:
+        u.is_active = False
+        count += 1
+    db.commit()
+    
+    log = AuditLog(action="Bulk Block", target=f"{count} users", user_id=admin.id, log_type="warning")
+    db.add(log)
+    db.commit()
+    return {"message": f"Blocked {count} teachers"}
+
+@router.post("/teachers/bulk-unblock")
+def bulk_unblock_teachers(req: BulkActionRequest, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    users = db.query(User).filter(User.id.in_(req.user_ids), User.role == "teacher").all()
+    count = 0
+    for u in users:
+        u.is_active = True
+        count += 1
+    db.commit()
+    
+    log = AuditLog(action="Bulk Unblock", target=f"{count} users", user_id=admin.id, log_type="success")
+    db.add(log)
+    db.commit()
+    return {"message": f"Unblocked {count} teachers"}
+
+@router.post("/teachers/bulk-delete")
+def bulk_delete_teachers(req: BulkActionRequest, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    users = db.query(User).filter(User.id.in_(req.user_ids), User.role == "teacher").all()
+    user_ids = [u.id for u in users]
+    
+    from apps.generator.models import TokenUsage, GenerationLog
+    from apps.payments.models import UserSubscription, UserPayment
+    
+    try:
+        db.query(TokenUsage).filter(TokenUsage.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(GenerationLog).filter(GenerationLog.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(UserSubscription).filter(UserSubscription.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(UserPayment).filter(UserPayment.user_id.in_(user_ids)).delete(synchronize_session=False)
+        
+        db.query(User).filter(User.id.in_(user_ids)).delete(synchronize_session=False)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Bulk delete failed: {str(e)}")
+        
+    log = AuditLog(action="Bulk Delete", target=f"{len(user_ids)} users", user_id=admin.id, log_type="danger")
+    db.add(log)
+    db.commit()
+    return {"message": f"Deleted {len(user_ids)} teachers and their usage records"}
 
 # ── Analytics ─────────────────────────────────────────────────
 

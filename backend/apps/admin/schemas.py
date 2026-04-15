@@ -65,6 +65,9 @@ class UpdateTeacherRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     new_password: str
 
+class BulkActionRequest(BaseModel):
+    user_ids: List[int]
+
 class TokenUsageStats(BaseModel):
     user_id: int
     full_name: str

@@ -17,6 +17,7 @@ from apps.library.models import SavedResource, GeneratedBook
 from apps.gamification.models import StudentProfile, XPTransaction, CoinTransaction, DailyProgress, SeasonStats, ShopItem, Purchase
 from apps.classes.models import ClassGroup
 from apps.generator.services import check_token_quota, increment_token_usage
+from apps.payments.models import UserPayment, UserSubscription
 from fastapi import HTTPException
 
 engine = create_engine("sqlite:///:memory:")

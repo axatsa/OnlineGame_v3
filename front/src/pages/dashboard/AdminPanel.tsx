@@ -475,6 +475,8 @@ const TeachersView = ({
   isLoading: boolean;
   onRefresh: () => void;
   onImpersonate: (id: number) => void;
+  selectedIds: number[];
+  setSelectedIds: (v: number[] | ((prev: number[]) => number[])) => void;
 }) => {
   const { t } = useTranslation();
   const filtered = teachers;
@@ -520,11 +522,79 @@ const TeachersView = ({
         </Button>
       </div>
 
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6"
+          >
+            <span className="text-sm font-semibold font-sans">Выбрано: {selectedIds.length}</span>
+            <div className="h-4 w-px bg-background/20" />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-background/10 text-background gap-2 h-8 text-xs font-sans"
+                onClick={async () => {
+                  await adminService.bulkBlockTeachers(selectedIds);
+                  setSelectedIds([]);
+                  onRefresh();
+                  toast.success("Пользователи заблокированы");
+                }}
+              >
+                <Lock className="w-3.5 h-3.5" /> Блокировать
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-background/10 text-background gap-2 h-8 text-xs font-sans"
+                onClick={async () => {
+                  await adminService.bulkUnblockTeachers(selectedIds);
+                  setSelectedIds([]);
+                  onRefresh();
+                  toast.success("Пользователи разблокированы");
+                }}
+              >
+                <Unlock className="w-3.5 h-3.5" /> Разблокировать
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-destructive/20 text-destructive gap-2 h-8 text-xs font-sans"
+                onClick={async () => {
+                  if (confirm(`Вы уверены, что хотите удалить ${selectedIds.length} учителей?`)) {
+                    await adminService.bulkDeleteTeachers(selectedIds);
+                    setSelectedIds([]);
+                    onRefresh();
+                    toast.success("Пользователи удалены");
+                  }
+                }}
+              >
+                <X className="w-3.5 h-3.5" /> Удалить
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">
+                <th className="w-10 px-5">
+                  <input
+                    type="checkbox"
+                    className="rounded border-border"
+                    checked={selectedIds.length === filtered.length && filtered.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedIds(filtered.map(t => t.id));
+                      else setSelectedIds([]);
+                    }}
+                  />
+                </th>
                 {[t("exp_teacher_login"), t("exp_school"), t("exp_last_login"), t("exp_tokens"), t("exp_status"), t("exp_action")].map(h => (
                   <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider font-sans whitespace-nowrap">{h}</th>
                 ))}
@@ -552,6 +622,17 @@ const TeachersView = ({
                     transition={{ delay: i * 0.04 }}
                     className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/20"}`}
                   >
+                    <td className="px-5 py-4">
+                      <input
+                        type="checkbox"
+                        className="rounded border-border"
+                        checked={selectedIds.includes(t.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedIds(prev => [...prev, t.id]);
+                          else setSelectedIds(prev => prev.filter(id => id !== t.id));
+                        }}
+                      />
+                    </td>
                     <td className="px-5 py-4">
                       <p className="font-medium text-foreground font-sans text-sm">{t.name}</p>
                       <p className="text-xs text-muted-foreground font-sans">@{t.login}</p>
@@ -1194,6 +1275,7 @@ const AdminPanel = () => {
   const [auditLogs, setAuditLogs] = useState<any[]>([]); // simplified type for logs
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Pagination & Search State
   const [page, setPage] = useState(1);
@@ -1246,7 +1328,7 @@ const AdminPanel = () => {
           school: u.school || "Online",
           status: u.is_active ? "active" : "blocked",
           lastLogin: stats?.last_active ? new Date(stats.last_active).toLocaleString("ru-RU") : "—",
-          plan: u.plan || "free",
+          plan: u.plan?.toUpperCase() || "FREE",
           tokenUsage: stats?.total_tokens || 0,
           ip: "—",
           is_active: u.is_active,
@@ -1425,6 +1507,8 @@ const AdminPanel = () => {
                   isLoading={isLoading}
                   onRefresh={fetchData}
                   onImpersonate={handleImpersonate}
+                  selectedIds={selectedIds}
+                  setSelectedIds={setSelectedIds}
                 />
               )}
               {activeSection === "organizations" && <OrgsView orgs={orgs} isLoading={isLoading} onRefresh={fetchData} />}

@@ -37,6 +37,21 @@ export const adminService = {
         return response.data;
     },
 
+    bulkBlockTeachers: async (user_ids: number[]) => {
+        const response = await api.post("/admin/teachers/bulk-block", { user_ids });
+        return response.data;
+    },
+
+    bulkUnblockTeachers: async (user_ids: number[]) => {
+        const response = await api.post("/admin/teachers/bulk-unblock", { user_ids });
+        return response.data;
+    },
+
+    bulkDeleteTeachers: async (user_ids: number[]) => {
+        const response = await api.post("/admin/teachers/bulk-delete", { user_ids });
+        return response.data;
+    },
+
     // ── Analytics ──────────────────────────────────────────────
     getAnalytics: async () => {
         const response = await api.get("/admin/analytics");

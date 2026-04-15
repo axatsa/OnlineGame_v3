@@ -18,6 +18,7 @@ def db():
     from apps.generator.models import TokenUsage
     from apps.library.models import GeneratedBook
     from apps.classes.models import ClassGroup
+    from apps.payments.models import UserPayment, UserSubscription
     yield session
     session.close()
     Base.metadata.drop_all(bind=engine)

@@ -464,7 +464,8 @@ const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { tea
 };
 
 const TeachersView = ({
-  teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal, isLoading, onRefresh, onImpersonate
+  teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal, isLoading, onRefresh, onImpersonate,
+  selectedIds, setSelectedIds,
 }: {
   teachers: Teacher[];
   searchQuery: string;

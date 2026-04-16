@@ -35,9 +35,16 @@ PAYMENT_SIMULATE = os.getenv("PAYMENT_SIMULATE", "false").lower() == "true"
 # Plan prices in tiyin (1 UZS = 100 tiyin)
 # Pro: ~190 000 UZS → 19 000 000 tiyin
 # School: ~620 000 UZS → 62 000 000 tiyin
+# Helper to safely get int from env
+def get_env_int(key: str, default: str) -> int:
+    val = os.getenv(key, default)
+    if not val or val.strip() == "":
+        return int(default)
+    return int(val)
+
 PLAN_PRICES_TIYIN: dict[str, int] = {
-    "pro": int(os.getenv("PLAN_PRO_PRICE_TIYIN", "19000000")),
-    "school": int(os.getenv("PLAN_SCHOOL_PRICE_TIYIN", "62000000")),
+    "pro": get_env_int("PLAN_PRO_PRICE_TIYIN", "19000000"),
+    "school": get_env_int("PLAN_SCHOOL_PRICE_TIYIN", "62000000"),
 }
 
 SUBSCRIPTION_DAYS = 30

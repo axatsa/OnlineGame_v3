@@ -4,7 +4,7 @@ from database import get_db
 from apps.auth.models import User
 from apps.auth.dependencies import get_current_user
 from services import gemini_service, openai_service
-from config import GEMINI_API_KEY, OPENAI_API_KEY
+from config import GEMINI_API_KEYS_LIST, OPENAI_API_KEY
 from apps.library.schemas import StorybookRequest, SavedResourceCreate, SavedResourceResponse, BookResponse
 from apps.library.models import SavedResource, GeneratedBook
 from typing import List
@@ -29,7 +29,7 @@ async def gen_storybook(
     provider = None
 
     # ── Попытка 1: Gemini ────────────────────────────────────────────────────
-    if GEMINI_API_KEY:
+    if GEMINI_API_KEYS_LIST:
         try:
             logger.info("Trying Gemini for storybook generation...")
             result = await gemini_service.generate_storybook(

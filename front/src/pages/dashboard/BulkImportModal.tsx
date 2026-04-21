@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, FileText, CheckCircle2, AlertTriangle, Download, Info } from "lucide-react";
+import { Upload, X, FileText, CheckCircle2, AlertTriangle, Download, Info, Loader2, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { adminService } from "@/api/adminService";
@@ -46,7 +46,7 @@ const BulkImportModal = ({ orgId, orgName, onClose, onSuccess }: BulkImportModal
           email: row.email || row.Email || "",
           name: row.name || row.Name || row.full_name || ""
         })).filter(r => r.email);
-        
+
         if (formatted.length === 0) {
           setError("Файл пуст или имеет неверный формат (нужны колонки name, email)");
         } else {
@@ -172,11 +172,11 @@ const BulkImportModal = ({ orgId, orgName, onClose, onSuccess }: BulkImportModal
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3 p-4 bg-violet-500/5 rounded-2xl border border-violet-500/10">
                     <Info className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-violet-600/80 font-sans leading-relaxed">
-                      Для каждого нового учителя будет автоматически создан аккаунт. 
+                      Для каждого нового учителя будет автоматически создан аккаунт.
                       После импорта вы сможете скачать файл с временными паролями.
                     </p>
                   </div>
@@ -184,7 +184,7 @@ const BulkImportModal = ({ orgId, orgName, onClose, onSuccess }: BulkImportModal
               )}
 
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
                   className="p-4 rounded-2xl bg-destructive/10 text-destructive text-sm font-sans flex items-center gap-3 border border-destructive/10"
                 >
@@ -218,14 +218,12 @@ const BulkImportModal = ({ orgId, orgName, onClose, onSuccess }: BulkImportModal
 
               {result.created?.length > 0 && (
                 <div className="p-6 rounded-3xl bg-yellow-500/5 border border-yellow-500/20 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                    <KeyIcon className="w-20 h-20 text-yellow-600 rotate-12" />
-                  </div>
+                  <Key className="w-20 h-20 text-yellow-600 rotate-12" />
                   <h5 className="font-bold text-yellow-700 font-sans flex items-center gap-2 mb-3">
                     <AlertTriangle className="w-5 h-5" /> Сохраните данные!
                   </h5>
                   <p className="text-sm text-yellow-700/80 font-sans mb-5 leading-relaxed relative z-10">
-                    Временные пароли сгенерированы автоматически. Пожалуйста, скачайте их сейчас, 
+                    Временные пароли сгенерированы автоматически. Пожалуйста, скачайте их сейчас,
                     так как они не сохраняются в системе после закрытия этого окна.
                   </p>
                   <Button onClick={downloadResults} className="w-full font-bold rounded-2xl gap-3 h-12 shadow-lg shadow-yellow-500/20 relative z-10">
@@ -243,9 +241,9 @@ const BulkImportModal = ({ orgId, orgName, onClose, onSuccess }: BulkImportModal
               <Button variant="outline" className="font-sans rounded-2xl px-6 h-11" onClick={onClose} disabled={isUploading}>
                 Отмена
               </Button>
-              <Button 
-                className="font-bold rounded-2xl px-8 h-11 gap-2 shadow-lg shadow-primary/20" 
-                disabled={!file || isUploading} 
+              <Button
+                className="font-bold rounded-2xl px-8 h-11 gap-2 shadow-lg shadow-primary/20"
+                disabled={!file || isUploading}
                 onClick={handleUpload}
               >
                 {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Начать импорт"}
@@ -261,18 +259,5 @@ const BulkImportModal = ({ orgId, orgName, onClose, onSuccess }: BulkImportModal
     </div>
   );
 };
-
-// Internal icon for the "Save passwords" section
-const KeyIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-  </svg>
-);
-
-const Loader2 = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-  </svg>
-);
 
 export default BulkImportModal;

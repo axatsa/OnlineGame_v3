@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from database import get_db
-from apps.auth.models import User
-from apps.auth.schemas import UserLogin, Token, ChangePasswordRequest, UserRegister
+from apps.auth.models import User, PasswordResetToken
+from apps.auth.schemas import UserLogin, Token, ChangePasswordRequest, UserRegister, ForgotPasswordRequest, ResetPasswordRequest
 from apps.admin.schemas import RegisterWithInviteRequest
 from apps.admin.models import InviteToken, Organization, GlobalSetting
 from apps.auth.dependencies import get_current_user
@@ -10,6 +10,9 @@ from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta, datetime
 from jose import jwt
 from passlib.context import CryptContext
+import secrets
+import os
+from services.email_service import send_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -174,6 +177,61 @@ def register(req: UserRegister, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": new_user
     }
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    # Always return 200 to avoid email enumeration
+    if not user:
+        return {"message": "Если аккаунт существует, письмо отправлено"}
+
+    # Invalidate any existing unused tokens
+    db.query(PasswordResetToken).filter(
+        PasswordResetToken.user_id == user.id,
+        PasswordResetToken.is_used == False
+    ).update({"is_used": True})
+
+    token_value = secrets.token_urlsafe(32)
+    expires = datetime.utcnow() + timedelta(hours=1)
+    reset_token = PasswordResetToken(
+        user_id=user.id,
+        token=token_value,
+        expires_at=expires,
+    )
+    db.add(reset_token)
+    db.commit()
+
+    frontend_url = os.getenv("FRONTEND_URL", str(request.base_url).rstrip("/"))
+    reset_link = f"{frontend_url}/reset-password?token={token_value}"
+    send_reset_email(user.email, reset_link)
+
+    return {"message": "Если аккаунт существует, письмо отправлено"}
+
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    reset_token = db.query(PasswordResetToken).filter(
+        PasswordResetToken.token == req.token,
+        PasswordResetToken.is_used == False,
+        PasswordResetToken.expires_at > datetime.utcnow()
+    ).first()
+
+    if not reset_token:
+        raise HTTPException(status_code=400, detail="Ссылка недействительна или устарела")
+
+    user = db.query(User).filter(User.id == reset_token.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    if len(req.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 6 символов")
+
+    user.hashed_password = pwd_context.hash(req.new_password)
+    reset_token.is_used = True
+    db.commit()
+
+    return {"message": "Пароль успешно изменён"}
+
 
 @router.get("/announcement")
 def get_announcement(db: Session = Depends(get_db)):

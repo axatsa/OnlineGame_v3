@@ -52,3 +52,10 @@ class UserRegister(BaseModel):
     email: str
     password: str
     full_name: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str

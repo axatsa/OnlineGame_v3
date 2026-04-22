@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
     children: ReactNode;
@@ -24,7 +25,11 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         }
     }, [user, token, isLoading, navigate, allowedRoles]);
 
-    if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    if (isLoading) return (
+        <div className="flex h-screen items-center justify-center bg-background">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+    );
     if (!user) return null; // Will redirect
 
     return <>{children}</>;

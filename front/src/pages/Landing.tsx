@@ -144,7 +144,7 @@ export default function Landing() {
           borderBottom: navScrolled ? "1px solid rgba(0,0,0,0.06)" : "none",
         }}
       >
-        <button onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer" }}>
+        <button onClick={() => navigate(user ? "/teacher" : "/")} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer" }}>
           <img src="/logo_sticker.webp" alt="ClassPlay" style={{ width: 36, height: 36, borderRadius: 10, objectFit: "contain" }} />
           <span style={{
             fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em",

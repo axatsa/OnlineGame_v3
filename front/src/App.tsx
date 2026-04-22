@@ -11,6 +11,8 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import Login from "./pages/auth/Login";
 import JoinWithInvite from "./pages/auth/JoinWithInvite";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import AdminPanel from "./pages/dashboard/AdminPanel";
 import TeacherDashboard from "./pages/dashboard/TeacherDashboard";
 import ClassManager from "./pages/ClassManager";
@@ -46,6 +48,8 @@ const App = () => (
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<JoinWithInvite />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/demo" element={<DemoGenerator />} />
 
                 {/* Admin Routes */}

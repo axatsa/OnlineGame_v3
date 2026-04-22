@@ -41,7 +41,7 @@ export default function JoinWithInvite() {
       
       toast.success("Регистрация успешна!");
       login(response.data.access_token, response.data.user);
-      navigate("/dashboard");
+      navigate("/teacher");
     } catch (error: any) {
       const msg = error.response?.data?.detail || "Ошибка при регистрации";
       toast.error(msg);

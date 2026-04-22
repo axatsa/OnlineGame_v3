@@ -8,6 +8,7 @@ import { AIGeneratingOverlay } from "@/components/AIGeneratingOverlay";
 import { useClass } from "@/context/ClassContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { generateCrosswordLayout, CrosswordGrid, CrosswordWord } from "@/lib/crossword";
 
 interface CellInput {
@@ -16,6 +17,7 @@ interface CellInput {
 }
 
 const Crossword = () => {
+  const { t } = useTranslation();
   const { activeClassId } = useClass();
   const [status, setStatus] = useState<"setup" | "loading" | "playing" | "finished">("setup");
   const [topicInput, setTopicInput] = useState("");
@@ -31,7 +33,7 @@ const Crossword = () => {
 
   const startGame = async () => {
     if (!topicInput.trim()) {
-      toast.error("Введите тему");
+      toast.error(t("crosswordEnterTopic", "Введите тему"));
       return;
     }
     setStatus("loading");
@@ -62,10 +64,10 @@ const Crossword = () => {
       setSelectedWord(null);
       setChecked(false);
       setStatus("playing");
-      toast.success("Кроссворд сгенерирован!");
+      toast.success(t("crosswordGenerated", "Кроссворд сгенерирован!"));
     } catch (e) {
       console.error(e);
-      toast.error("Не удалось сгенерировать кроссворд. Попробуйте снова.");
+      toast.error(t("crosswordGenError", "Не удалось сгенерировать кроссворд. Попробуйте снова."));
       setStatus("setup");
     }
   };
@@ -125,7 +127,7 @@ const Crossword = () => {
     if (allCorrect) {
       setTimeout(() => setStatus("finished"), 600);
     } else {
-      toast.info("Проверьте выделенные красным ячейки!");
+      toast.info(t("crosswordCheckHint", "Проверьте выделенные красным ячейки!"));
     }
   };
 
@@ -173,12 +175,12 @@ const Crossword = () => {
   const acrossWords = crossword?.words.filter(w => w.isAcross).sort((a, b) => a.number - b.number) || [];
   const downWords = crossword?.words.filter(w => !w.isAcross).sort((a, b) => a.number - b.number) || [];
 
-  const howToPlay = "Введите буквы в клетки кроссворда. Нажмите на подсказку слева чтобы выбрать слово. Нажмите «Проверить» чтобы увидеть правильные и неправильные ответы. Заполните все слова чтобы победить!";
+  const howToPlay = t("game_crossword_how", "Введите буквы в клетки кроссворда. Нажмите на подсказку слева чтобы выбрать слово. Нажмите «Проверить» чтобы увидеть правильные и неправильные ответы. Заполните все слова чтобы победить!");
 
   const CELL_SIZE = 32; // px
 
   return (
-    <GameShell title="Кроссворд" onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
+    <GameShell title={t("game_crossword_title", "Кроссворд")} onBack="/games" onRestart={startGame} howToPlay={howToPlay}>
       <AnimatePresence mode="wait">
         {/* ── Setup ── */}
         {status === "setup" && (

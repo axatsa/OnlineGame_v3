@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from rate_limiter import limiter
 from sqlalchemy.orm import Session
 from database import get_db
 from apps.auth.models import User, PasswordResetToken
@@ -28,7 +29,8 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 @router.post("/login", response_model=Token)
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_data.email).first()
     
     if not user or not pwd_context.verify(user_data.password, user.hashed_password):
@@ -179,7 +181,8 @@ def register(req: UserRegister, db: Session = Depends(get_db)):
     }
 
 @router.post("/forgot-password")
-def forgot_password(req: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
+@limiter.limit("3/hour")
+def forgot_password(request: Request, req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email).first()
     # Always return 200 to avoid email enumeration
     if not user:

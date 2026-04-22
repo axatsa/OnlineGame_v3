@@ -774,7 +774,7 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
         {isLoading ? (
           <TableSkeleton rows={3} columns={1} />
         ) : orgs.length === 0 ? (
-          <EmptyState icon={Building2} title="Нет организаций" description="Список организаций пуст" />
+          <EmptyState icon={Building2} title={t("adminNoOrgs", "Нет организаций")} description={t("adminNoOrgsDesc", "Список организаций пуст")} />
         ) : (
           orgs.map((org, i) => (
             <motion.div
@@ -957,7 +957,7 @@ const AiMonitorView = ({
               ) : teachers.length === 0 ? (
                 <tr>
                   <td colSpan={7}>
-                    <EmptyState icon={Users} title="Нет учителей" description="Список учителей пуст" />
+                    <EmptyState icon={Users} title={t("adminNoTeachers", "Нет учителей")} description={t("adminNoTeachersDesc", "Список учителей пуст")} />
                   </td>
                 </tr>
               ) : (
@@ -1234,7 +1234,7 @@ const SystemView = ({
               ) : auditLogs.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="py-20 text-center">
-                    <EmptyState icon={Activity} title="Нет логов" description="История действий пуста" />
+                    <EmptyState icon={Activity} title={t("adminNoLogs", "Нет логов")} description={t("adminNoLogsDesc", "История действий пуста")} />
                   </td>
                 </tr>
               ) : (

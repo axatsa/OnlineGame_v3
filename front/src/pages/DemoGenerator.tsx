@@ -41,13 +41,13 @@ const DemoGenerator = () => {
 
       if (response.data.problems && response.data.problems.length > 0) {
         setGeneratedProblems(response.data.problems);
-        toast.success("Успешно сгенерировано!");
+        toast.success(t("demoGeneratedSuccess", "Успешно сгенерировано!"));
       }
     } catch (error: any) {
       if (error.response?.status === 429) {
-        toast.error("Дневной лимит демо-запросов исчерпан. Зарегистрируйтесь для продолжения!");
+        toast.error(t("demoLimitExceeded", "Дневной лимит демо-запросов исчерпан. Зарегистрируйтесь для продолжения!"));
       } else {
-        toast.error("Ошибка генерации. Попробуйте другую тему.");
+        toast.error(t("demoGenError", "Ошибка генерации. Попробуйте другую тему."));
       }
     } finally {
       setIsGenerating(false);

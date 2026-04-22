@@ -47,6 +47,16 @@ const GamesLibrary = () => {
           <p className="text-muted-foreground font-sans">{t("gamesSub")}</p>
         </motion.div>
 
+        {GAMES_CONFIG.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Play className="w-8 h-8 text-primary" />
+            </div>
+            <p className="font-bold text-foreground text-lg mb-1">{t("noGamesYet", "Игры скоро появятся")}</p>
+            <p className="text-muted-foreground font-sans text-sm">{t("noGamesSub", "Мы работаем над новыми играми для вас")}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {GAMES_CONFIG.map((game, i) => (
             <motion.div

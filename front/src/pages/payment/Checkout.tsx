@@ -20,7 +20,22 @@ const PLANS: Record<string, {
     features: string[];
     accent: string;
     planKey: Plan;
+    free?: boolean;
 }> = {
+    free: {
+        name: "Бесплатный",
+        price: "$0",
+        period: "/ навсегда",
+        planKey: "pro" as Plan,
+        free: true,
+        accent: `linear-gradient(135deg, #10B981, #06D6A0)`,
+        features: [
+            "10 ИИ-генераций",
+            "Базовые игры",
+            "Поддержка",
+            "1 учитель",
+        ],
+    },
     pro: {
         name: "Pro Учитель",
         price: "$15",
@@ -83,6 +98,24 @@ export default function Checkout() {
 
     const { login: contextLogin } = useAuth();
 
+    const handleFreeSignup = async () => {
+        setAuthLoading(true);
+        try {
+            const endpoint = authMode === "login" ? "/auth/login" : "/auth/register";
+            const payload = authMode === "login"
+                ? { email, password }
+                : { email, password, full_name: fullName };
+            const res = await api.post(endpoint, payload);
+            contextLogin(res.data.access_token, res.data.user);
+            toast.success(authMode === "login" ? "Добро пожаловать!" : "Аккаунт создан! Добро пожаловать!");
+            navigate("/teacher");
+        } catch (err: any) {
+            toast.error(err.response?.data?.detail || "Ошибка авторизации");
+        } finally {
+            setAuthLoading(false);
+        }
+    };
+
     const handleAuthAndPay = async (method: PaymentMethod) => {
         setLoading(method);
         try {
@@ -118,6 +151,11 @@ export default function Checkout() {
             setLoading(null);
         }
     };
+
+    if (plan.free && user) {
+        navigate("/teacher");
+        return null;
+    }
 
     if (!user) {
         return (
@@ -181,7 +219,23 @@ export default function Checkout() {
                         </div>
 
                         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-                            {PAYMENT_METHODS.map(m => (
+                            {plan.free ? (
+                                <button
+                                    disabled={authLoading || !email || !password}
+                                    onClick={handleFreeSignup}
+                                    style={{
+                                        width: "100%", padding: "16px",
+                                        background: authLoading ? "rgba(255,255,255,0.1)" : `linear-gradient(135deg, #10B981, #06D6A0)`,
+                                        color: "#fff", fontSize: 15, fontWeight: 700,
+                                        border: "none", borderRadius: 16, cursor: "pointer",
+                                        display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                                        opacity: (!email || !password) ? 0.5 : 1,
+                                        boxShadow: (email && password) ? `0 8px 24px rgba(16,185,129,0.3)` : "none",
+                                    }}
+                                >
+                                    {authLoading ? <Loader2 size={18} className="animate-spin" /> : (authMode === "login" ? "Войти" : "Начать бесплатно")}
+                                </button>
+                            ) : PAYMENT_METHODS.map(m => (
                                 <button
                                     key={m.id}
                                     disabled={loading !== null || !email || !password}

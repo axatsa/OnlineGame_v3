@@ -723,8 +723,8 @@ export default function Landing() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => navigate("/login")} style={{ width: "100%", padding: 14, borderRadius: 14, border: "2px solid rgba(0,0,0,0.12)", background: "transparent", color: INK, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
-                {t("land_start", "Начать")}
+              <button onClick={() => navigate("/checkout?plan=free")} style={{ width: "100%", padding: 14, borderRadius: 14, border: "2px solid rgba(0,0,0,0.12)", background: "transparent", color: INK, fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                {t("land_start", "Начать бесплатно")}
               </button>
             </motion.div>
 

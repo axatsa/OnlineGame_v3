@@ -126,6 +126,17 @@ const Login = () => {
             <p className="text-muted-foreground font-sans">{t("loginSub")}</p>
           </div>
 
+          <p className="text-sm text-muted-foreground font-sans">
+            {t("noAccount", "Нет аккаунта?")}{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/checkout?plan=free")}
+              className="text-primary font-semibold hover:underline"
+            >
+              {t("registerFree", "Зарегистрироваться бесплатно")}
+            </button>
+          </p>
+
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <label className="text-sm font-medium font-sans text-foreground">{t("loginEmail")}</label>

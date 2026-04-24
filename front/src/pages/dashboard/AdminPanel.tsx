@@ -1260,7 +1260,8 @@ const AdminPanel = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
-  const { isDark, toggle: toggleTheme, login } = useAuth();
+  const { login } = useAuth();
+  const { isDark, toggle: toggleTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<Section>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1482,7 +1483,7 @@ const AdminPanel = () => {
               {isDark ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
             </button>
             <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors overflow-hidden">
-              <img src="/favicon.webp" alt="Logo" className="w-full h-full object-cover" />
+              <img src="/logo_sticker.webp" alt="Logo" className="w-full h-full object-contain" />
             </button>
           </div>
         </header>

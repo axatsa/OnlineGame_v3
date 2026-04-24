@@ -100,8 +100,7 @@ def update_teacher(user_id: int, req: UpdateTeacherRequest, db: Session = Depend
                 sub = UserSubscription(
                     user_id=user_id,
                     plan=value.lower(),
-                    expires_at=datetime.utcnow() + timedelta(days=365),
-                    is_active=True
+                    expires_at=datetime.utcnow() + timedelta(days=365)
                 )
                 db.add(sub)
         elif hasattr(user, key):
@@ -304,8 +303,9 @@ def delete_org(org_id: int, db: Session = Depends(get_db), admin: User = Depends
     org = db.query(Organization).filter(Organization.id == org_id).first()
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
-    
+
     name = org.name
+    db.query(User).filter(User.organization_id == org_id).update({"organization_id": None})
     db.delete(org)
     db.commit()
     

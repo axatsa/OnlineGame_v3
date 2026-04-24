@@ -7,6 +7,7 @@ import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ClassProvider } from "./context/ClassContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import Login from "./pages/auth/Login";
@@ -44,7 +45,8 @@ const App = () => (
       <OverloadCountdown />
       <BrowserRouter>
         <AuthProvider>
-          <ClassProvider>
+          <ThemeProvider>
+            <ClassProvider>
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
@@ -125,6 +127,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ClassProvider>
+          </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

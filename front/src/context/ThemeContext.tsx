@@ -10,8 +10,7 @@ const ThemeContext = createContext<ThemeCtx>({ isDark: false, toggle: () => {} }
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("classplay_theme");
-    if (saved) return saved === "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return saved === "dark";
   });
 
   useEffect(() => {

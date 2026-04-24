@@ -51,6 +51,6 @@ export type AuditLog = {
   action: string;
   resource_type: string;
   resource_id?: number;
-  changes?: Record<string, any>;
+  changes?: Record<string, unknown>;
   ip_address?: string;
 };

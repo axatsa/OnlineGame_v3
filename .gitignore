@@ -2,7 +2,10 @@
 .env
 .env.local
 .env.*.local
+.env.production.local
 .claude
+.claude-flow/
+.agent/
 
 # Python
 __pycache__/
@@ -12,33 +15,70 @@ __pycache__/
 .venv/
 venv/
 backend/venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Node
+# Node & Frontend
 front/node_modules/
 front/dist/
 front/.next/
+front/build/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.pnpm-lock.yaml
+lerna-debug.log
+*.tsbuildinfo
 
 # Build artifacts
 dist/
 build/
-*.egg-info/
+out/
 
-# SQLite (dev leftovers — prod uses PostgreSQL)
+# Database (dev leftovers — prod uses PostgreSQL)
 *.db
 *.sqlite
 *.sqlite3
+backup/
 
-# Logs
+# Logs & Cache
 *.log
+.cache/
+.turbo/
 
-# OS
+# OS & Desktop
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# IDE
+# IDE & Editor
 .vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
 .idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Temporary files
+.tmp/
+temp/
+*.tmp
 
 # Worktrees
-.worktrees/
 .worktrees/

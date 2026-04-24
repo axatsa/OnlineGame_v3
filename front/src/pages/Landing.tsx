@@ -85,16 +85,16 @@ const STEPS = [
     colorClass: "text-accent",
     iconBg: "bg-accent/10",
     title: "Запустите на уроке",
-    desc: "Игры запускаются в один клик прямо на проекторе. Ученики конкурируют.",
+    desc: "Игры запускаются в один клик прямо на интерактивной доске. Ученики конкурируют.",
   },
 ];
 
 const LEADERBOARD_DEMO = [
-  { name: "Aisha K.", level: 12, xp: 3240, rank: 1 },
-  { name: "Marcus T.", level: 11, xp: 2980, rank: 2 },
-  { name: "Sofia L.", level: 10, xp: 2710, rank: 3 },
-  { name: "James R.", level: 9, xp: 2490, rank: 4 },
-  { name: "Priya M.", level: 9, xp: 2301, rank: 5 },
+  { name: "Kaiser S.", level: 12, xp: 3240, rank: 1 },
+  { name: "Salamov A.", level: 11, xp: 2980, rank: 2 },
+  { name: "Abdullaev B.", level: 10, xp: 2710, rank: 3 },
+  { name: "Ibragimov F.", level: 9, xp: 2490, rank: 4 },
+  { name: "Miraliev D.", level: 9, xp: 2301, rank: 5 },
 ];
 
 const GAMES = [
@@ -110,14 +110,14 @@ const STATS = [
   { value: "12k+", label: "Учеников", icon: Users },
   { value: "6+", label: "Мини-игр", icon: Gamepad2 },
   { value: "AI", label: "Генератор", icon: BrainCircuit },
-  { value: "∞", label: "Контента", icon: Layers },
+  { value: "Нет ограничений", label: "Контента", icon: Layers },
 ];
 
 const FAQS = [
   { q: "Это бесплатно?", a: "Базовый план полностью бесплатен для одного учителя и одного класса без ограничений по времени." },
   { q: "Нужна ли карта для регистрации?", a: "Нет. Вы можете зарегистрироваться и начать работу без банковской карты." },
   { q: "Какие игры доступны?", a: "Jeopardy, Memory Matrix, Word Search, Tug of War, Balance Scales и Crossword — всего 6 режимов." },
-  { q: "Можно ли использовать на мобильных?", a: "Да, платформа полностью адаптирована для мобильных устройств и планшетов." },
+  { q: "Можно ли использовать на мобильных?", a: "Да, но лучше использовать ее на экранах больше 10 дюймов. Так как платформа расчитана изночально на большие экраны." },
   { q: "Как работает ИИ-генератор?", a: "Вы вводите тему или загружаете текст — ИИ создаёт тест, карточки или персональную книгу автоматически." },
 ];
 

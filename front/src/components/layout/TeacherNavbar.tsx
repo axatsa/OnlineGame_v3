@@ -67,7 +67,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveN
                                 <Bell className="w-4 h-4 text-emerald-100" />
                                 <span>{announcement.text}</span>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setAnnouncement(null)}
                                 className="p-1 hover:bg-white/20 rounded-lg transition-colors"
                             >
@@ -79,152 +79,156 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ activeNav: initialActiveN
             </AnimatePresence>
 
             <header className={`sticky top-0 z-30 bg-card/90 backdrop-blur-xl border-b border-border transition-shadow duration-300 ${scrolled ? "shadow-md" : ""}`}>
-            <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                {/* Logo + Brand */}
-                <button
-                    onClick={() => navigate("/teacher")}
-                    className="flex items-center gap-3 group"
-                >
-                    <img
-                        src="/logo_sticker.webp"
-                        alt="ClassPlay Logo"
-                        className="w-10 h-10 rounded-xl object-contain group-hover:scale-110 transition-transform duration-200"
-                    />
-                    <span className="text-xl font-display font-bold text-foreground hidden sm:inline tracking-tight">
-                        ClassPlay
-                    </span>
-                </button>
+                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                    {/* Logo + Brand */}
+                    <button
+                        onClick={() => navigate("/teacher")}
+                        className="flex items-center gap-3 group"
+                    >
+                        <img
+                            src="/logo_sticker.webp"
+                            alt="ClassPlay Logo"
+                            className="w-10 h-10 rounded-xl object-contain group-hover:scale-110 transition-transform duration-200"
+                        />
+                        <span className="text-xl font-display font-bold text-foreground hidden sm:inline tracking-tight">
+                            ClassPlay
+                        </span>
+                    </button>
 
-                {/* Nav Pills */}
-                <div className="flex items-center bg-muted rounded-full p-1 mx-4">
-                    {navPills.map((pill) => (
-                        <button
-                            key={pill.key}
-                            onClick={() => {
-                                setActiveNav(pill.key);
-                                navigate(pill.route);
-                            }}
-                            className={`relative px-5 py-2 text-sm font-medium font-sans rounded-full transition-colors ${activeNav === pill.key ? "text-white" : "text-muted-foreground hover:text-foreground"
-                                }`}
-                        >
-                            {activeNav === pill.key && (
-                                <motion.div
-                                    layoutId="activePill"
-                                    className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-sky-500 rounded-full"
-                                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                />
-                            )}
-                            <span className="relative z-10">{pill.label}</span>
-                        </button>
-                    ))}
-                </div>
+                    {/* Nav Pills */}
+                    <div className="flex items-center bg-muted rounded-full p-1 mx-4">
+                        {navPills.map((pill) => (
+                            <button
+                                key={pill.key}
+                                onClick={() => {
+                                    setActiveNav(pill.key);
+                                    navigate(pill.route);
+                                }}
+                                className={`relative px-5 py-2 text-sm font-medium font-sans rounded-full transition-colors ${activeNav === pill.key ? "text-white" : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                            >
+                                {activeNav === pill.key && (
+                                    <motion.div
+                                        layoutId="activePill"
+                                        className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-sky-500 rounded-full"
+                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                    />
+                                )}
+                                <span className="relative z-10">{pill.label}</span>
+                            </button>
+                        ))}
+                    </div>
 
-                {/* Right: Class Picker + Lang + Profile */}
-                <div className="flex items-center gap-2">
-                    {/* Class Picker */}
-                    <div className="relative mr-2">
-                        <button
-                            onClick={() => setShowClassPicker(v => !v)}
-                            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted transition-colors text-sm font-sans font-medium"
-                        >
-                            <GraduationCap className="w-4 h-4 text-emerald-500" />
-                            {activeClass ? (
-                                <span className="max-w-[100px] truncate">{activeClass.name}</span>
-                            ) : (
-                                <span className="text-muted-foreground">{t("selectClass")}</span>
-                            )}
-                            <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showClassPicker ? "rotate-180" : ""}`} />
-                        </button>
-                        <AnimatePresence>
-                            {showClassPicker && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                                    className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-xl p-1.5 min-w-[200px] z-50 flex flex-col gap-1"
-                                >
-                                    {classes.map((cls) => (
-                                        <button
-                                            key={cls.id}
-                                            onClick={() => { setActiveClassId(cls.id); setShowClassPicker(false); }}
-                                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-muted transition-colors text-left text-sm font-sans"
-                                        >
-                                            <div className="flex flex-col">
-                                                <span className="font-medium text-foreground">{cls.name}</span>
-                                                <span className="text-[10px] text-muted-foreground">{cls.studentCount} {t("studentsLabel")}</span>
-                                            </div>
-                                            {cls.id === activeClass?.id && <Check className="w-3.5 h-3.5 text-emerald-500" />}
-                                        </button>
-                                    ))}
-                                    <div className="h-px bg-border my-1" />
-                                    <button
-                                        onClick={() => { setShowClassPicker(false); navigate("/classes"); }}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 font-semibold font-sans hover:bg-muted rounded-xl transition-colors"
+                    {/* Right: Class Picker + Lang + Profile */}
+                    <div className="flex items-center gap-2">
+                        {/* Class Picker */}
+                        <div className="relative mr-2">
+                            <button
+                                onClick={() => setShowClassPicker(v => !v)}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted transition-colors text-sm font-sans font-medium"
+                            >
+                                <GraduationCap className="w-4 h-4 text-emerald-500" />
+                                {activeClass ? (
+                                    <span className="max-w-[100px] truncate">{activeClass.name}</span>
+                                ) : (
+                                    <span className="text-muted-foreground">{t("selectClass")}</span>
+                                )}
+                                <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showClassPicker ? "rotate-180" : ""}`} />
+                            </button>
+                            <AnimatePresence>
+                                {showClassPicker && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                                        className="absolute right-0 top-12 bg-card border border-border rounded-2xl shadow-xl p-1.5 min-w-[200px] z-50 flex flex-col gap-1"
                                     >
-                                        <Plus className="w-3.5 h-3.5" /> {t("addClass")}
-                                    </button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* Language Switcher */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowLangMenu(v => !v)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors text-sm font-sans font-medium text-foreground"
-                        >
-                            <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                            {lang.toUpperCase()}
-                        </button>
-                        <AnimatePresence>
-                            {showLangMenu && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                                    transition={{ duration: 0.12 }}
-                                    className="absolute right-0 top-11 bg-card border border-border rounded-2xl shadow-xl p-1.5 min-w-[140px] z-50 flex flex-col gap-1"
-                                >
-                                    {[
-                                        { l: "ru", n: "🇷🇺 Русский" },
-                                        { l: "uz", n: "🇺🇿 O'zbekcha" },
-                                        { l: "en", n: "🇺🇸 English" }
-                                    ].map(({ l, n }) => (
+                                        {classes.map((cls) => (
+                                            <button
+                                                key={cls.id}
+                                                onClick={() => { setActiveClassId(cls.id); setShowClassPicker(false); }}
+                                                className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-muted transition-colors text-left text-sm font-sans"
+                                            >
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-foreground">{cls.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{cls.studentCount} {t("studentsLabel")}</span>
+                                                </div>
+                                                {cls.id === activeClass?.id && <Check className="w-3.5 h-3.5 text-emerald-500" />}
+                                            </button>
+                                        ))}
+                                        <div className="h-px bg-border my-1" />
                                         <button
-                                            key={l}
-                                            onClick={() => { i18n.changeLanguage(l); setShowLangMenu(false); }}
-                                            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-sans transition-colors flex items-center justify-between ${lang === l ? "bg-emerald-50 text-emerald-700 font-semibold" : "hover:bg-muted text-foreground"}`}
+                                            onClick={() => { setShowClassPicker(false); navigate("/classes"); }}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-emerald-600 font-semibold font-sans hover:bg-muted rounded-xl transition-colors"
                                         >
-                                            <span>{n}</span>
-                                            {lang === l && <Check className="w-3.5 h-3.5" />}
+                                            <Plus className="w-3.5 h-3.5" /> {t("addClass")}
                                         </button>
-                                    ))}
-                                </motion.div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Language Switcher */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowLangMenu(v => !v)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors text-sm font-sans font-medium text-foreground"
+                            >
+                                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                                {lang.toUpperCase()}
+                            </button>
+                            <AnimatePresence>
+                                {showLangMenu && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                                        transition={{ duration: 0.12 }}
+                                        className="absolute right-0 top-11 bg-card border border-border rounded-2xl shadow-xl p-1.5 min-w-[140px] z-50 flex flex-col gap-1"
+                                    >
+                                        {[
+                                            { l: "ru", n: "🇷🇺 Русский" },
+                                            { l: "uz", n: "🇺🇿 O'zbekcha" },
+                                            { l: "en", n: "🇺🇸 English" }
+                                        ].map(({ l, n }) => (
+                                            <button
+                                                key={l}
+                                                onClick={() => { i18n.changeLanguage(l); setShowLangMenu(false); }}
+                                                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-sans transition-colors flex items-center justify-between ${lang === l ? "bg-emerald-50 text-emerald-700 font-semibold" : "hover:bg-muted text-foreground"}`}
+                                            >
+                                                <span>{n}</span>
+                                                {lang === l && <Check className="w-3.5 h-3.5" />}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Profile */}
+                        <button
+                            onClick={() => navigate("/profile")}
+                            className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-sky-500 flex items-center justify-center hover:scale-110 transition-transform shadow-sm overflow-hidden"
+                            title={t("view_profile", "Профиль")}
+                        >
+                            {user?.avatar_url ? (
+                                <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-5 h-5 text-white" />
                             )}
-                        </AnimatePresence>
+                        </button>
+
+                        {/* Logout */}
+                        <button
+                            onClick={logout}
+                            className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors shadow-sm"
+                            title={t("logout", "Выйти")}
+                        >
+                            <LogOut className="w-5 h-5 text-red-500" />
+                        </button>
                     </div>
-
-                    {/* Profile */}
-                    <button
-                        onClick={() => navigate("/profile")}
-                        className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-sky-500 flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
-                        title={t("view_profile", "Профиль")}
-                    >
-                        <User className="w-5 h-5 text-white" />
-                    </button>
-
-                    {/* Logout */}
-                    <button
-                        onClick={logout}
-                        className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center transition-colors shadow-sm"
-                        title={t("logout", "Выйти")}
-                    >
-                        <LogOut className="w-5 h-5 text-red-500" />
-                    </button>
                 </div>
-            </div>
-        </header>
+            </header>
         </>
     );
 };

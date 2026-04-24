@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Printer, Download, Loader2, AlertCircle, GraduationCap } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
+const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
 
 const TYPE_LABELS: Record<string, string> = {
     math: "Математика",

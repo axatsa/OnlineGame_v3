@@ -21,7 +21,7 @@ const Crossword = () => {
   const { activeClassId } = useClass();
   const [status, setStatus] = useState<"setup" | "loading" | "playing" | "finished">("setup");
   const [topicInput, setTopicInput] = useState("");
-  const [language, setLanguage] = useState<"ru" | "uz">("ru");
+  const [language, setLanguage] = useState<"ru" | "uz" | "en">("ru");
   const [wordCount, setWordCount] = useState("10");
 
   // Game state
@@ -41,7 +41,7 @@ const Crossword = () => {
       const res = await api.post("/generate/crossword", {
         topic: topicInput.trim(),
         word_count: parseInt(wordCount) || 10,
-        language: language === "ru" ? "Русский" : "O'zbekcha",
+        language: language === "ru" ? "Русский" : language === "uz" ? "O'zbekcha" : "English",
         class_id: activeClassId,
       });
 
@@ -193,10 +193,10 @@ const Crossword = () => {
               <div className="space-y-1.5">
                 <p className="text-gray-700 font-sans text-sm font-medium">Язык / Тил</p>
                 <div className="flex gap-2">
-                  {(["ru", "uz"] as const).map((l) => (
+                  {(["ru", "uz", "en"] as const).map((l) => (
                     <button key={l} onClick={() => setLanguage(l)}
                       className={`flex-1 py-2.5 rounded-xl font-sans font-semibold text-sm transition-all ${language === l ? "bg-purple-600 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-600 hover:border-purple-300"}`}>
-                      {l === "ru" ? "🇷🇺 Русский" : "🇺🇿 O'zbek"}
+                      {l === "ru" ? "🇷🇺" : l === "uz" ? "🇺🇿" : "🇺🇸"} {l.toUpperCase()}
                     </button>
                   ))}
                 </div>
@@ -248,146 +248,153 @@ const Crossword = () => {
         {/* ── Playing ── */}
         {status === "playing" && crossword && (
           <motion.div key="playing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="flex h-full bg-white gap-4 p-4 items-start"
+            className="flex flex-col h-full bg-white"
           >
-            {/* Clues sidebar */}
-            <div className="w-56 flex-shrink-0 flex flex-col gap-3 overflow-y-auto h-full pr-1">
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button onClick={handleReset}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-sans font-medium transition-colors">
-                  <RotateCcw className="w-3.5 h-3.5" /> Сброс
-                </button>
-                <button onClick={() => setStatus("setup")}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 text-xs font-sans font-medium transition-colors">
-                  <LogOut className="w-3.5 h-3.5" /> Выход
-                </button>
+            {topicInput && (
+              <div className="text-center py-2 text-sm font-sans text-gray-500 bg-gray-50 border-b border-gray-200">
+                Тема: <span className="font-semibold text-purple-600">{topicInput}</span>
               </div>
+            )}
+            <div className="flex h-full gap-4 p-4 items-start overflow-hidden">
+              {/* Clues sidebar */}
+              <div className="w-56 flex-shrink-0 flex flex-col gap-3 overflow-y-auto h-full pr-1">
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button onClick={handleReset}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-sans font-medium transition-colors">
+                    <RotateCcw className="w-3.5 h-3.5" /> Сброс
+                  </button>
+                  <button onClick={() => setStatus("setup")}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 text-xs font-sans font-medium transition-colors">
+                    <LogOut className="w-3.5 h-3.5" /> Выход
+                  </button>
+                </div>
 
-              <Button onClick={handleCheckAnswers}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> Проверить
-              </Button>
+                <Button onClick={handleCheckAnswers}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" /> Проверить
+                </Button>
 
-              {/* Across clues */}
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 font-sans">По горизонтали</p>
-                <div className="flex flex-col gap-1">
-                  {acrossWords.map(w => (
-                    <button key={`a-${w.number}`}
-                      onClick={() => setSelectedWord(w)}
-                      className={`text-left px-2 py-1.5 rounded-lg text-xs font-sans transition-colors ${selectedWord?.number === w.number && selectedWord?.isAcross ? "bg-blue-100 text-blue-800 font-semibold" : "hover:bg-gray-100 text-gray-700"}`}>
-                      <span className="font-bold text-gray-500 mr-1">{w.number}.</span>{w.clue}
-                    </button>
-                  ))}
+                {/* Across clues */}
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 font-sans">По горизонтали</p>
+                  <div className="flex flex-col gap-1">
+                    {acrossWords.map(w => (
+                      <button key={`a-${w.number}`}
+                        onClick={() => setSelectedWord(w)}
+                        className={`text-left px-2 py-1.5 rounded-lg text-xs font-sans transition-colors ${selectedWord?.number === w.number && selectedWord?.isAcross ? "bg-blue-100 text-blue-800 font-semibold" : "hover:bg-gray-100 text-gray-700"}`}>
+                        <span className="font-bold text-gray-500 mr-1">{w.number}.</span>{w.clue}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Down clues */}
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 font-sans">По вертикали</p>
+                  <div className="flex flex-col gap-1">
+                    {downWords.map(w => (
+                      <button key={`d-${w.number}`}
+                        onClick={() => setSelectedWord(w)}
+                        className={`text-left px-2 py-1.5 rounded-lg text-xs font-sans transition-colors ${selectedWord?.number === w.number && !selectedWord?.isAcross ? "bg-blue-100 text-blue-800 font-semibold" : "hover:bg-gray-100 text-gray-700"}`}>
+                        <span className="font-bold text-gray-500 mr-1">{w.number}.</span>{w.clue}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Down clues */}
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 font-sans">По вертикали</p>
-                <div className="flex flex-col gap-1">
-                  {downWords.map(w => (
-                    <button key={`d-${w.number}`}
-                      onClick={() => setSelectedWord(w)}
-                      className={`text-left px-2 py-1.5 rounded-lg text-xs font-sans transition-colors ${selectedWord?.number === w.number && !selectedWord?.isAcross ? "bg-blue-100 text-blue-800 font-semibold" : "hover:bg-gray-100 text-gray-700"}`}>
-                      <span className="font-bold text-gray-500 mr-1">{w.number}.</span>{w.clue}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+              {/* Grid */}
+              <div className="flex-1 overflow-auto flex items-start justify-center pt-2">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${crossword.width}, ${CELL_SIZE}px)`,
+                    gridTemplateRows: `repeat(${crossword.height}, ${CELL_SIZE}px)`,
+                    gap: "2px",
+                    background: "transparent",
+                  }}
+                >
+                  {crossword.grid.map((row, r) =>
+                    row.map((cell, c) => {
+                      const isEmpty = cell === "";
+                      const wordStart = crossword.words.find(w => w.row === r && w.col === c);
+                      const inputCell = inputs[r]?.[c];
 
-            {/* Grid */}
-            <div className="flex-1 overflow-auto flex items-start justify-center pt-2">
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${crossword.width}, ${CELL_SIZE}px)`,
-                  gridTemplateRows: `repeat(${crossword.height}, ${CELL_SIZE}px)`,
-                  gap: "2px",
-                  background: "transparent",
-                }}
-              >
-                {crossword.grid.map((row, r) =>
-                  row.map((cell, c) => {
-                    const isEmpty = cell === "";
-                    const wordStart = crossword.words.find(w => w.row === r && w.col === c);
-                    const inputCell = inputs[r]?.[c];
+                      if (isEmpty) {
+                        return (
+                          <div key={`${r}-${c}`}
+                            style={{ width: CELL_SIZE, height: CELL_SIZE, background: "transparent" }}
+                          />
+                        );
+                      }
 
-                    if (isEmpty) {
                       return (
                         <div key={`${r}-${c}`}
-                          style={{ width: CELL_SIZE, height: CELL_SIZE, background: "transparent" }}
-                        />
-                      );
-                    }
-
-                    return (
-                      <div key={`${r}-${c}`}
-                        style={{ width: CELL_SIZE, height: CELL_SIZE, position: "relative" }}
-                        className={getCellStyle(r, c)}
-                        onClick={() => {
-                          const w = getWordAtCell(r, c);
-                          if (w) setSelectedWord(w);
-                        }}
-                      >
-                        {/* Number label */}
-                        {wordStart && (
-                          <span style={{
-                            position: "absolute", top: 1, left: 2,
-                            fontSize: "8px", fontWeight: "bold", color: "#6b7280",
-                            lineHeight: 1, userSelect: "none",
-                          }}>
-                            {wordStart.number}
-                          </span>
-                        )}
-                        {/* Input */}
-                        <input
-                          id={`cw-cell-${r}-${c}`}
-                          type="text"
-                          maxLength={2}
-                          value={inputCell?.value || ""}
-                          onChange={(e) => handleCellChange(r, c, e.target.value)}
-                          onFocus={() => {
+                          style={{ width: CELL_SIZE, height: CELL_SIZE, position: "relative" }}
+                          className={getCellStyle(r, c)}
+                          onClick={() => {
                             const w = getWordAtCell(r, c);
                             if (w) setSelectedWord(w);
                           }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Backspace" && !inputCell?.value && selectedWord) {
-                              // Move back
-                              const cells = [];
-                              for (let i = 0; i < selectedWord.word.length; i++) {
-                                cells.push(selectedWord.isAcross
-                                  ? [selectedWord.row, selectedWord.col + i]
-                                  : [selectedWord.row + i, selectedWord.col]);
+                        >
+                          {/* Number label */}
+                          {wordStart && (
+                            <span style={{
+                              position: "absolute", top: 1, left: 2,
+                              fontSize: "8px", fontWeight: "bold", color: "#6b7280",
+                              lineHeight: 1, userSelect: "none",
+                            }}>
+                              {wordStart.number}
+                            </span>
+                          )}
+                          {/* Input */}
+                          <input
+                            id={`cw-cell-${r}-${c}`}
+                            type="text"
+                            maxLength={2}
+                            value={inputCell?.value || ""}
+                            onChange={(e) => handleCellChange(r, c, e.target.value)}
+                            onFocus={() => {
+                              const w = getWordAtCell(r, c);
+                              if (w) setSelectedWord(w);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Backspace" && !inputCell?.value && selectedWord) {
+                                // Move back
+                                const cells = [];
+                                for (let i = 0; i < selectedWord.word.length; i++) {
+                                  cells.push(selectedWord.isAcross
+                                    ? [selectedWord.row, selectedWord.col + i]
+                                    : [selectedWord.row + i, selectedWord.col]);
+                                }
+                                const idx = cells.findIndex(([cr, cc]) => cr === r && cc === c);
+                                if (idx > 0) {
+                                  const [pr, pc] = cells[idx - 1];
+                                  document.getElementById(`cw-cell-${pr}-${pc}`)?.focus();
+                                }
                               }
-                              const idx = cells.findIndex(([cr, cc]) => cr === r && cc === c);
-                              if (idx > 0) {
-                                const [pr, pc] = cells[idx - 1];
-                                document.getElementById(`cw-cell-${pr}-${pc}`)?.focus();
-                              }
-                            }
-                          }}
-                          style={{
-                            position: "absolute", inset: 0,
-                            width: "100%", height: "100%",
-                            textAlign: "center",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                            fontFamily: "monospace",
-                            background: "transparent",
-                            border: "none",
-                            outline: "none",
-                            cursor: "pointer",
-                            paddingTop: wordStart ? "8px" : "0",
-                            color: inputCell?.correct === false ? "#dc2626" : inputCell?.correct === true ? "#16a34a" : "#1f2937",
-                          }}
-                        />
-                      </div>
-                    );
-                  })
-                )}
+                            }}
+                            style={{
+                              position: "absolute", inset: 0,
+                              width: "100%", height: "100%",
+                              textAlign: "center",
+                              fontSize: "14px",
+                              fontWeight: "bold",
+                              fontFamily: "monospace",
+                              background: "transparent",
+                              border: "none",
+                              outline: "none",
+                              cursor: "pointer",
+                              paddingTop: wordStart ? "8px" : "0",
+                              color: inputCell?.correct === false ? "#dc2626" : inputCell?.correct === true ? "#16a34a" : "#1f2937",
+                            }}
+                          />
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>

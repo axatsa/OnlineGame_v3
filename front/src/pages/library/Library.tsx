@@ -102,114 +102,129 @@ const GenerateForm = ({
 
     return (
         <>
-        <AIGeneratingOverlay isGenerating={loading} />
-        <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={onClose}
-        >
+            <AIGeneratingOverlay isGenerating={loading} />
             <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border p-6"
-                onClick={e => e.stopPropagation()}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+                onClick={onClose}
             >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center">
-                            <Wand2 className="w-5 h-5 text-violet-600" />
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="w-full max-w-lg bg-card rounded-2xl shadow-2xl border border-border p-6"
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center">
+                                <Wand2 className="w-5 h-5 text-violet-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold font-serif text-foreground">Создать книгу</h3>
+                                {user?.role === "super_admin" && (
+                                    <p className="text-xs text-muted-foreground font-sans">
+                                        Text: gemini-2.0-flash · Images: gemini-2.5-flash-image · 10 стр · 10 иллюстраций
+                                    </p>
+                                )}
+                            </div>
                         </div>
+                        <button onClick={onClose}
+                            className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors">
+                            <X className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        {/* Topic */}
                         <div>
-                            <h3 className="text-lg font-bold font-serif text-foreground">Создать книгу</h3>
-                            {user?.role === "super_admin" && (
-                                <p className="text-xs text-muted-foreground font-sans">
-                                    Text: gemini-2.0-flash · Images: gemini-2.5-flash-image · 10 стр · 10 иллюстраций
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
+                                Про что будет книга? *
+                            </label>
+                            <textarea
+                                value={topic}
+                                onChange={e => setTopic(e.target.value)}
+                                placeholder="Опишите главных героев, место действия и мораль истории..."
+                                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[120px] resize-none"
+                            />
+                            <div className="mt-3 p-3 bg-violet-50 border border-violet-100 rounded-xl">
+                                <p className="text-xs text-violet-800 font-bold mb-1 flex items-center gap-1.5 font-sans">
+                                    <Info className="w-3.5 h-3.5" /> Секрет хорошей книги:
                                 </p>
-                            )}
+                                <p className="text-xs text-violet-700 font-sans leading-relaxed mb-2">
+                                    Чем подробнее вы опишете идею, тем интереснее получится история. Укажите: кто главный герой, где происходят события, с какой проблемой он сталкивается и чему должен научиться.
+                                </p>
+                                <div
+                                    onClick={() => setTopic("Напиши сказку про маленького динозаврика Тимми, который боялся темноты. Он жил в ярком тропическом лесу. Однажды ночью он потерялся и ему пришлось самому искать дорогу домой. В пути он встречает светлячков, которые показывают ему красоту ночного леса. В конце он понимает, что темнота совсем не страшная.")}
+                                    className="bg-white/60 p-2.5 rounded-lg text-xs text-violet-900 font-sans cursor-pointer hover:bg-white border border-violet-200 transition-colors"
+                                >
+                                    <span className="font-semibold block mb-1">Пример промпта (нажмите, чтобы вставить):</span>
+                                    <span className="italic">«Напиши сказку про маленького динозаврика Тимми, который боялся темноты. Он жил в ярком тропическом лесу. Однажды ночью он потерялся и ему пришлось самому искать дорогу домой. В пути он встречает светлячков... В конце он понимает, что темнота совсем не страшная.»</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Language + Age */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
+                                    <Globe className="w-3 h-3 inline mr-1" />Язык
+                                </label>
+                                <div className="flex gap-1">
+                                    {LANGUAGES.map(l => (
+                                        <button key={l} onClick={() => setLanguage(l)}
+                                            className={`flex-1 text-xs py-2 rounded-lg border font-sans transition-colors ${language === l ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
+                                            {l === "Russian" ? "RU" : l === "Uzbek" ? "UZ" : "EN"}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
+                                    <Users className="w-3 h-3 inline mr-1" />Возраст
+                                </label>
+                                <div className="flex gap-1">
+                                    {AGE_GROUPS.map(a => (
+                                        <button key={a} onClick={() => setAgeGroup(a)}
+                                            className={`flex-1 text-xs py-2 rounded-lg border font-sans transition-colors ${ageGroup === a ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
+                                            {a}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Genre */}
+                        <div>
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
+                                Жанр
+                            </label>
+                            <select value={genre} onChange={e => setGenre(e.target.value)}
+                                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                        </div>
+
+                        {/* Info badge */}
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
+                            <Sparkles className="w-4 h-4 text-violet-500 shrink-0" />
+                            <p className="text-xs text-violet-700 font-sans">
+                                Книга будет содержать <strong>10 страниц</strong> текста (60–70 слов каждая) и <strong>10 иллюстраций</strong>, чередующихся.
+                            </p>
                         </div>
                     </div>
-                    <button onClick={onClose}
-                        className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors">
-                        <X className="w-4 h-4 text-muted-foreground" />
+
+                    <button onClick={handleGenerate}
+                        disabled={loading || !topic.trim()}
+                        className="w-full mt-5 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold font-sans flex items-center justify-center gap-2 hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md">
+                        {loading
+                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Генерация (~30-60 сек)...</>
+                            : <><Sparkles className="w-4 h-4" /> Сгенерировать книгу</>
+                        }
                     </button>
-                </div>
-
-                <div className="space-y-4">
-                    {/* Topic */}
-                    <div>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
-                            Про что будет книга? *
-                        </label>
-                        <textarea
-                            value={topic}
-                            onChange={e => setTopic(e.target.value)}
-                            placeholder='Например: "Приключения львенка в Африке, который учился дружить и считать до десяти"'
-                            className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[100px] resize-none"
-                        />
-                    </div>
-
-                    {/* Language + Age */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
-                                <Globe className="w-3 h-3 inline mr-1" />Язык
-                            </label>
-                            <div className="flex gap-1">
-                                {LANGUAGES.map(l => (
-                                    <button key={l} onClick={() => setLanguage(l)}
-                                        className={`flex-1 text-xs py-2 rounded-lg border font-sans transition-colors ${language === l ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
-                                        {l === "Russian" ? "RU" : l === "Uzbek" ? "UZ" : "EN"}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
-                                <Users className="w-3 h-3 inline mr-1" />Возраст
-                            </label>
-                            <div className="flex gap-1">
-                                {AGE_GROUPS.map(a => (
-                                    <button key={a} onClick={() => setAgeGroup(a)}
-                                        className={`flex-1 text-xs py-2 rounded-lg border font-sans transition-colors ${ageGroup === a ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
-                                        {a}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Genre */}
-                    <div>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans block mb-1.5">
-                            Жанр
-                        </label>
-                        <select value={genre} onChange={e => setGenre(e.target.value)}
-                            className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/30">
-                            {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
-                        </select>
-                    </div>
-
-                    {/* Info badge */}
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-violet-500/5 border border-violet-500/20">
-                        <Sparkles className="w-4 h-4 text-violet-500 shrink-0" />
-                        <p className="text-xs text-violet-700 font-sans">
-                            Книга будет содержать <strong>10 страниц</strong> текста (60–70 слов каждая) и <strong>10 иллюстраций</strong>, чередующихся.
-                        </p>
-                    </div>
-                </div>
-
-                <button onClick={handleGenerate}
-                    disabled={loading || !topic.trim()}
-                    className="w-full mt-5 py-3 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold font-sans flex items-center justify-center gap-2 hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md">
-                    {loading
-                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Генерация (~30-60 сек)...</>
-                        : <><Sparkles className="w-4 h-4" /> Сгенерировать книгу</>
-                    }
-                </button>
+                </motion.div>
             </motion.div>
-        </motion.div>
         </>
     );
 };

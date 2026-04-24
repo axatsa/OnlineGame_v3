@@ -7,6 +7,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
     full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
     is_active: bool = True
     created_at: Optional[datetime] = None
     phone: Optional[str] = None
@@ -36,6 +37,7 @@ class UpdateProfileRequest(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     school: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 class AuditLogResponse(BaseModel):
     id: int

@@ -200,10 +200,11 @@ async def generate_crossword_words(topic: str, count: int, language: str = "Russ
         {"role": "user", "content": user_prompt}
     ])
 
-async def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[List[Dict], int]:
+async def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian", difficulty: str = "medium") -> Tuple[List[Dict], int]:
     user_prompt = f"""
     Generate {count} multiple-choice quiz questions in {language}.
     Topic: {topic}
+    Difficulty: {difficulty}
     {build_class_context_block(grade, context)}
 
     CRITICAL RULES — VIOLATIONS WILL BREAK THE GAME:
@@ -214,6 +215,7 @@ async def generate_quiz(topic: str, count: int, grade: str = "", context: str = 
     5. Every question MUST have exactly 4 options in the "options" array.
     6. All 4 options must be plausible — avoid obviously wrong distractors.
     7. Double-check: copy the correct option string into "a" EXACTLY as it appears in "options".
+    8. CRITICAL MATH RULE: Do NOT wrap terms or variables in brackets (e.g. write "4x^2 - 12x + 9 = 0", NOT "[4X^2] - [12X] + [9] = 0"). Brackets MUST ONLY be used for [FRAC:N:D]. Evaluate the math correctly so the answer "a" is factually correct. Make sure exponents are just x^2, not inside square brackets.
 
     VERIFICATION STEP (do this mentally before outputting):
     - For each question, check: does options array contain a string that is identical to "a"? If not, fix it.
@@ -288,11 +290,12 @@ async def generate_jeopardy(topic: str, grade: str = "", context: str = "", lang
     
     STRICT RULES:
     1. For math: "q" must be a bare expression (e.g. "1/2 + [FRAC:1:4] = ?"). Use [FRAC:N:D] for fractions.
-    2. Answer "a" should be short and direct.
+    2. Answer "a" MUST be factually correct and directly answer the question "q".
     3. NO introductory text in "q".
+    4. CRITICAL: Ensure you do NOT mix up questions and answers. The "a" MUST match the "q" perfectly.
 
     Generate 5 distinct categories related to the topic.
-    For each category, generate 5 questions with increasing difficulty (100 to 500 points).
+    For each category, generate 5 questions with increasing difficulty exactly mapped to these points: 100, 200, 300, 400, 500.
     
     Return ONLY a JSON object:
     {{

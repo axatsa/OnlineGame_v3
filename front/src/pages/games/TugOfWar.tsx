@@ -40,6 +40,7 @@ const TugOfWar = () => {
   const lang = i18n.language as "ru" | "uz";
   const [status, setStatus] = useState<GameStatus>("setup");
   const [topic, setTopic] = useState("");
+  const [difficulty, setDifficulty] = useState<"просто" | "средне" | "тяжело">("средне");
   // FIX #4: выбор языка вопросов
   const [selectedLang, setSelectedLang] = useState<"ru" | "uz" | "en">(lang as any || "ru");
   // FIX #3: два разных вопроса для двух команд из одного пула
@@ -117,6 +118,7 @@ const TugOfWar = () => {
         topic: searchTopic,
         language: langLabel,
         count: 40, // Генерируем много, чтобы разделить на два пула
+        difficulty: difficulty,
         class_id: activeClassId
       });
 
@@ -229,6 +231,25 @@ const TugOfWar = () => {
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAudioEnabled ? "translate-x-6" : "translate-x-1"}`} />
                 </button>
               </div>
+              {/* Сложность вопросов */}
+              <div className="space-y-1.5">
+                <Label className="text-gray-700 font-sans text-sm">{t('game_difficulty', 'Сложность')}</Label>
+                <div className="flex gap-2">
+                  <button onClick={() => setDifficulty("просто")}
+                    className={`flex-1 py-2 rounded-xl text-xs font-sans border-2 transition-all ${difficulty === "просто" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                    Легко
+                  </button>
+                  <button onClick={() => setDifficulty("средне")}
+                    className={`flex-1 py-2 rounded-xl text-xs font-sans border-2 transition-all ${difficulty === "средне" ? "bg-amber-500 text-white border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-300"}`}>
+                    Средне
+                  </button>
+                  <button onClick={() => setDifficulty("тяжело")}
+                    className={`flex-1 py-2 rounded-xl text-xs font-sans border-2 transition-all ${difficulty === "тяжело" ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-600 border-gray-200 hover:border-red-300"}`}>
+                    Сложно
+                  </button>
+                </div>
+              </div>
+
               {/* FIX #4: выбор языка вопросов */}
               <div className="space-y-1.5">
                 <Label className="text-gray-700 font-sans text-sm">{t('game_questions_language')}</Label>
@@ -264,167 +285,175 @@ const TugOfWar = () => {
 
         {status === "playing" && blueQ && redQ && (
           <motion.div key="playing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="flex h-full bg-gray-50"
+            className="flex flex-col h-full bg-gray-50"
           >
-            {/* Blue team panel */}
-            <div className="w-72 flex-shrink-0 bg-white rounded-r-2xl shadow-lg border-r border-gray-100 flex flex-col p-4 gap-3">
-              <div className="flex items-center justify-between bg-blue-500 rounded-xl px-4 py-2.5">
-                <span className="text-white font-bold font-sans text-base">{team1Name}</span>
-                <span className="bg-white text-blue-600 font-bold rounded-full w-8 h-8 flex items-center justify-center text-sm">{blueScore}</span>
+            {topic && (
+              <div className="text-center py-2 text-sm font-sans text-gray-500 bg-white border-b border-gray-200 shadow-sm z-10 w-full relative">
+                {t('genTopic')}: <span className="font-semibold text-blue-600">{topic}</span>
               </div>
-              {/* FIX #3: у синей команды свой вопрос */}
-              <div className={`flex-1 flex flex-col gap-3 transition-opacity ${feedback?.team === "blue" ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
-                <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5">
-                  <p className="text-xs text-blue-500 font-sans font-medium">{t('game_question_number')}{blueCurrentQ + 1}</p>
+            )}
+            <div className="flex flex-1 overflow-hidden">
+              {/* Blue team panel */}
+              <div className="w-72 flex-shrink-0 bg-white rounded-r-2xl shadow-lg border-r border-gray-100 flex flex-col p-4 gap-3">
+                <div className="flex items-center justify-between bg-blue-500 rounded-xl px-4 py-2.5">
+                  <span className="text-white font-bold font-sans text-base">{team1Name}</span>
+                  <span className="bg-white text-blue-600 font-bold rounded-full w-8 h-8 flex items-center justify-center text-sm">{blueScore}</span>
                 </div>
-                <div className="text-blue-700 font-bold text-center text-base font-sans leading-snug px-1 pt-2">
-                  <RichTextRenderer text={blueQ.q} />
-                </div>
-                <div className="flex flex-col gap-2 mt-1">
-                  {blueQ.options.map((opt, i) => {
-                    const isCorrect = opt === blueQ.a;
-                    const isFeedback = feedback && feedback.team === "blue";
-                    return (
-                      <motion.button key={opt}
-                        onClick={() => selectAnswer("blue", opt)}
-                        disabled={!!feedback}
-                        whileHover={!feedback ? { scale: 1.02 } : {}}
-                        whileTap={!feedback ? { scale: 0.98 } : {}}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
-                          isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
-                          "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 text-gray-700"
-                          }`}
-                      >
-                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
-                          isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
-                            "bg-blue-100 text-blue-600"
-                          }`}>{LABELS[i]}</span>
-                        <RichTextRenderer text={opt} />
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Center arena */}
-            <div className="flex-1 flex flex-col items-center justify-between py-4 px-2">
-              {/* Scoreboard с секундомером */}
-              <div className="flex items-center gap-8 bg-white rounded-2xl px-8 py-3 shadow-sm border border-gray-100 w-full max-w-md">
-                <div className="flex-1 text-center">
-                  <p className="text-xs text-gray-500 font-sans">{team1Name}</p>
-                  <p className="text-3xl font-bold text-gray-800 font-serif">{blueScore}</p>
-                </div>
-                {/* FIX #3: секундомер — считает вверх */}
-                <div className="text-center">
-                  <p className="text-xs text-gray-400 font-sans mb-0.5">{t('game_stopwatch')}</p>
-                  <p className="font-mono font-bold text-xl text-gray-700">
-                    ⏱ {formatStopwatch(elapsed)}
-                  </p>
-                </div>
-                <div className="flex-1 text-center">
-                  <p className="text-xs text-gray-500 font-sans">{team2Name}</p>
-                  <p className="text-3xl font-bold text-gray-800 font-serif">{redScore}</p>
-                </div>
-              </div>
-
-              {/* Rope & characters */}
-              <div className="relative w-full max-w-lg h-52 flex items-center justify-center">
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 bg-amber-800/30 rounded-full" />
-                <div className="absolute top-0 bottom-0 left-1/2 border-l-2 border-dashed border-gray-300" />
-                <motion.div
-                  animate={{ x: position * 18 }}
-                  transition={{ type: "spring", stiffness: 180, damping: 22 }}
-                  className="relative z-10"
-                >
-                  <img src={tugOfWarImg} alt="Tug of War" className="h-40 w-auto object-contain drop-shadow-md" />
-                </motion.div>
-                <motion.div
-                  animate={{ left: `${ropePercent}%` }}
-                  transition={{ type: "spring", stiffness: 180, damping: 22 }}
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20"
-                  style={{ left: `${ropePercent}%` }}
-                >
-                  <div className="w-1 h-6 bg-amber-800 rounded">
-                    <div className="w-4 h-3 bg-red-500 rounded-sm -mt-3 ml-1" />
+                {/* FIX #3: у синей команды свой вопрос */}
+                <div className={`flex-1 flex flex-col gap-3 transition-opacity ${feedback?.team === "blue" ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5">
+                    <p className="text-xs text-blue-500 font-sans font-medium">{t('game_question_number')}{blueCurrentQ + 1}</p>
                   </div>
-                </motion.div>
+                  <div className="text-blue-700 font-bold text-center text-base font-sans leading-snug px-1 pt-2">
+                    <RichTextRenderer text={blueQ.q} />
+                  </div>
+                  <div className="flex flex-col gap-2 mt-1">
+                    {blueQ.options.map((opt, i) => {
+                      const isCorrect = opt === blueQ.a;
+                      const isFeedback = feedback && feedback.team === "blue";
+                      return (
+                        <motion.button key={opt}
+                          onClick={() => selectAnswer("blue", opt)}
+                          disabled={!!feedback}
+                          whileHover={!feedback ? { scale: 1.02 } : {}}
+                          whileTap={!feedback ? { scale: 0.98 } : {}}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
+                            isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
+                              "border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 text-gray-700"
+                            }`}
+                        >
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
+                            isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
+                              "bg-blue-100 text-blue-600"
+                            }`}>{LABELS[i]}</span>
+                          <RichTextRenderer text={opt} />
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              {/* Feedback Overlay */}
-              <AnimatePresence>
-                {feedback && (
-                  <motion.div key="fb" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
-                    className={`text-3xl font-bold px-6 py-3 rounded-2xl bg-white shadow-xl border-2 z-50 absolute ${feedback.correct ? "border-green-500 text-green-600" : "border-red-500 text-red-500"}`}
+              {/* Center arena */}
+              <div className="flex-1 flex flex-col items-center justify-between py-4 px-2">
+                {/* Scoreboard с секундомером */}
+                <div className="flex items-center gap-8 bg-white rounded-2xl px-8 py-3 shadow-sm border border-gray-100 w-full max-w-md">
+                  <div className="flex-1 text-center">
+                    <p className="text-xs text-gray-500 font-sans">{team1Name}</p>
+                    <p className="text-3xl font-bold text-gray-800 font-serif">{blueScore}</p>
+                  </div>
+                  {/* FIX #3: секундомер — считает вверх */}
+                  <div className="text-center">
+                    <p className="text-xs text-gray-400 font-sans mb-0.5">{t('game_stopwatch')}</p>
+                    <p className="font-mono font-bold text-xl text-gray-700">
+                      ⏱ {formatStopwatch(elapsed)}
+                    </p>
+                  </div>
+                  <div className="flex-1 text-center">
+                    <p className="text-xs text-gray-500 font-sans">{team2Name}</p>
+                    <p className="text-3xl font-bold text-gray-800 font-serif">{redScore}</p>
+                  </div>
+                </div>
+
+                {/* Rope & characters */}
+                <div className="relative w-full max-w-lg h-52 flex items-center justify-center">
+                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 bg-amber-800/30 rounded-full" />
+                  <div className="absolute top-0 bottom-0 left-1/2 border-l-2 border-dashed border-gray-300" />
+                  <motion.div
+                    animate={{ x: position * 18 }}
+                    transition={{ type: "spring", stiffness: 180, damping: 22 }}
+                    className="relative z-10"
                   >
-                    {feedback.correct ? `✅ ${t('game_correct')}` : `❌ ${t('game_error')}`}
+                    <img src={tugOfWarImg} alt="Tug of War" className="h-40 w-auto object-contain drop-shadow-md" />
                   </motion.div>
-                )}
-              </AnimatePresence>
+                  <motion.div
+                    animate={{ left: `${ropePercent}%` }}
+                    transition={{ type: "spring", stiffness: 180, damping: 22 }}
+                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20"
+                    style={{ left: `${ropePercent}%` }}
+                  >
+                    <div className="w-1 h-6 bg-amber-800 rounded">
+                      <div className="w-4 h-3 bg-red-500 rounded-sm -mt-3 ml-1" />
+                    </div>
+                  </motion.div>
+                </div>
 
-              <div className="px-5 py-2 rounded-full text-sm font-semibold font-sans shadow-sm bg-gray-100 text-gray-700">
-                🔀 {t('game_different_questions_info')}
+                {/* Feedback Overlay */}
+                <AnimatePresence>
+                  {feedback && (
+                    <motion.div key="fb" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
+                      className={`text-3xl font-bold px-6 py-3 rounded-2xl bg-white shadow-xl border-2 z-50 absolute ${feedback.correct ? "border-green-500 text-green-600" : "border-red-500 text-red-500"}`}
+                    >
+                      {feedback.correct ? `✅ ${t('game_correct')}` : `❌ ${t('game_error')}`}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="px-5 py-2 rounded-full text-sm font-semibold font-sans shadow-sm bg-gray-100 text-gray-700">
+                  🔀 {t('game_different_questions_info')}
+                </div>
+              </div>
+
+              {/* Red team panel */}
+              <div className="w-72 flex-shrink-0 bg-white rounded-l-2xl shadow-lg border-l border-gray-100 flex flex-col p-4 gap-3">
+                <div className="flex items-center justify-between bg-red-500 rounded-xl px-4 py-2.5">
+                  <span className="text-white font-bold font-sans text-base">{team2Name}</span>
+                  <span className="bg-white text-red-600 font-bold rounded-full w-8 h-8 flex items-center justify-center text-sm">{redScore}</span>
+                </div>
+                {/* FIX #3: у красной команды свой вопрос */}
+                <div className={`flex-1 flex flex-col gap-3 transition-opacity ${feedback?.team === "red" ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-1.5">
+                    <p className="text-xs text-red-500 font-sans font-medium">{t('game_question_number')}{redCurrentQ + 1}</p>
+                  </div>
+                  <div className="text-red-600 font-bold text-center text-base font-sans leading-snug px-1 pt-2">
+                    <RichTextRenderer text={redQ.q} />
+                  </div>
+                  <div className="flex flex-col gap-2 mt-1">
+                    {redQ.options.map((opt, i) => {
+                      const isCorrect = opt === redQ.a;
+                      const isFeedback = feedback && feedback.team === "red";
+                      return (
+                        <motion.button key={opt}
+                          onClick={() => selectAnswer("red", opt)}
+                          disabled={!!feedback}
+                          whileHover={!feedback ? { scale: 1.02 } : {}}
+                          whileTap={!feedback ? { scale: 0.98 } : {}}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
+                            isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
+                              "border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 text-gray-700"
+                            }`}
+                        >
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
+                            isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
+                              "bg-red-100 text-red-600"
+                            }`}>{LABELS[i]}</span>
+                          <RichTextRenderer text={opt} />
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Red team panel */}
-            <div className="w-72 flex-shrink-0 bg-white rounded-l-2xl shadow-lg border-l border-gray-100 flex flex-col p-4 gap-3">
-              <div className="flex items-center justify-between bg-red-500 rounded-xl px-4 py-2.5">
-                <span className="text-white font-bold font-sans text-base">{team2Name}</span>
-                <span className="bg-white text-red-600 font-bold rounded-full w-8 h-8 flex items-center justify-center text-sm">{redScore}</span>
-              </div>
-              {/* FIX #3: у красной команды свой вопрос */}
-              <div className={`flex-1 flex flex-col gap-3 transition-opacity ${feedback?.team === "red" ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
-                <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-1.5">
-                  <p className="text-xs text-red-500 font-sans font-medium">{t('game_question_number')}{redCurrentQ + 1}</p>
-                </div>
-                <div className="text-red-600 font-bold text-center text-base font-sans leading-snug px-1 pt-2">
-                  <RichTextRenderer text={redQ.q} />
-                </div>
-                <div className="flex flex-col gap-2 mt-1">
-                  {redQ.options.map((opt, i) => {
-                    const isCorrect = opt === redQ.a;
-                    const isFeedback = feedback && feedback.team === "red";
-                    return (
-                      <motion.button key={opt}
-                        onClick={() => selectAnswer("red", opt)}
-                        disabled={!!feedback}
-                        whileHover={!feedback ? { scale: 1.02 } : {}}
-                        whileTap={!feedback ? { scale: 0.98 } : {}}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left font-sans text-sm font-medium transition-all ${isFeedback && isCorrect ? "border-green-400 bg-green-50 text-green-700" :
-                          isFeedback && !isCorrect ? "border-red-200 bg-red-50 text-red-400" :
-                            "border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 text-gray-700"
-                          }`}
-                      >
-                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isFeedback && isCorrect ? "bg-green-400 text-white" :
-                          isFeedback && !isCorrect ? "bg-red-200 text-red-500" :
-                            "bg-red-100 text-red-600"
-                          }`}>{LABELS[i]}</span>
-                        <RichTextRenderer text={opt} />
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+          </div>
           </motion.div>
         )}
 
-        {status === "finished" && (
-          <motion.div key="finished" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center h-full gap-6 bg-white"
-          >
-            <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.8 }} className="text-8xl">🏆</motion.div>
-            <h2 className="text-5xl font-bold text-gray-800 font-serif">{winner} {t('game_won')}</h2>
-            <p className="text-gray-500 font-sans">{team1Name}: {blueScore} | {team2Name}: {redScore}</p>
-            <p className="text-gray-400 font-sans text-sm">{t('game_play_time')} {formatStopwatch(elapsed)}</p>
-            <Button onClick={startGame} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 text-lg rounded-2xl">
-              {t('game_playAgain')}
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </GameShell>
+      {status === "finished" && (
+        <motion.div key="finished" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center h-full gap-6 bg-white"
+        >
+          <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.8 }} className="text-8xl">🏆</motion.div>
+          <h2 className="text-5xl font-bold text-gray-800 font-serif">{winner} {t('game_won')}</h2>
+          <p className="text-gray-500 font-sans">{team1Name}: {blueScore} | {team2Name}: {redScore}</p>
+          <p className="text-gray-400 font-sans text-sm">{t('game_play_time')} {formatStopwatch(elapsed)}</p>
+          <Button onClick={startGame} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 text-lg rounded-2xl">
+            {t('game_playAgain')}
+          </Button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </GameShell >
   );
 };
 

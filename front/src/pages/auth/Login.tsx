@@ -78,8 +78,8 @@ const Login = () => {
             transition={{ delay: 0.3, duration: 0.5 }}
             className="flex flex-col items-center gap-4"
           >
-            <div className="w-20 h-20 rounded-2xl bg-primary-foreground/20 flex items-center justify-center backdrop-blur-sm">
-              <GraduationCap className="w-10 h-10 text-primary-foreground" />
+            <div className="w-24 h-24 rounded-3xl bg-white/20 flex items-center justify-center backdrop-blur-sm p-3 shadow-xl">
+              <img src="/logo_sticker.webp" alt="ClassPlay Logo" className="w-full h-full object-contain filter drop-shadow-lg" />
             </div>
             <h1 className="text-5xl font-bold text-primary-foreground tracking-tight">ClassPlay</h1>
             <p className="text-primary-foreground/70 text-lg font-sans max-w-xs">{t("loginTagline")}</p>
@@ -97,8 +97,8 @@ const Login = () => {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-primary-foreground" />
+            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center p-2 shadow-lg">
+              <img src="/logo_sticker.webp" alt="ClassPlay Logo" className="w-full h-full object-contain filter drop-shadow-sm" />
             </div>
             <span className="text-2xl font-bold font-serif text-foreground">ClassPlay</span>
           </div>

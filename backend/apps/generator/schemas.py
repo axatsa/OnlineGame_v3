@@ -19,6 +19,7 @@ class QuizRequest(BaseModel):
     topic: str
     count: int
     language: str = "Russian"
+    difficulty: Optional[str] = "medium"
     class_id: Optional[int] = None
 
 class AssignmentRequest(BaseModel):

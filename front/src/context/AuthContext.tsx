@@ -11,6 +11,7 @@ interface User {
     full_name: string;
     onboarding_completed: boolean;
     organization_id: number | null;
+    avatar_url?: string | null;
 }
 
 interface AuthContextType {

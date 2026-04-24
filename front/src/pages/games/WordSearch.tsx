@@ -66,7 +66,7 @@ const WordSearch = () => {
   const [status, setStatus] = useState<"setup" | "loading" | "playing" | "finished">("setup");
   const [topicInput, setTopicInput] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
-  const [language, setLanguage] = useState<"ru" | "uz">(i18n.language as "ru" | "uz");
+  const [language, setLanguage] = useState<"ru" | "uz" | "en">(i18n.language as "ru" | "uz" | "en" || "ru");
   const [grid, setGrid] = useState<string[][]>([]);
   const [placedWords, setPlacedWords] = useState<{ word: string; cells: [number, number][] }[]>([]);
   const [found, setFound] = useState<Set<string>>(new Set());
@@ -86,7 +86,7 @@ const WordSearch = () => {
     setStatus("loading");
     try {
       const isRu = language === "ru";
-      const langLabel = isRu ? "Russian" : "Uzbek";
+      const langLabel = isRu ? "Russian" : language === "uz" ? "Uzbek" : "English";
       const wordCount = difficulty === "Легко" || difficulty === "Easy" ? 6 : difficulty === "Средне" || difficulty === "Medium" ? 10 : 12;
       const res = await api.post("/generate/crossword", {
         topic: topicInput,
@@ -184,10 +184,10 @@ const WordSearch = () => {
               <div className="space-y-1.5">
                 <p className="text-gray-700 font-sans text-sm font-medium">{t('language_label')}</p>
                 <div className="flex gap-2">
-                  {(["ru", "uz"] as const).map((l) => (
+                  {(["ru", "uz", "en"] as const).map((l) => (
                     <button key={l} onClick={() => setLanguage(l)}
                       className={`flex-1 py-2.5 rounded-xl font-sans font-semibold text-sm transition-all ${language === l ? "bg-blue-600 text-white shadow-sm" : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300"}`}>
-                      {l === "ru" ? "🇷🇺 Русский" : "🇺🇿 O'zbekcha"}
+                      {l === "ru" ? "🇷🇺" : l === "uz" ? "🇺🇿" : "🇺🇸"} {l.toUpperCase()}
                     </button>
                   ))}
                 </div>

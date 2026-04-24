@@ -124,7 +124,7 @@ async def gen_quiz(request: Request, req: QuizRequest, db: Session = Depends(get
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
     
-    questions, tokens = await generate_quiz(req.topic, req.count, grade, context, req.language)
+    questions, tokens = await generate_quiz(req.topic, req.count, grade, context, req.language, req.difficulty)
     
     if questions is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")

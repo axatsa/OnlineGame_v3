@@ -59,6 +59,7 @@ def get_me(user: User = Depends(get_current_user)):
         "id": user.id,
         "email": user.email,
         "full_name": user.full_name,
+        "avatar_url": getattr(user, 'avatar_url', None),
         "role": user.role,
         "phone": getattr(user, 'phone', None),
         "school": getattr(user, 'school', None),
@@ -72,7 +73,7 @@ def get_me(user: User = Depends(get_current_user)):
 
 @router.patch("/me")
 def update_me(data: dict, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    allowed = {"full_name", "phone", "school"}
+    allowed = {"full_name", "phone", "school", "avatar_url"}
     for key, val in data.items():
         if key in allowed and val is not None:
             setattr(user, key, val)

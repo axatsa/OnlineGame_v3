@@ -140,7 +140,7 @@ export default function Landing() {
             className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer"
           >
             <div className="w-9 h-9 rounded-xl bg-sidebar flex items-center justify-center overflow-hidden shrink-0">
-              <img src="/logo-sticker.webp" alt="ClassPlay" className="w-full h-full object-cover" />
+              <img src="/logo_sticker.webp" alt="ClassPlay" className="w-full h-full object-cover" />
             </div>
             <span className="text-lg font-bold text-foreground font-serif tracking-tight">ClassPlay</span>
           </button>
@@ -435,11 +435,10 @@ export default function Landing() {
               <div className="divide-y divide-border">
                 {LEADERBOARD_DEMO.map((item) => (
                   <div key={item.rank} className={`flex items-center gap-4 px-6 py-4 ${item.rank === 1 ? "bg-primary/5" : ""}`}>
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${
-                      item.rank === 1 ? "bg-yellow-400 text-white" :
-                      item.rank === 2 ? "bg-gray-300 text-gray-700" :
-                      item.rank === 3 ? "bg-orange-400 text-white" : "bg-muted text-muted-foreground"
-                    }`}>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${item.rank === 1 ? "bg-yellow-400 text-white" :
+                        item.rank === 2 ? "bg-gray-300 text-gray-700" :
+                          item.rank === 3 ? "bg-orange-400 text-white" : "bg-muted text-muted-foreground"
+                      }`}>
                       {item.rank}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -726,7 +725,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-sidebar flex items-center justify-center overflow-hidden shrink-0">
-              <img src="/logo-sticker.webp" alt="ClassPlay" className="w-full h-full object-cover" />
+              <img src="/logo_sticker.webp" alt="ClassPlay" className="w-full h-full object-cover" />
             </div>
             <span className="font-bold font-serif text-foreground">ClassPlay</span>
           </div>

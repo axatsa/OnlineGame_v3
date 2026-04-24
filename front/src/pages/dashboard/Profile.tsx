@@ -83,9 +83,9 @@ export default function Profile() {
   const loadStats = async () => {
     try {
       const [res, classRes, historyRes] = await Promise.allSettled([
-        api.get("/generator/usage-stats"),
+        api.get("/generate/stats/me"),
         api.get("/classes/"),
-        api.get("/history/"),
+        api.get("/generate/history"),
       ]);
       setStats({
         total_resources: historyRes.status === "fulfilled" ? (historyRes.value.data?.items?.length || historyRes.value.data?.length || 0) : 0,

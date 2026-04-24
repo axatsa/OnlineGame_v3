@@ -29,6 +29,30 @@ from apps.payments.router import router as payments_router
 # Create tables
 Base.metadata.create_all(bind=engine)
 
+# Schema repair (for existing databases)
+from sqlalchemy import text
+def repair_db():
+    with engine.connect() as conn:
+        # Table, Column, Type
+        new_cols = [
+            ("users", "avatar_url", "VARCHAR"),
+            ("users", "tokens_used_this_month", "INTEGER DEFAULT 0"),
+            ("users", "tokens_limit", "INTEGER DEFAULT 30000"),
+            ("users", "tokens_reset_at", "TIMESTAMP"),
+            ("users", "onboarding_completed", "BOOLEAN DEFAULT FALSE"),
+            ("users", "phone", "VARCHAR"),
+            ("users", "school", "VARCHAR"),
+            ("generation_logs", "is_favorite", "INTEGER DEFAULT 0"),
+        ]
+        for table, col, ctype in new_cols:
+            try:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {ctype}"))
+                conn.commit()
+            except Exception:
+                pass # Already exists or other error
+
+repair_db()
+
 # Sentry Initialization
 sentry_dsn = os.getenv("SENTRY_DSN", "")
 if sentry_dsn:

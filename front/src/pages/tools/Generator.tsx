@@ -171,7 +171,7 @@ const Generator = () => {
         document.body.appendChild(link);
         link.click();
         link.remove();
-        
+
         toast.success("Batch ZIP generated and downloading!");
         setIsGenerating(false);
         return;
@@ -277,7 +277,7 @@ const Generator = () => {
     try {
       const res = await api.get(`/generate/templates?feature=${genType}`);
       setTemplates(res.data);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   React.useEffect(() => {
@@ -287,19 +287,19 @@ const Generator = () => {
   const loadTemplate = (tmpl: any) => {
     const p = tmpl.params;
     if (genType === "math") {
-      if(p.topic) setMathTopic(p.topic);
-      if(p.count) setQuestionCount(String(p.count));
-      if(p.difficulty) setDifficulty(p.difficulty);
+      if (p.topic) setMathTopic(p.topic);
+      if (p.count) setQuestionCount(String(p.count));
+      if (p.difficulty) setDifficulty(p.difficulty);
     } else if (genType === "crossword") {
-      if(p.topic) setCrosswordTopic(p.topic);
-      if(p.word_count) setWordCount(String(p.word_count));
+      if (p.topic) setCrosswordTopic(p.topic);
+      if (p.word_count) setWordCount(String(p.word_count));
     } else if (genType === "quiz") {
-      if(p.topic) setQuizTopic(p.topic);
-      if(p.count) setQuizCount(String(p.count));
+      if (p.topic) setQuizTopic(p.topic);
+      if (p.count) setQuizCount(String(p.count));
     } else if (genType === "assignment") {
-      if(p.subject) setAssignSubject(p.subject);
-      if(p.topic) setAssignTopic(p.topic);
-      if(p.count) setAssignCount(String(p.count));
+      if (p.subject) setAssignSubject(p.subject);
+      if (p.topic) setAssignTopic(p.topic);
+      if (p.count) setAssignCount(String(p.count));
     }
     toast.success("Шаблон загружен!");
   };
@@ -310,23 +310,23 @@ const Generator = () => {
       return;
     }
     try {
-      const params = genType === "math" ? {topic: mathTopic, count: parseInt(questionCount), difficulty} :
-                    genType === "crossword" ? {topic: crosswordTopic, word_count: parseInt(wordCount)} :
-                    genType === "quiz" ? {topic: quizTopic, count: parseInt(quizCount)} :
-                    {subject: assignSubject, topic: assignTopic, count: parseInt(assignCount)};
-      
+      const params = genType === "math" ? { topic: mathTopic, count: parseInt(questionCount), difficulty } :
+        genType === "crossword" ? { topic: crosswordTopic, word_count: parseInt(wordCount) } :
+          genType === "quiz" ? { topic: quizTopic, count: parseInt(quizCount) } :
+            { subject: assignSubject, topic: assignTopic, count: parseInt(assignCount) };
+
       await api.post("/generate/templates", {
-          feature: genType,
-          name: templateTitle,
-          description: "",
-          params: params,
-          is_system: false
+        feature: genType,
+        name: templateTitle,
+        description: "",
+        params: params,
+        is_system: false
       });
       toast.success("Шаблон сохранен!");
       setShowTemplateDialog(false);
       setTemplateTitle("");
       fetchTemplates();
-    } catch(e) {
+    } catch (e) {
       toast.error("Ошибка сохранения шаблона");
     }
   };
@@ -1163,8 +1163,8 @@ const Generator = () => {
             {templates.length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
                 {templates.map(t => (
-                  <button 
-                    key={t.id} 
+                  <button
+                    key={t.id}
                     onClick={() => loadTemplate(t)}
                     className="p-3 text-left rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-muted transition-all"
                   >
@@ -1202,10 +1202,10 @@ const Generator = () => {
             )}
           </Button>
           {generated && activeClass && (
-              <div className="text-xs text-primary/70 flex items-center justify-center gap-1.5 mt-3">
-                  <Sparkles className="w-3 h-3" />
-                  Адаптировано для: {activeClass.name} (Класс {activeClass.grade})
-              </div>
+            <div className="text-xs text-primary/70 flex items-center justify-center gap-1.5 mt-3">
+              <Sparkles className="w-3 h-3" />
+              Адаптировано для: {activeClass.name} (Класс {activeClass.grade})
+            </div>
           )}
         </div>
       </motion.div>
@@ -1265,7 +1265,7 @@ const Generator = () => {
                       <div ref={answerRef} className="w-[210mm] bg-white p-8 flex flex-col">
                         <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-200">
                           <div className="flex items-center gap-2">
-                            <img src="/logo-sticker.webp" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                            <img src="/logo_sticker.webp" alt="Logo" className="w-6 h-6 rounded object-contain" />
                             <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">{orgName || "ClassPlay"}</span>
                           </div>
                           <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">Answer Key • {quizTopic}</span>
@@ -1303,7 +1303,7 @@ const Generator = () => {
                             <>
                               <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
                                 <div className="flex items-center gap-1.5">
-                                  <img src="/logo-sticker.webp" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                                  <img src="/logo_sticker.webp" alt="Logo" className="w-6 h-6 rounded object-contain" />
                                   <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">{orgName || "ClassPlay"}</span>
                                 </div>
                                 <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">{quizTopic}</span>
@@ -1344,7 +1344,7 @@ const Generator = () => {
                       <div className="p-6 flex flex-col print:p-5 border-t-4 border-dashed border-gray-300" style={{ pageBreakBefore: "always" }}>
                         <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
                           <div className="flex items-center gap-1.5">
-                            <img src="/logo-sticker.webp" alt="Logo" className="w-6 h-6 rounded object-contain" />
+                            <img src="/logo_sticker.webp" alt="Logo" className="w-6 h-6 rounded object-contain" />
                             <span style={{ fontSize: "11px" }} className="font-bold font-serif text-gray-800">{orgName || "ClassPlay"}</span>
                           </div>
                           <span style={{ fontSize: "9px" }} className="text-gray-500 font-sans">Answer Key • {quizTopic}</span>
@@ -1373,7 +1373,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo_sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">{orgName || "ClassPlay"}</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {assignmentData.title}</span>
@@ -1438,7 +1438,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo_sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">{orgName || "ClassPlay"}</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {mathTopic}</span>
@@ -1466,7 +1466,7 @@ const Generator = () => {
                     <div className="p-10 h-full flex flex-col print:p-2">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo_sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">{orgName || "ClassPlay"}</span>
                         </div>
                         <div className="text-right">
@@ -1513,7 +1513,7 @@ const Generator = () => {
                     <div ref={answerRef} className="w-[210mm] min-h-[297mm] bg-white p-10 flex flex-col">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo_sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">{orgName || "ClassPlay"}</span>
                         </div>
                         <span className="text-xs text-gray-500 font-sans">Answer Key • {crosswordTopic}</span>
@@ -1555,7 +1555,7 @@ const Generator = () => {
                     <div className="p-8 flex flex-col min-h-full print:p-2">
                       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <img src="/logo-sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
+                          <img src="/logo_sticker.webp" alt="Logo" className="w-8 h-8 rounded object-contain" />
                           <span className="text-sm font-bold font-serif text-gray-800">{orgName || "ClassPlay"}</span>
                         </div>
                         <div className="text-right">
@@ -1664,15 +1664,15 @@ const Generator = () => {
 
       {/* Edit Dialog */}
       {showEdit && (
-        <ResultEditor 
+        <ResultEditor
           open={showEdit}
           onOpenChange={setShowEdit}
           type={genType}
           data={
             genType === "math" ? generatedProblems :
-            genType === "quiz" ? quizData :
-            genType === "crossword" ? crosswordData :
-            assignmentData
+              genType === "quiz" ? quizData :
+                genType === "crossword" ? crosswordData :
+                  assignmentData
           }
           onSave={saveEdit}
         />

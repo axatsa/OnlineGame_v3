@@ -52,6 +52,16 @@ export const adminService = {
         return response.data;
     },
 
+    bulkChangePlan: async (user_ids: number[], plan: string) => {
+        const response = await api.post(`/admin/teachers/bulk-change-plan?plan=${plan}`, { user_ids });
+        return response.data;
+    },
+
+    bulkExtendSubscription: async (user_ids: number[], days: number) => {
+        const response = await api.post(`/admin/teachers/bulk-extend-subscription?days=${days}`, { user_ids });
+        return response.data;
+    },
+
     // ── Analytics ──────────────────────────────────────────────
     getAnalytics: async () => {
         const response = await api.get("/admin/analytics");

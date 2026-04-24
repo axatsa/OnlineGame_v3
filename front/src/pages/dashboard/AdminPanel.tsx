@@ -440,14 +440,44 @@ const ExportMenu = ({ onCSV, onPDF }: { onCSV: () => void; onPDF: () => void }) 
 
 const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { teachers: Teacher[]; orgs: Org[]; payments: Payment[]; auditLogs: any[]; isLoading: boolean }) => {
   const { t } = useTranslation();
+  const expiringTeachers = teachers.filter(t => {
+    if (!t.expires_at) return false;
+    const daysLeft = Math.ceil((new Date(t.expires_at).getTime() - Date.now()) / 86400000);
+    return daysLeft > 0 && daysLeft <= 7;
+  });
+  const expiredTeachers = teachers.filter(t => {
+    if (!t.expires_at) return false;
+    return new Date(t.expires_at).getTime() < Date.now();
+  });
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={Users} label={t("admin_total_teachers")} value={String(teachers.length)} sub="+12 за месяц" trend="up" color="bg-primary/10 text-primary" />
+        <MetricCard icon={Users} label={t("admin_total_teachers")} value={String(teachers.length)} sub={`${expiringTeachers.length} истекают скоро`} trend={expiringTeachers.length > 0 ? "down" : undefined} color="bg-primary/10 text-primary" />
         <MetricCard icon={Building2} label={t("admin_orgs")} value={String(orgs.length)} sub={`${orgs.filter(o => o.status === "expiring").length} истекают`} color="bg-yellow-500/10 text-yellow-600" />
         <MetricCard icon={DollarSign} label={t("admin_revenue")} value={`$${payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0).toLocaleString()}`} sub="+18% рост" trend="up" color="bg-success/10 text-success" />
         <MetricCard icon={BrainCircuit} label={t("admin_tokens_stat")} value="1.2M" sub="24.5k сегодня" color="bg-violet-500/10 text-violet-600" />
       </div>
+
+      {(expiringTeachers.length > 0 || expiredTeachers.length > 0) && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
+          <h3 className="font-semibold text-yellow-700 mb-3 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" /> Подписки требуют внимания
+          </h3>
+          <div className="space-y-2">
+            {expiringTeachers.length > 0 && (
+              <p className="text-sm text-yellow-700 font-sans">
+                <span className="font-bold">{expiringTeachers.length}</span> учителей истекают в течение 7 дней
+              </p>
+            )}
+            {expiredTeachers.length > 0 && (
+              <p className="text-sm text-destructive font-sans">
+                <span className="font-bold">{expiredTeachers.length}</span> учителей имеют истёкшие подписки
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card border border-border rounded-2xl p-5">
@@ -629,11 +659,43 @@ const TeachersView = ({
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 flex-wrap max-w-[90vw]"
           >
             <span className="text-sm font-semibold font-sans">Выбрано: {selectedIds.length}</span>
             <div className="h-4 w-px bg-background/20" />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-background/10 text-background gap-2 h-8 text-xs font-sans"
+                onClick={async () => {
+                  const plan = prompt("Введите план (free, pro, school):", "pro");
+                  if (plan) {
+                    await adminService.bulkChangePlan(selectedIds, plan);
+                    setSelectedIds([]);
+                    onRefresh();
+                    toast.success(`План изменён на ${plan}`);
+                  }
+                }}
+              >
+                <CreditCard className="w-3.5 h-3.5" /> План
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-background/10 text-background gap-2 h-8 text-xs font-sans"
+                onClick={async () => {
+                  const days = prompt("На сколько дней продлить?", "30");
+                  if (days && !isNaN(parseInt(days))) {
+                    await adminService.bulkExtendSubscription(selectedIds, parseInt(days));
+                    setSelectedIds([]);
+                    onRefresh();
+                    toast.success(`Подписка продлена на ${days} дней`);
+                  }
+                }}
+              >
+                <Calendar className="w-3.5 h-3.5" /> Продлить
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

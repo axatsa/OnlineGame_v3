@@ -204,11 +204,60 @@ def bulk_unblock_teachers(req: BulkActionRequest, db: Session = Depends(get_db),
         u.is_active = True
         count += 1
     db.commit()
-    
+
     log = AuditLog(action="Bulk Unblock", target=f"{count} users", user_id=admin.id, log_type="success")
     db.add(log)
     db.commit()
     return {"message": f"Unblocked {count} teachers"}
+
+@router.post("/teachers/bulk-change-plan")
+def bulk_change_plan(req: BulkActionRequest, plan: str = "free", db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    users = db.query(User).filter(User.id.in_(req.user_ids), User.role == "teacher").all()
+    count = 0
+    for u in users:
+        sub = db.query(UserSubscription).filter(UserSubscription.user_id == u.id).first()
+        if sub:
+            sub.plan = plan.lower()
+            sub.expires_at = datetime.utcnow() + timedelta(days=365)
+        else:
+            sub = UserSubscription(
+                user_id=u.id,
+                plan=plan.lower(),
+                expires_at=datetime.utcnow() + timedelta(days=365)
+            )
+            db.add(sub)
+        count += 1
+    db.commit()
+
+    log = AuditLog(action="Bulk Change Plan", target=f"{count} users → {plan}", user_id=admin.id, log_type="success")
+    db.add(log)
+    db.commit()
+    return {"message": f"Changed plan for {count} teachers to {plan}"}
+
+@router.post("/teachers/bulk-extend-subscription")
+def bulk_extend_subscription(req: BulkActionRequest, days: int = 30, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    users = db.query(User).filter(User.id.in_(req.user_ids), User.role == "teacher").all()
+    count = 0
+    for u in users:
+        sub = db.query(UserSubscription).filter(UserSubscription.user_id == u.id).first()
+        if sub and sub.expires_at:
+            sub.expires_at = sub.expires_at + timedelta(days=days)
+        elif sub:
+            sub.expires_at = datetime.utcnow() + timedelta(days=days)
+        else:
+            sub = UserSubscription(
+                user_id=u.id,
+                plan="pro",
+                expires_at=datetime.utcnow() + timedelta(days=days)
+            )
+            db.add(sub)
+        count += 1
+    db.commit()
+
+    log = AuditLog(action="Bulk Extend Subscription", target=f"{count} users +{days}d", user_id=admin.id, log_type="success")
+    db.add(log)
+    db.commit()
+    return {"message": f"Extended subscription for {count} teachers by {days} days"}
 
 @router.post("/teachers/bulk-delete")
 def bulk_delete_teachers(req: BulkActionRequest, db: Session = Depends(get_db), admin: User = Depends(require_admin)):

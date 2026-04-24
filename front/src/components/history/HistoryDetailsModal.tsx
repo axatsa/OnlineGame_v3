@@ -61,7 +61,12 @@ export const HistoryDetailsModal = ({ isOpen, onClose, item }: HistoryDetailsMod
                 Отправьте на печать или сохраните
               </p>
               
-              <ResourceQRCode logId={item.id} topic={item.topic || "Материал"} />
+              <ResourceQRCode
+                logId={item.id}
+                topic={item.topic || "Материал"}
+                generatorType={item.generator_type}
+                content={item.content}
+              />
             </div>
 
             <div className="mt-auto space-y-3 pt-6 border-t border-border">

@@ -34,14 +34,21 @@ const MemoryMatrix = lazy(() => import("./pages/games/MemoryMatrix"));
 const BalanceScales = lazy(() => import("./pages/games/BalanceScales"));
 const WordSearch = lazy(() => import("./pages/games/WordSearch"));
 const Crossword = lazy(() => import("./pages/games/Crossword"));
+const Hangman = lazy(() => import("./pages/games/Hangman"));
+const SpellingBee = lazy(() => import("./pages/games/SpellingBee"));
+const MathPuzzle = lazy(() => import("./pages/games/MathPuzzle"));
+const WordTranslate = lazy(() => import("./pages/games/WordTranslate"));
 const Profile = lazy(() => import("./pages/dashboard/Profile"));
 const HistoryPage = lazy(() => import("./pages/dashboard/HistoryPage"));
 const Library = lazy(() => import("./pages/library/Library"));
+const MaterialsPage = lazy(() => import("./pages/library/MaterialsPage"));
 const DemoGenerator = lazy(() => import("./pages/DemoGenerator"));
 const Checkout = lazy(() => import("./pages/payment/Checkout"));
 const ShareResource = lazy(() => import("./pages/ShareResource"));
 const PaymentSuccess = lazy(() => import("./pages/payment/PaymentSuccess"));
 const PaymentFail = lazy(() => import("./pages/payment/PaymentFail"));
+const OrgAdminDashboard = lazy(() => import("./pages/dashboard/OrgAdminDashboard"));
+const AnalyticsPage = lazy(() => import("./pages/dashboard/AnalyticsPage"));
 
 // Suspense loading fallback
 const RouteLoadingFallback = () => (
@@ -76,6 +83,13 @@ const App = () => (
                   </ProtectedRoute>
                 } />
 
+                {/* Org Admin Routes */}
+                <Route path="/org-admin" element={
+                  <ProtectedRoute allowedRoles={["org_admin"]}>
+                    <OrgAdminDashboard />
+                  </ProtectedRoute>
+                } />
+
                 {/* Teacher Routes */}
                 <Route path="/teacher" element={
                   <ProtectedRoute allowedRoles={["teacher"]}>
@@ -107,18 +121,28 @@ const App = () => (
                   </ProtectedRoute>
                 } />
                 <Route path="/profile" element={
-                  <ProtectedRoute allowedRoles={["teacher", "super_admin"]}>
+                  <ProtectedRoute allowedRoles={["teacher", "super_admin", "org_admin"]}>
                     <Profile />
                   </ProtectedRoute>
                 } />
                 <Route path="/history" element={
-                  <ProtectedRoute allowedRoles={["teacher"]}>
+                  <ProtectedRoute allowedRoles={["teacher", "org_admin"]}>
                     <HistoryPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/analytics" element={
+                  <ProtectedRoute allowedRoles={["teacher", "org_admin"]}>
+                    <AnalyticsPage />
                   </ProtectedRoute>
                 } />
                 <Route path="/library" element={
                   <ProtectedRoute allowedRoles={["teacher"]}>
                     <Library />
+                  </ProtectedRoute>
+                } />
+                <Route path="/materials" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <MaterialsPage />
                   </ProtectedRoute>
                 } />
 
@@ -129,6 +153,10 @@ const App = () => (
                 <Route path="/games/scales" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Balance scales error"><BalanceScales /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/games/word-search" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Word search error"><WordSearch /></ErrorBoundary></ProtectedRoute>} />
                 <Route path="/games/crossword" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Crossword error"><Crossword /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/hangman" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="Hangman error"><Hangman /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/spelling" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="SpellingBee error"><SpellingBee /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/math-puzzle" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="MathPuzzle error"><MathPuzzle /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/games/word-translate" element={<ProtectedRoute allowedRoles={["teacher"]}><ErrorBoundary fallbackTitle="WordTranslate error"><WordTranslate /></ErrorBoundary></ProtectedRoute>} />
 
                 {/* Public share route — no auth */}
                 <Route path="/share/:logId" element={<ShareResource />} />

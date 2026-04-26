@@ -107,6 +107,20 @@ def increment_token_usage(user: User, tokens_used: int, db: Session) -> None:
         db.commit()
 
 
+def get_material_context(material_id: int | None, user: User, db: Session) -> str:
+    """Returns extracted text for the material, or empty string if not found/not owned."""
+    if not material_id:
+        return ""
+    from apps.library.models import UserMaterial
+    mat = db.query(UserMaterial).filter(
+        UserMaterial.id == material_id,
+        UserMaterial.user_id == user.id,
+    ).first()
+    if not mat:
+        return ""
+    return mat.extracted_text or ""
+
+
 def get_quota_info(user: User, db: Session) -> dict:
     reset_quota_if_needed(user, db)
     return {

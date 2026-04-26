@@ -65,7 +65,7 @@ def get_teachers(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin)
 ):
-    query = db.query(User).options(joinedload(User.subscription)).filter(User.role == "teacher")
+    query = db.query(User).options(joinedload(User.subscription)).filter(User.role.in_(["teacher", "org_admin"]))
     
     if search:
         search_filter = f"%{search}%"
@@ -181,6 +181,30 @@ def delete_teacher(user_id: int, db: Session = Depends(get_db), admin: User = De
     db.add(log)
     db.commit()
     return {"message": "Teacher deleted and all related records cleared"}
+
+@router.post("/teachers/{user_id}/promote")
+def promote_to_org_admin(user_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    user = db.query(User).filter(User.id == user_id, User.role.in_(["teacher", "org_admin"])).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    if not user.organization_id:
+        raise HTTPException(status_code=400, detail="Teacher must belong to an organization first")
+    user.role = "org_admin"
+    log = AuditLog(action="Promote Org Admin", target=user.email, user_id=admin.id, log_type="success")
+    db.add(log)
+    db.commit()
+    return {"id": user.id, "email": user.email, "role": user.role}
+
+@router.post("/teachers/{user_id}/demote")
+def demote_from_org_admin(user_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    user = db.query(User).filter(User.id == user_id, User.role == "org_admin").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Org admin not found")
+    user.role = "teacher"
+    log = AuditLog(action="Demote Org Admin", target=user.email, user_id=admin.id, log_type="warning")
+    db.add(log)
+    db.commit()
+    return {"id": user.id, "email": user.email, "role": user.role}
 
 @router.post("/teachers/bulk-block")
 def bulk_block_teachers(req: BulkActionRequest, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
@@ -502,6 +526,36 @@ def create_invite(org_id: int, req: InviteCreate, db: Session = Depends(get_db),
 @router.get("/organizations/{org_id}/invites", response_model=List[InviteResponse])
 def get_org_invites(org_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     return db.query(InviteToken).filter(InviteToken.org_id == org_id, InviteToken.is_active == 1).all()
+
+@router.post("/organizations/{org_id}/set-token-limit")
+def set_org_token_limit(
+    org_id: int,
+    body: dict,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    tokens_limit = body.get("tokens_limit")
+    if not isinstance(tokens_limit, int) or tokens_limit < 0:
+        raise HTTPException(status_code=422, detail="tokens_limit must be a non-negative integer")
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    updated = db.query(User).filter(
+        User.organization_id == org_id,
+        User.role.in_(["teacher", "org_admin"]),
+    ).all()
+    for user in updated:
+        user.tokens_limit = tokens_limit
+    log = AuditLog(
+        action=f"Set Org Token Limit: {tokens_limit}",
+        target=org.name,
+        user_id=admin.id,
+        log_type="success",
+    )
+    db.add(log)
+    db.commit()
+    return {"updated": len(updated), "tokens_limit": tokens_limit}
+
 
 @router.delete("/invites/{invite_id}")
 def revoke_invite(invite_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):

@@ -140,7 +140,7 @@ export default function Landing() {
             className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer"
           >
             <div className="w-9 h-9 flex items-center justify-center overflow-hidden shrink-0">
-              <img src="/logo_sticker.webp" alt="ClassPlay" className="w-full h-full object-contain" />
+              <img src="/logo_sticker.webp" alt="ClassPlay" className="w-full h-full object-contain" fetchPriority="high" />
             </div>
             <span className="text-lg font-bold text-foreground font-serif tracking-tight">ClassPlay</span>
           </button>
@@ -725,7 +725,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 flex items-center justify-center overflow-hidden shrink-0">
-              <img src="/logo_sticker.webp" alt="ClassPlay" className="w-full h-full object-contain" />
+              <img src="/logo_sticker.webp" alt="ClassPlay" className="w-full h-full object-contain" loading="lazy" />
             </div>
             <span className="font-bold font-serif text-foreground">ClassPlay</span>
           </div>

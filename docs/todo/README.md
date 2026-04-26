@@ -1,48 +1,48 @@
 # ClassPlay — Development Tasks
 
-**Platform:** SaaS for teachers — AI content generators, interactive smartboard games, children's library.  
-**Goal:** Bring the product to a state ready for B2C and B2B sales.  
-**Stack:** React + TypeScript, FastAPI, PostgreSQL, Docker
+**Platform:** SaaS для учителей — AI-генераторы контента, интерактивные игры, детская библиотека.  
+**Goal:** Продукт готов к B2C и B2B продажам.  
+**Stack:** React + TypeScript, FastAPI, SQLite → PostgreSQL, Docker
+
+**Обновлено:** 26.04.2026
 
 ---
 
 ## Task Status
 
-| # | File | Area | Priority | Status |
-|---|------|------|----------|--------|
-| 01 | [01-security-reliability.md](./01-security-reliability.md) | Security, rate limits, backups | Critical | Mostly done — HTTPS not confirmed in prod |
-| 02 | [02-ux-onboarding.md](./02-ux-onboarding.md) | Onboarding, dashboard | Medium | Done |
-| 03 | [03-dark-theme.md](./03-dark-theme.md) | Dark mode | Medium | Done |
-| 04 | [04-generation-history.md](./04-generation-history.md) | Generation history, favorites | Medium | Done |
-| 05 | [05-content-editor.md](./05-content-editor.md) | Result editor, templates | Medium | Done |
-| 06 | [06-batch-generation.md](./06-batch-generation.md) | Batch generation (ZIP) | Low | Done |
-| 07 | [07-import-export.md](./07-import-export.md) | Custom word import, Google Drive | Low | 7.1 done — 7.2 (Google Drive) not started |
-| 08 | [08-b2b-tools.md](./08-b2b-tools.md) | Org–User link, invite system, CSV | Critical | Done |
-| 09 | [09-tech-debt.md](./09-tech-debt.md) | i18n, Sentry, API versioning, tests | High | Done — 19 backend + 13 frontend tests passing |
-| 10 | [10-demo-mode.md](./10-demo-mode.md) | Demo mode, landing FAQ/reviews | Medium | Done |
+| # | Файл | Область | Приоритет | Статус |
+|---|------|---------|-----------|--------|
+| 01 | [01-security-reliability.md](./01-security-reliability.md) | Безопасность, rate limits, backups | Critical | ✅ Готово — HTTPS не подтверждён в prod |
+| 02 | [02-ux-onboarding.md](./02-ux-onboarding.md) | Онбординг, дашборд | Medium | ✅ Готово |
+| 03 | [03-dark-theme.md](./03-dark-theme.md) | Тёмная тема | Medium | ✅ Готово |
+| 04 | [04-generation-history.md](./04-generation-history.md) | История генераций, избранное | Medium | ✅ Готово |
+| 05 | [05-content-editor.md](./05-content-editor.md) | Редактор результатов, шаблоны | Medium | ✅ Готово |
+| 06 | [06-batch-generation.md](./06-batch-generation.md) | Пакетная генерация (ZIP) | Low | ✅ Готово |
+| 07 | [07-import-export.md](./07-import-export.md) | Импорт слов, Google Drive | Low | 7.1 ✅ — 7.2 Google Drive не начато |
+| 08 | [08-b2b-tools.md](./08-b2b-tools.md) | Org–User связь, инвайты, CSV | Critical | ✅ Готово + org_admin роль |
+| 09 | [09-tech-debt.md](./09-tech-debt.md) | i18n, Sentry, API версионирование, тесты | High | ✅ Готово |
+| 10 | [10-demo-mode.md](./10-demo-mode.md) | Демо-режим, FAQ/отзывы на лендинге | Medium | ✅ Готово |
 
 ---
 
-## Critical Bugs (as of 2026-04-09)
+## Активные задачи (не вошедшие в спринты выше)
 
-~~**Critical bugs resolved as of 2026-04-12.**~~ All Sprint 1 tasks are complete.
+| Задача | Статус |
+|--------|--------|
+| MathPuzzle: таймер + streak + результаты | ✅ Готово (26.04.2026) |
+| AnalyticsPage для учителей | ✅ Готово (26.04.2026) |
+| Роль org_admin + OrgAdminDashboard | ✅ Готово (26.04.2026) |
+| Загрузка материалов (PDF/DOCX/TXT) | ✅ Готово |
+| 4 новые игры (Hangman/Spelling/Math/WordTranslate) | ✅ Готово |
+| Pagination в /generate/history | 🔴 В очереди |
+| WordTranslate: режим множественного выбора | 🔴 В очереди |
+| Admin Phase 4: Quick Analytics + Finance View | 🔴 В очереди |
 
 ---
 
-## Out of Scope (not in these tasks)
+## Критические баги
 
-- Stripe / Payme / Click payment integration
-- Self-registration with email verification
-- Forgot password via email
-- Welcome email
+~~Все критические баги Sprint 1 исправлены (2026-04-12).~~  
+~~Исправлен data leak в get_org_stats (2026-04-26).~~
 
----
-
-## Sprint Order
-
-```
-Sprint 1 (urgent)  →  08: User↔Org fix + invite system  |  01: HTTPS in prod
-Sprint 2           →  02: Onboarding  |  10: Reviews + FAQ on landing
-Sprint 3           →  05: Templates   |  06: Batch  |  real financial metrics
-Sprint 4           →  07: Google Drive  |  SEO  |  Telegram leads
-```
+**Активных критических багов нет.**

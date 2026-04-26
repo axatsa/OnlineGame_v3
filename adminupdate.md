@@ -1,121 +1,92 @@
-# Admin Panel Updates — Phase 3+
+# Admin Panel — История обновлений
 
-## Completed ✅
-- Phase 1: Logo, theme (light by default), basic structure
-- Phase 2: Subscription column, plan badges with expiry countdown, status/plan filtering
+**Обновлено:** 26.04.2026
 
-## Completed ✅
+---
 
-### Phase 2
-- ✅ Subscription column with plan badges and expiry countdown
-- ✅ Status/plan filtering for teachers
-- ✅ Functional filter dropdown menu
+## ✅ Завершено — Phase 1
 
-### Phase 3
-- ✅ AI Monitor: Daily token consumption (7 days) with cost calculation
-- ✅ Organization users modal with subscription status
-- ✅ Backend endpoint: GET /organizations/{org_id}/users
-- ✅ Bulk operations: change plan, extend subscription
-- ✅ Dashboard alerts for expiring/expired subscriptions
-- ✅ Seat usage button showing used/total seats
+- Логотип, светлая тема по умолчанию, базовая структура
 
-## Phase 4 — Complete ✅
+## ✅ Завершено — Phase 2
 
-All core admin panel functionality is now complete!
+- Колонка подписки с бейджами плана и обратным отсчётом
+- Фильтрация по статусу и плану
 
-### 1. Finance View — Show Real Subscription Data
-- [ ] Add organization subscription plans to org list
-- [ ] Show next billing/expiry date
-- [ ] Color-coded status badges (Active/Expiring/Expired)
-- [ ] Payment status summary
-- [ ] Revenue per plan breakdown
+## ✅ Завершено — Phase 3
 
-### 2. Export Improvements
-- [ ] Teachers export with subscription info (expires_at)
-- [ ] Orgs export with seat usage percentage
-- [ ] Payments with org subscription plans
+- AI Monitor: суточный расход токенов (7 дней) с расчётом стоимости
+- Модалка пользователей организации с отображением подписки
+- Backend: `GET /organizations/{org_id}/users`
+- Bulk операции: смена плана, продление подписки
+- Алерты на дашборде для истекающих / просроченных подписок
+- Кнопка использования мест (used/total seats)
 
-### 3. Audit Logs Enhancements
-- ✅ Add date range filter
-- ✅ Add action type filter
-- [ ] Add target filter (user/org/system)
-- [ ] Show counts per action type
-- [ ] Quick view modal for log details
+## ✅ Завершено — Phase 3+ (26.04.2026)
 
-### 4. Quick Analytics
-- [ ] Plan distribution pie chart (Free/Pro/School counts)
-- [ ] Subscription status summary (Active/Expiring/Expired)
-- [ ] Payment status pie chart (Paid/Pending/Failed)
-- [ ] Organizations by status pie chart
+### Поиск и фильтры
+- ✅ Поиск учителей по школе
+- ✅ Фильтр по дате истечения (Сегодня / Эта неделя / Этот месяц / Истекло)
+- ✅ Фильтр аудит-логов по диапазону дат
+- ✅ Поиск аудит-логов по типу действия
+- ✅ Объединённые фильтры работают совместно
 
-### 5. Teacher Search Improvements
-- ✅ Search by school name
-- ✅ Filter by expiry date range (Today, This week, This month, Expired)
-- ✅ Combined filters working together
+### Роль org_admin
+- ✅ Бейдж "ORG ADMIN" в строке учителя
+- ✅ Кнопка "Сделать адм.орги" (`POST /admin/teachers/{id}/promote`) — только если есть `organization_id`
+- ✅ Кнопка "Снять роль" (`POST /admin/teachers/{id}/demote`)
+- ✅ Toast с подсказкой "Пользователь должен перезайти" после смены роли
+- ✅ Список учителей теперь включает пользователей с ролью `org_admin`
 
-## Implementation Order (High → Low Impact)
-1. ✨ Finance: Org subscription info display
-2. 📊 Quick analytics charts (pie charts)
-3. 📅 Date range filter for logs
-4. 📤 Better exports (with subscription data)
-5. 🔍 Advanced teacher search (by school, date range)
+### Токен-лимиты для организаций
+- ✅ Кнопка "Токены" в строке организации
+- ✅ Модалка установки лимита: пресеты 30k / 50k / 100k / 200k
+- ✅ Backend: `POST /admin/organizations/{org_id}/set-token-limit` — обновляет `tokens_limit` всем учителям орги одним запросом
 
-## Backend Status
-- Teachers API ✅ returns plan, expires_at
-- Orgs API ✅ returns expires_at, seat info
-- Payments API ✅ functional
-- Audit logs ✅ functional
-- Daily tokens data — check if available
-- Subscription plans — check if available per org
+### Системные настройки
+- ✅ Поле `admin_telegram` — username для кнопки "Написать в Telegram" у org_admin
+- ✅ Сохранение через существующий `POST /admin/settings/{key}`
 
-## Optional Enhancements (Low Priority)
+### Impersonation fix
+- ✅ Редирект при входе под учителем учитывает роль: `/admin` / `/org-admin` / `/teacher`
 
-### Advanced Audit Log Features
-- [ ] Target filter (user/org/system) for audit logs
-- [ ] Show counts per action type
-- [ ] Quick view modal for log details
+---
 
-### Export Enhancements
-- [ ] Organizations export with seat usage percentage
-- [ ] Payments export with org subscription plans
+## 🔴 Осталось — Phase 4
 
-### Advanced Finance View
-- [ ] Show organization subscription plans in detail
-- [ ] Revenue per plan breakdown
-- [ ] Advanced financial metrics
+### Finance View
+- [ ] Планы подписки организаций в списке орг
+- [ ] Дата следующего платежа / истечения
+- [ ] Цветные статус-бейджи (Active / Expiring / Expired)
+- [ ] Сводка выручки по планам
 
-## Summary of Completed Features
+### Quick Analytics
+- [ ] Pie chart: распределение планов (Free/Pro/School)
+- [ ] Pie chart: статусы подписок (Active/Expiring/Expired)
+- [ ] Pie chart: статусы платежей (Paid/Pending/Failed)
+- [ ] Pie chart: организации по статусу
 
-**Core Admin Functions:**
-- ✅ Dashboard: Overview with alerts for expiring subscriptions
-- ✅ Teachers: Full management with subscription tracking, bulk operations
-- ✅ Organizations: Users modal, seat usage tracking
-- ✅ AI Monitor: Daily token consumption tracking
-- ✅ Finances: Payment history, analytics with pie charts
-- ✅ System: Settings, audit logs with filters
+### Audit Logs
+- [ ] Фильтр по цели (user/org/system)
+- [ ] Количество по типу действия
+- [ ] Quick view modal для деталей лога
 
-**Search & Filters:**
-- ✅ Teacher search by name/login
-- ✅ Teacher filter by status (active/blocked)
-- ✅ Teacher filter by plan (Free/Pro/School)
-- ✅ Teacher search by school name (NEW)
-- ✅ Teacher filter by expiry date range (NEW)
-- ✅ Audit log filter by date range (NEW)
-- ✅ Audit log search by action type (NEW)
+### Export
+- [ ] Учителя с `expires_at` и планом
+- [ ] Организации с % использования мест
+- [ ] Платежи с планами подписки
 
-**Data Management:**
-- ✅ Bulk change plan for teachers
-- ✅ Bulk extend subscription
-- ✅ Bulk block/unblock teachers
-- ✅ Export teachers to CSV/DOCX
-- ✅ Export payments to CSV/DOCX
-- ✅ Export audit logs to DOCX
-- ✅ Organization user import (CSV)
+---
 
-**UI/UX:**
-- ✅ Light/Dark theme toggle
-- ✅ Custom branding with new logo
-- ✅ Responsive design for mobile
-- ✅ Plan badges with expiry countdown
-- ✅ Color-coded status indicators
-- ✅ Quick stats and alerts
+## Текущий статус бэкенда
+
+| API | Статус |
+|-----|--------|
+| `GET /admin/teachers` | ✅ включает org_admin |
+| `POST /admin/teachers/{id}/promote` | ✅ |
+| `POST /admin/teachers/{id}/demote` | ✅ |
+| `POST /admin/organizations/{id}/set-token-limit` | ✅ |
+| `GET /admin/organizations` | ✅ expires_at, seat info |
+| `GET /admin/payments` | ✅ |
+| `GET /admin/audit-logs` | ✅ с фильтрами |
+| `GET/POST /admin/settings/{key}` | ✅ |

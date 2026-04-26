@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -31,3 +31,17 @@ class GeneratedBook(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="books")
+
+
+class UserMaterial(Base):
+    __tablename__ = "user_materials"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    filename = Column(String, nullable=False)
+    file_type = Column(String, nullable=False)  # "pdf" | "docx" | "txt"
+    extracted_text = Column(Text, nullable=False)
+    char_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")

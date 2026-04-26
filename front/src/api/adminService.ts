@@ -137,6 +137,21 @@ export const adminService = {
         return response.data;
     },
 
+    setOrgTokenLimit: async (orgId: number, tokens_limit: number) => {
+        const response = await api.post(`/admin/organizations/${orgId}/set-token-limit`, { tokens_limit });
+        return response.data;
+    },
+
+    promoteToOrgAdmin: async (id: number) => {
+        const response = await api.post(`/admin/teachers/${id}/promote`);
+        return response.data;
+    },
+
+    demoteFromOrgAdmin: async (id: number) => {
+        const response = await api.post(`/admin/teachers/${id}/demote`);
+        return response.data;
+    },
+
     getOrgGeminiKey: async (orgId: number) => {
         const response = await api.get(`/admin/organizations/${orgId}/gemini-key`);
         return response.data as { org_id: number; has_custom_key: boolean; key_preview: string | null };

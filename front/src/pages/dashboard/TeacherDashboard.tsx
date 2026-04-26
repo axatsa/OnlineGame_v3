@@ -47,12 +47,17 @@ const TeacherDashboard = () => {
   
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [materialCount, setMaterialCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await api.get("/generate/stats/me");
-        setStats(res.data);
+        const [statsRes, matRes] = await Promise.all([
+          api.get("/generate/stats/me"),
+          api.get<{ id: number }[]>("/materials/").catch(() => ({ data: [] })),
+        ]);
+        setStats(statsRes.data);
+        setMaterialCount(matRes.data.length);
       } catch (error) {
         console.error("Failed to fetch stats", error);
         toast.error("Не удалось загрузить статистику");
@@ -66,9 +71,11 @@ const TeacherDashboard = () => {
   const navPills = [
     { key: "Generators", label: t("navGenerators"), route: "/generator" },
     { key: "History",    label: lang === "ru" ? "История" : "Tarix",  route: "/history" },
+    { key: "Analytics",  label: lang === "ru" ? "Аналитика" : "Tahlil", route: "/analytics" },
     { key: "Tools",      label: t("navTools"),      route: "/tools" },
     { key: "Games",      label: t("navGames"),      route: "/games" },
     { key: "Library",    label: t("navLibrary"),    route: "/library" },
+    { key: "Materials",  label: lang === "ru" ? "Материалы" : "Materiallar", route: "/materials" },
   ] as const;
 
   const [activeNav] = useState<typeof navPills[number]["key"]>("Generators");
@@ -235,6 +242,38 @@ const TeacherDashboard = () => {
               </div>
             </motion.button>
           ))}
+
+          {/* Materials card with upload count */}
+          <motion.button
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * cardsList.length + 0.7 }}
+            whileHover={{ scale: 1.02, y: -3 }} whileTap={{ scale: 0.98 }}
+            onClick={() => navigate("/materials")}
+            className="text-left p-6 rounded-[28px] bg-card border border-border shadow-sm hover:shadow-md transition-all flex flex-col gap-4 group relative"
+          >
+            {materialCount === 0 && (
+              <span className="absolute top-3 right-3 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 border border-amber-200">
+                Загрузить
+              </span>
+            )}
+            {materialCount > 0 && (
+              <span className="absolute top-3 right-3 text-[10px] font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5 border border-green-200">
+                {materialCount} файл{materialCount === 1 ? "" : materialCount < 5 ? "а" : "ов"}
+              </span>
+            )}
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <BookMarked className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-foreground leading-tight">
+                {lang === "ru" ? "Материалы" : "Materiallar"}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                {lang === "ru"
+                  ? "Загрузите учебники — ИИ создаст задания по вашему контенту"
+                  : "Darsliklar yuklang — AI sizning materialingiz bo'yicha topshiriqlar yaratadi"}
+              </p>
+            </div>
+          </motion.button>
         </div>
       </main>
 

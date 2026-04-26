@@ -19,11 +19,15 @@ type HistoryItem = {
   is_favorite: number;
 };
 
+const PAGE_SIZE = 20;
+
 const HistoryPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterFav, setFilterFav] = useState(false);
@@ -32,8 +36,9 @@ const HistoryPage = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await api.get("/generate/history");
+        const res = await api.get("/generate/history", { params: { limit: PAGE_SIZE, offset: 0 } });
         setItems(res.data);
+        setHasMore(res.data.length === PAGE_SIZE);
       } catch (e) {
         console.error("Failed to fetch history", e);
       } finally {
@@ -42,6 +47,19 @@ const HistoryPage = () => {
     };
     fetchHistory();
   }, []);
+
+  const loadMore = async () => {
+    setIsLoadingMore(true);
+    try {
+      const res = await api.get("/generate/history", { params: { limit: PAGE_SIZE, offset: items.length } });
+      setItems((prev) => [...prev, ...res.data]);
+      setHasMore(res.data.length === PAGE_SIZE);
+    } catch (e) {
+      console.error("Failed to load more history", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const toggleFavorite = async (id: number) => {
     setItems(items.map(item => item.id === id ? { ...item, is_favorite: item.is_favorite === 1 ? 0 : 1 } : item));
@@ -188,6 +206,14 @@ const HistoryPage = () => {
                 </motion.div>
               ))}
             </AnimatePresence>
+          )}
+          {!isLoading && hasMore && filteredItems.length > 0 && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={loadMore} disabled={isLoadingMore} className="gap-2 rounded-xl">
+                {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {isLoadingMore ? "Загружаю..." : "Загрузить ещё"}
+              </Button>
+            </div>
           )}
         </div>
       </div>

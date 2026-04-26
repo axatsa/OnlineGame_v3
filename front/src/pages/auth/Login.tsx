@@ -23,6 +23,8 @@ const Login = () => {
         navigate(redirectAfter);
       } else if (user.role === "super_admin") {
         navigate("/admin");
+      } else if (user.role === "org_admin") {
+        navigate("/org-admin");
       } else {
         navigate("/teacher");
       }

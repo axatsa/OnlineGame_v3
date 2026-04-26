@@ -7,7 +7,7 @@ import { queryClient } from "@/lib/queryClient";
 interface User {
     id: number;
     email: string;
-    role: "super_admin" | "teacher";
+    role: "super_admin" | "teacher" | "org_admin";
     full_name: string;
     onboarding_completed: boolean;
     organization_id: number | null;
@@ -47,9 +47,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (storedUser) {
                         setUser(JSON.parse(storedUser));
                     }
+                    // Refresh user data from server so role/token changes are reflected without re-login
+                    const res = await api.get("/auth/me");
+                    const freshUser: User = res.data;
+                    setUser(freshUser);
+                    localStorage.setItem("user", JSON.stringify(freshUser));
                 } catch (e) {
                     console.error("Auth init failed", e);
                     localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    setUser(null);
                 }
             }
             setIsLoading(false);

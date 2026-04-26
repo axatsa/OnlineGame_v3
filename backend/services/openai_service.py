@@ -22,6 +22,18 @@ def get_system_prompt(language: str) -> str:
         f"Do NOT mix languages. Output ONLY valid JSON, no markdown fences, no extra text."
     )
 
+def build_material_context_block(material_text: str) -> str:
+    if not material_text or not material_text.strip():
+        return ""
+    return (
+        "USER'S OWN MATERIAL (highest priority — base questions on THIS content):\n"
+        "```\n"
+        f"{material_text[:10000]}\n"
+        "```\n"
+        "Use this material as the primary source. Extract vocabulary, concepts, and facts directly from it."
+    )
+
+
 def build_class_context_block(grade: str, context: str) -> str:
     if not grade and not context:
         return ""
@@ -157,11 +169,12 @@ def _sanitize_quiz_questions(questions: Any) -> List[Dict]:
     return sanitized
 
 
-async def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[List[Dict[str, str]], int]:
+async def generate_math_problems(topic: str, count: int, difficulty: str, grade: str = "", context: str = "", language: str = "Russian", material_context: str = "") -> Tuple[List[Dict[str, str]], int]:
     user_prompt = f"""
     Generate {count} math problems.
     Topic: {topic}
     Difficulty: {difficulty}
+    {build_material_context_block(material_context)}
     {build_class_context_block(grade, context)}
 
     STRICT FORMATTING RULES:
@@ -180,9 +193,10 @@ async def generate_math_problems(topic: str, count: int, difficulty: str, grade:
         {"role": "user", "content": user_prompt}
     ])
 
-async def generate_crossword_words(topic: str, count: int, language: str = "Russian", grade: str = "", context: str = "") -> tuple:
+async def generate_crossword_words(topic: str, count: int, language: str = "Russian", grade: str = "", context: str = "", material_context: str = "") -> tuple:
     user_prompt = f"""
     Generate exactly {count} words and clues related to the topic "{topic}" in {language}.
+    {build_material_context_block(material_context)}
     {build_class_context_block(grade, context)}
     
     RULES:
@@ -200,11 +214,12 @@ async def generate_crossword_words(topic: str, count: int, language: str = "Russ
         {"role": "user", "content": user_prompt}
     ])
 
-async def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian", difficulty: str = "medium") -> Tuple[List[Dict], int]:
+async def generate_quiz(topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian", difficulty: str = "medium", material_context: str = "") -> Tuple[List[Dict], int]:
     user_prompt = f"""
     Generate {count} multiple-choice quiz questions in {language}.
     Topic: {topic}
     Difficulty: {difficulty}
+    {build_material_context_block(material_context)}
     {build_class_context_block(grade, context)}
 
     CRITICAL RULES — VIOLATIONS WILL BREAK THE GAME:
@@ -245,12 +260,13 @@ async def generate_quiz(topic: str, count: int, grade: str = "", context: str = 
     return result, tokens
 
 
-async def generate_assignment(subject: str, topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[Dict, int]:
+async def generate_assignment(subject: str, topic: str, count: int, grade: str = "", context: str = "", language: str = "Russian", material_context: str = "") -> Tuple[Dict, int]:
     user_prompt = f"""
     Create a detailed school assignment/worksheet.
     Subject: {subject}
     Topic: {topic}
     Target language: {language}
+    {build_material_context_block(material_context)}
     {build_class_context_block(grade, context)}
     Question Count: {count}
     
@@ -281,11 +297,12 @@ async def generate_assignment(subject: str, topic: str, count: int, grade: str =
         {"role": "user", "content": user_prompt}
     ])
 
-async def generate_jeopardy(topic: str, grade: str = "", context: str = "", language: str = "Russian") -> Tuple[Dict, int]:
+async def generate_jeopardy(topic: str, grade: str = "", context: str = "", language: str = "Russian", material_context: str = "") -> Tuple[Dict, int]:
     user_prompt = f"""
     Create a Jeopardy game board.
     Topic: {topic}
     Target language: {language}
+    {build_material_context_block(material_context)}
     {build_class_context_block(grade, context)}
     
     STRICT RULES:
@@ -312,6 +329,95 @@ async def generate_jeopardy(topic: str, grade: str = "", context: str = "", lang
     """
     return await _get_completion([
         {"role": "system", "content": get_system_prompt(language)},
+        {"role": "user", "content": user_prompt}
+    ])
+
+
+async def generate_hangman_words(topic: str, count: int, language: str = "Russian", material_context: str = "") -> tuple:
+    user_prompt = f"""
+    Generate {count} words for a Hangman game.
+    Topic: {topic}
+    {build_material_context_block(material_context)}
+
+    RULES:
+    - Each word must be a single word (no spaces)
+    - 4-12 characters long
+    - Provide a short hint/clue (max 6 words) for each word
+    - Words must relate to the topic
+
+    Return ONLY a JSON array:
+    [{{"word": "GRAVITY", "hint": "Force pulling objects to Earth"}}]
+    """
+    return await _get_completion([
+        {"role": "system", "content": get_system_prompt(language)},
+        {"role": "user", "content": user_prompt}
+    ])
+
+
+async def generate_spelling_words(topic: str, count: int, difficulty: str = "medium", language: str = "Russian", material_context: str = "") -> tuple:
+    user_prompt = f"""
+    Generate {count} words for a Spelling Bee game.
+    Topic: {topic}
+    Difficulty: {difficulty} (easy = common short words, medium = grade-level words, hard = complex/rare words)
+    {build_material_context_block(material_context)}
+
+    RULES:
+    - Each word is a single word in {language}
+    - Provide a short definition (1 sentence max)
+    - Provide an example sentence using the word
+
+    Return ONLY a JSON array:
+    [{{"word": "photosynthesis", "definition": "Process plants use to make food from sunlight", "example": "Photosynthesis occurs in the leaves of plants."}}]
+    """
+    return await _get_completion([
+        {"role": "system", "content": get_system_prompt(language)},
+        {"role": "user", "content": user_prompt}
+    ])
+
+
+async def generate_math_puzzles(topic: str, count: int, puzzle_type: str = "missing_operator", language: str = "Russian", material_context: str = "") -> tuple:
+    puzzle_instructions = {
+        "missing_operator": "Fill in the missing operator (+, -, ×, ÷) to make the equation true. Example: {\"puzzle\": \"4 ? 3 = 12\", \"answer\": \"×\"}",
+        "magic_square": "A 3×3 grid where each row, column, and diagonal sums to the same number. Example: {\"puzzle\": [[2,\"?\",6],[7,5,3],[6,1,\"?\"]], \"answers\": [4,8], \"magic_sum\": 12}",
+        "number_chain": "A sequence of numbers where player fills in the next number. Example: {\"puzzle\": \"2, 4, 8, 16, ?\", \"answer\": \"32\", \"rule\": \"multiply by 2\"}",
+    }
+    instruction = puzzle_instructions.get(puzzle_type, puzzle_instructions["missing_operator"])
+
+    user_prompt = f"""
+    Generate {count} math puzzles of type "{puzzle_type}".
+    Topic hint: {topic}
+    {build_material_context_block(material_context)}
+    Format: {instruction}
+
+    RULES:
+    - All answers must be mathematically correct
+    - Vary difficulty within the set
+    - Return ONLY a JSON array of puzzle objects matching the format above
+    """
+    return await _get_completion([
+        {"role": "system", "content": get_system_prompt(language)},
+        {"role": "user", "content": user_prompt}
+    ])
+
+
+async def generate_word_pairs(topic: str, count: int, source_lang: str = "Russian", target_lang: str = "English", material_context: str = "") -> tuple:
+    user_prompt = f"""
+    Generate {count} word translation pairs for a flashcard game.
+    Topic: {topic}
+    Translate from: {source_lang}
+    Translate to: {target_lang}
+    {build_material_context_block(material_context)}
+
+    RULES:
+    - Words should be topic-relevant vocabulary
+    - Include a short example sentence in {source_lang}
+    - Vary between nouns, verbs, adjectives
+
+    Return ONLY a JSON array:
+    [{{"source": "кошка", "target": "cat", "example": "Кошка спит на диване."}}]
+    """
+    return await _get_completion([
+        {"role": "system", "content": get_system_prompt(source_lang)},
         {"role": "user", "content": user_prompt}
     ])
 

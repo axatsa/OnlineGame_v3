@@ -12,3 +12,5 @@ python-multipart
 google-genai
 slowapi
 sentry-sdk
+pypdf
+python-docx

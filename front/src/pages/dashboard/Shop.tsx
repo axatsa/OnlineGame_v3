@@ -100,7 +100,7 @@ const Shop = () => {
                             <div key={item.id} className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all group flex flex-col">
                                 <div className="aspect-[4/3] bg-muted/50 flex items-center justify-center relative flex-shrink-0">
                                     {item.image_url ? (
-                                        <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                        <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                                     ) : (
                                         <Sparkles className="w-16 h-16 text-primary/10 group-hover:scale-110 transition-transform" />
                                     )}

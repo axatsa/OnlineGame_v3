@@ -42,7 +42,7 @@ function renderContent(raw: string, generatorType?: string) {
                     {parsed.pages.map((page: any, i: number) => (
                         <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
                             {page.image_base64 && (
-                                <img src={page.image_base64} alt={`Page ${page.page_number}`} className="w-full h-auto" />
+                                <img src={page.image_base64} alt={`Page ${page.page_number}`} className="w-full h-auto" loading="lazy" />
                             )}
                             <div className="p-4 bg-gray-50 space-y-2">
                                 <p className="text-xs font-semibold text-gray-400">Страница {page.page_number}</p>

@@ -5,7 +5,13 @@ import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
     children: ReactNode;
-    allowedRoles?: ("super_admin" | "teacher")[];
+    allowedRoles?: ("super_admin" | "teacher" | "org_admin")[];
+}
+
+function roleHome(role: string): string {
+    if (role === "super_admin") return "/admin";
+    if (role === "org_admin") return "/org-admin";
+    return "/teacher";
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -18,9 +24,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
             if (!token || !user) {
                 navigate("/");
             } else if (allowedRoles && !allowedRoles.includes(user.role)) {
-                // Redirect to their appropriate dashboard if they try to access wrong area
-                if (user.role === "super_admin") navigate("/admin");
-                else navigate("/teacher");
+                navigate(roleHome(user.role));
             }
         }
     }, [user, token, isLoading, navigate, allowedRoles]);

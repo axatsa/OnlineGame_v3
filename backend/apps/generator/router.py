@@ -5,9 +5,9 @@ from database import get_db
 from apps.generator.models import TokenUsage, GenerationLog, Template
 from apps.classes.models import ClassGroup
 from apps.auth.models import User
-from apps.generator.schemas import MathRequest, CrosswordRequest, QuizRequest, AssignmentRequest, JeopardyRequest, GenerationLogResponse, TemplateCreate, TemplateResponse, BatchRequest
-from apps.generator.services import check_token_quota, increment_token_usage, get_quota_info, priority_guard
-from services.openai_service import generate_math_problems, generate_crossword_words, generate_quiz, generate_assignment, generate_jeopardy
+from apps.generator.schemas import MathRequest, CrosswordRequest, QuizRequest, AssignmentRequest, JeopardyRequest, GenerationLogResponse, TemplateCreate, TemplateResponse, BatchRequest, HangmanRequest, SpellingRequest, MathPuzzleRequest, WordPairsRequest
+from apps.generator.services import check_token_quota, increment_token_usage, get_quota_info, priority_guard, get_material_context
+from services.openai_service import generate_math_problems, generate_crossword_words, generate_quiz, generate_assignment, generate_jeopardy, generate_hangman_words, generate_spelling_words, generate_math_puzzles, generate_word_pairs
 from apps.auth.dependencies import get_current_user
 from apps.generator.batch_utils import create_batch_zip
 from typing import Optional, List
@@ -51,8 +51,8 @@ async def gen_math(request: Request, req: MathRequest, db: Session = Depends(get
     await priority_guard(user, db)
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
-    
-    problems, tokens = await generate_math_problems(req.topic, req.count, req.difficulty, grade, context, req.language)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    problems, tokens = await generate_math_problems(req.topic, req.count, req.difficulty, grade, context, req.language, mat_ctx)
     
     if problems is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -104,8 +104,8 @@ async def gen_crossword(request: Request, req: CrosswordRequest, db: Session = D
         return {"words": words}
 
     grade, context = get_class_context(db, req.class_id)
-
-    words, tokens = await generate_crossword_words(req.topic, req.word_count, req.language, grade, context)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    words, tokens = await generate_crossword_words(req.topic, req.word_count, req.language, grade, context, mat_ctx)
 
     if words is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -123,8 +123,8 @@ async def gen_quiz(request: Request, req: QuizRequest, db: Session = Depends(get
     await priority_guard(user, db)
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
-    
-    questions, tokens = await generate_quiz(req.topic, req.count, grade, context, req.language, req.difficulty)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    questions, tokens = await generate_quiz(req.topic, req.count, grade, context, req.language, req.difficulty, mat_ctx)
     
     if questions is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -142,8 +142,8 @@ async def gen_jeopardy(request: Request, req: JeopardyRequest, db: Session = Dep
     await priority_guard(user, db)
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
-    
-    data, tokens = await generate_jeopardy(req.topic, grade, context, req.language)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    data, tokens = await generate_jeopardy(req.topic, grade, context, req.language, mat_ctx)
     
     if data is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -161,8 +161,8 @@ async def gen_assignment(request: Request, req: AssignmentRequest, db: Session =
     await priority_guard(user, db)
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
-    
-    assignment, tokens = await generate_assignment(req.subject, req.topic, req.count, grade, context, req.language)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    assignment, tokens = await generate_assignment(req.subject, req.topic, req.count, grade, context, req.language, mat_ctx)
     
     if assignment is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
@@ -174,13 +174,77 @@ async def gen_assignment(request: Request, req: AssignmentRequest, db: Session =
         
     return {"result": assignment}
 
+@router.post("/hangman")
+@limiter.limit(_rate_limit)
+async def gen_hangman(request: Request, req: HangmanRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    await priority_guard(user, db)
+    check_token_quota(user, db)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    words, tokens = await generate_hangman_words(req.topic, req.count, req.language, mat_ctx)
+    if words is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+    if tokens > 0:
+        log_usage(db, user.id, "hangman", tokens)
+        increment_token_usage(user, tokens, db)
+        save_generation(db, user.id, "hangman", req.topic, {"words": words})
+    return {"words": words or []}
+
+
+@router.post("/spelling")
+@limiter.limit(_rate_limit)
+async def gen_spelling(request: Request, req: SpellingRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    await priority_guard(user, db)
+    check_token_quota(user, db)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    words, tokens = await generate_spelling_words(req.topic, req.count, req.difficulty, req.language, mat_ctx)
+    if words is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+    if tokens > 0:
+        log_usage(db, user.id, "spelling", tokens)
+        increment_token_usage(user, tokens, db)
+        save_generation(db, user.id, "spelling", req.topic, {"words": words})
+    return {"words": words or []}
+
+
+@router.post("/math-puzzle")
+@limiter.limit(_rate_limit)
+async def gen_math_puzzle(request: Request, req: MathPuzzleRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    await priority_guard(user, db)
+    check_token_quota(user, db)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    puzzles, tokens = await generate_math_puzzles(req.topic, req.count, req.puzzle_type, req.language, mat_ctx)
+    if puzzles is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+    if tokens > 0:
+        log_usage(db, user.id, "math_puzzle", tokens)
+        increment_token_usage(user, tokens, db)
+        save_generation(db, user.id, "math_puzzle", req.topic, {"puzzles": puzzles, "puzzle_type": req.puzzle_type})
+    return {"puzzles": puzzles or [], "puzzle_type": req.puzzle_type}
+
+
+@router.post("/word-pairs")
+@limiter.limit(_rate_limit)
+async def gen_word_pairs(request: Request, req: WordPairsRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    await priority_guard(user, db)
+    check_token_quota(user, db)
+    mat_ctx = get_material_context(req.material_id, user, db)
+    pairs, tokens = await generate_word_pairs(req.topic, req.count, req.source_lang, req.target_lang, mat_ctx)
+    if pairs is None:
+        raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
+    if tokens > 0:
+        log_usage(db, user.id, "word_pairs", tokens)
+        increment_token_usage(user, tokens, db)
+        save_generation(db, user.id, "word_pairs", req.topic, {"pairs": pairs})
+    return {"pairs": pairs or []}
+
+
 @router.get("/quota")
 def get_my_quota(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     return get_quota_info(user, db)
 
 @router.get("/history", response_model=List[GenerationLogResponse])
-def get_history(limit: int = 50, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    logs = db.query(GenerationLog).filter(GenerationLog.user_id == user.id).order_by(GenerationLog.created_at.desc()).limit(limit).all()
+def get_history(limit: int = 20, offset: int = 0, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    logs = db.query(GenerationLog).filter(GenerationLog.user_id == user.id).order_by(GenerationLog.created_at.desc()).offset(offset).limit(limit).all()
     # Format dates as strings
     result = []
     for log in logs:

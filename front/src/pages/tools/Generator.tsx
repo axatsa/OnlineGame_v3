@@ -1,5 +1,5 @@
 
-import React, { useRef, RefObject, useState } from "react";
+import React, { useRef, RefObject, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, ChevronDown, Check, Plus, Save, Brain, Trophy, FileText, BookmarkPlus } from "lucide-react";
@@ -101,6 +101,16 @@ const Generator = () => {
   const [assignTopic, setAssignTopic] = useState("");
   const [assignCount, setAssignCount] = useState("5");
 
+  // Material context
+  const [materials, setMaterials] = useState<{ id: number; filename: string }[]>([]);
+  const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
+
+  useEffect(() => {
+    api.get<{ id: number; filename: string }[]>("/materials/")
+      .then((r) => setMaterials(r.data))
+      .catch(() => {/* silently ignore */});
+  }, []);
+
   // Results State
   const [quizData, setQuizData] = useState<any[]>([]);
   const [assignmentData, setAssignmentData] = useState<any>(null);
@@ -177,13 +187,16 @@ const Generator = () => {
         return;
       }
 
+      const matId = selectedMaterialId ?? undefined;
+
       if (genType === "math") {
         const payload = {
           topic: mathTopic,
           count: parseInt(questionCount) || 10,
           difficulty: difficulty,
           language: langLabel,
-          class_id: activeClassId
+          class_id: activeClassId,
+          material_id: matId,
         };
         const res = await api.post("/generate/math", payload);
         setGeneratedProblems(res.data.problems);
@@ -192,19 +205,20 @@ const Generator = () => {
           topic: quizTopic,
           count: parseInt(quizCount) || 5,
           language: langLabel,
-          class_id: activeClassId
+          class_id: activeClassId,
+          material_id: matId,
         };
         const res = await api.post("/generate/quiz", payload);
         setQuizData(res.data.questions);
       } else if (genType === "assignment") {
-        // Автоопределение предмета если не задан
         const finalSubject = assignSubject.trim() || "General";
         const payload = {
           subject: finalSubject,
           topic: assignTopic,
           count: parseInt(assignCount) || 5,
           language: langLabel,
-          class_id: activeClassId
+          class_id: activeClassId,
+          material_id: matId,
         };
         const res = await api.post("/generate/assignment", payload);
         setAssignmentData(res.data.result);
@@ -218,14 +232,15 @@ const Generator = () => {
           payload = {
             custom_words: parsedLines,
             language: langLabel,
-            class_id: activeClassId
+            class_id: activeClassId,
           };
         } else {
           payload = {
             topic: crosswordTopic,
             word_count: parseInt(wordCount) || 10,
             language: langLabel,
-            class_id: activeClassId
+            class_id: activeClassId,
+            material_id: matId,
           };
         }
         const res = await api.post("/generate/crossword", payload);
@@ -1179,6 +1194,45 @@ const Generator = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Material selector or upload prompt */}
+        <div className="px-6 pb-4 space-y-1.5">
+          {materials.length > 0 ? (
+            <>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Материал (необязательно)
+              </label>
+              <select
+                value={selectedMaterialId ?? ""}
+                onChange={(e) => setSelectedMaterialId(e.target.value ? Number(e.target.value) : null)}
+                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">— Без материала (общие знания ИИ)</option>
+                {materials.map((m) => (
+                  <option key={m.id} value={m.id}>{m.filename}</option>
+                ))}
+              </select>
+              {selectedMaterialId && (
+                <p className="text-xs text-green-600 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Генерация улучшена: ИИ использует ваш файл как источник
+                </p>
+              )}
+            </>
+          ) : (
+            <a
+              href="/materials"
+              className="flex items-center gap-2.5 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-3 py-2.5 hover:bg-primary/10 transition-colors group"
+            >
+              <span className="text-lg">📎</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-primary">Загрузите свои материалы</p>
+                <p className="text-xs text-muted-foreground">Учебник или конспект → ИИ создаст задания точно по теме</p>
+              </div>
+              <span className="text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0">→</span>
+            </a>
+          )}
         </div>
 
         {/* Generate Button */}

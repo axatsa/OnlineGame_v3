@@ -7,6 +7,7 @@ class MathRequest(BaseModel):
     difficulty: str
     language: str = "Russian"
     class_id: Optional[int] = None
+    material_id: Optional[int] = None
 
 class CrosswordRequest(BaseModel):
     topic: str
@@ -14,6 +15,7 @@ class CrosswordRequest(BaseModel):
     word_count: int
     class_id: Optional[int] = None
     custom_words: Optional[List[str]] = None
+    material_id: Optional[int] = None
 
 class QuizRequest(BaseModel):
     topic: str
@@ -21,6 +23,7 @@ class QuizRequest(BaseModel):
     language: str = "Russian"
     difficulty: Optional[str] = "medium"
     class_id: Optional[int] = None
+    material_id: Optional[int] = None
 
 class AssignmentRequest(BaseModel):
     subject: str
@@ -28,11 +31,13 @@ class AssignmentRequest(BaseModel):
     count: int
     language: str = "Russian"
     class_id: Optional[int] = None
+    material_id: Optional[int] = None
 
 class JeopardyRequest(BaseModel):
     topic: str
     language: str = "Russian"
     class_id: Optional[int] = None
+    material_id: Optional[int] = None
 
 class GenerationLogResponse(BaseModel):
     id: int
@@ -64,6 +69,37 @@ class TemplateResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+class HangmanRequest(BaseModel):
+    topic: str
+    count: int = 8
+    language: str = "Russian"
+    class_id: Optional[int] = None
+    material_id: Optional[int] = None
+
+class SpellingRequest(BaseModel):
+    topic: str
+    count: int = 8
+    difficulty: str = "medium"
+    language: str = "Russian"
+    class_id: Optional[int] = None
+    material_id: Optional[int] = None
+
+class MathPuzzleRequest(BaseModel):
+    topic: str
+    count: int = 6
+    puzzle_type: str = "missing_operator"  # missing_operator | number_chain | magic_square
+    language: str = "Russian"
+    class_id: Optional[int] = None
+    material_id: Optional[int] = None
+
+class WordPairsRequest(BaseModel):
+    topic: str
+    count: int = 10
+    source_lang: str = "Russian"
+    target_lang: str = "English"
+    class_id: Optional[int] = None
+    material_id: Optional[int] = None
 
 class BatchRequest(BaseModel):
     tool_type: str  # math, quiz, assignment

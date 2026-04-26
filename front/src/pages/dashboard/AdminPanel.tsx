@@ -12,7 +12,7 @@ import {
   ToggleLeft, ToggleRight, FileText,
   ArrowUpRight, ArrowDownRight, WifiOff, Wifi,
   CreditCard, Receipt, BarChart3, Loader2, Globe, Sun, Moon,
-  Upload, ChevronDown, ChevronUp, BarChart2,
+  Upload, ChevronDown, ChevronUp, BarChart2, ShieldCheck, ShieldOff,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useClass } from "@/context/ClassContext";
@@ -46,6 +46,8 @@ type Teacher = {
   is_active: boolean;
   tokens_limit: number;
   expires_at: string | null;
+  organization_id: number | null;
+  role: string;
 };
 
 type Org = {
@@ -122,8 +124,12 @@ const exportTeachersCSV = (teachers: Teacher[], t: any) => {
 const exportOrgsCSV = (orgs: Org[], t: any) => {
   downloadCSV(
     `classplay_organizations_${new Date().toISOString().slice(0, 10)}.csv`,
-    [t("exp_org_name"), t("exp_contact"), t("exp_seats_total"), t("exp_seats_used"), t("exp_expires"), t("exp_status")],
-    orgs.map(o => [o.name, o.contact, String(o.seats), String(o.used), o.expires, o.status])
+    [t("exp_org_name"), t("exp_contact"), "План", t("exp_seats_total"), t("exp_seats_used"), "Загрузка %", t("exp_expires"), t("exp_status")],
+    orgs.map(o => {
+      const plan = o.seats <= 10 ? "FREE" : o.seats <= 50 ? "PRO" : "SCHOOL";
+      const pct = o.seats > 0 ? Math.round((o.used / o.seats) * 100) : 0;
+      return [o.name, o.contact, plan, String(o.seats), String(o.used), `${pct}%`, o.expires, o.status];
+    })
   );
 };
 
@@ -196,16 +202,20 @@ const exportOrgsDOCX = async (orgs: Org[], t: any) => {
             width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
               new TableRow({
-                children: [t("exp_org_name"), t("exp_contact"), t("exp_seats_total"), t("exp_expires"), t("exp_status")].map(h => new TableCell({
+                children: [t("exp_org_name"), t("exp_contact"), "План", t("exp_seats_total"), "Загрузка", t("exp_expires"), t("exp_status")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
                   shading: { fill: "f3f4f6" }
                 }))
               }),
-              ...orgs.map(o => new TableRow({
-                children: [
-                  o.name, o.contact, `${o.used}/${o.seats}`, new Date(o.expires).toLocaleDateString("ru-RU"), o.status
-                ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
-              }))
+              ...orgs.map(o => {
+                const plan = o.seats <= 10 ? "FREE" : o.seats <= 50 ? "PRO" : "SCHOOL";
+                const pct = o.seats > 0 ? Math.round((o.used / o.seats) * 100) : 0;
+                return new TableRow({
+                  children: [
+                    o.name, o.contact, plan, `${o.used}/${o.seats}`, `${pct}%`, new Date(o.expires).toLocaleDateString("ru-RU"), o.status
+                  ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
+                });
+              })
             ]
           })
         ]
@@ -577,7 +587,7 @@ const DashboardView = ({ teachers, orgs, payments, auditLogs, isLoading }: { tea
 
 const TeachersView = ({
   teachers, searchQuery, setSearchQuery, toggleBlock, showResetModal, setShowResetModal, isLoading, onRefresh, onImpersonate,
-  selectedIds, setSelectedIds,
+  selectedIds, setSelectedIds, onPromote, onDemote,
 }: {
   teachers: Teacher[];
   searchQuery: string;
@@ -590,6 +600,8 @@ const TeachersView = ({
   onImpersonate: (id: number) => void;
   selectedIds: number[];
   setSelectedIds: (v: number[] | ((prev: number[]) => number[])) => void;
+  onPromote: (id: number) => void;
+  onDemote: (id: number) => void;
 }) => {
   const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "blocked">("all");
@@ -927,7 +939,12 @@ const TeachersView = ({
                       />
                     </td>
                     <td className="px-5 py-4">
-                      <p className="font-medium text-foreground font-sans text-sm">{t.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground font-sans text-sm">{t.name}</p>
+                        {t.role === "org_admin" && (
+                          <span className="text-[10px] font-bold uppercase bg-indigo-500/10 text-indigo-600 px-1.5 py-0.5 rounded-md font-sans">ORG</span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground font-sans">@{t.login}</p>
                     </td>
                     <td className="px-5 py-4 text-sm text-muted-foreground font-sans">{t.school}</td>
@@ -966,6 +983,25 @@ const TeachersView = ({
                             ? <Unlock className="w-3.5 h-3.5 text-success" />
                             : <Lock className="w-3.5 h-3.5 text-destructive" />}
                         </button>
+                        {t.organization_id && (
+                          t.role === "org_admin" ? (
+                            <button
+                              onClick={() => onDemote(t.id)}
+                              className="p-2 rounded-lg hover:bg-yellow-500/10 transition-colors"
+                              title="Снять роль адм. орги"
+                            >
+                              <ShieldOff className="w-3.5 h-3.5 text-yellow-600" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onPromote(t.id)}
+                              className="p-2 rounded-lg hover:bg-indigo-500/10 transition-colors"
+                              title="Сделать адм. орги"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+                            </button>
+                          )
+                        )}
                         <button onClick={() => handleDelete(t.id)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors" title="Удалить">
                           <X className="w-3.5 h-3.5 text-destructive" />
                         </button>
@@ -1042,6 +1078,8 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
   const [orgUsers, setOrgUsers] = useState<any[]>([]);
   const [inviteOrg, setInviteOrg] = useState<{ id: number, name: string } | null>(null);
   const [modal, setModal] = useState<{isOpen: boolean, data?: OrgFormData}>({isOpen: false});
+  const [tokenLimitOrg, setTokenLimitOrg] = useState<{ id: number, name: string } | null>(null);
+  const [tokenLimitValue, setTokenLimitValue] = useState("30000");
 
   const handleSave = async (data: OrgFormData) => {
     if (data.id) await adminService.updateOrganization(data.id, data);
@@ -1085,6 +1123,11 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
                     <Building2 className="w-4 h-4 text-muted-foreground" />
                     <h3 className="font-semibold text-foreground font-sans">{org.name}</h3>
                     <StatusBadge status={org.status} />
+                    {(() => {
+                      const plan = org.seats <= 10 ? "FREE" : org.seats <= 50 ? "PRO" : "SCHOOL";
+                      const cls = plan === "FREE" ? "bg-muted text-muted-foreground" : plan === "PRO" ? "bg-blue-500/10 text-blue-600" : "bg-purple-500/10 text-purple-600";
+                      return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cls}`}>{plan}</span>;
+                    })()}
                     <button 
                       onClick={() => setStatsOrg(org.id)}
                       className="ml-2 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors text-primary"
@@ -1142,6 +1185,15 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
                     >
                       <Plus className="w-3 h-3" /> Инвайт
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl font-sans h-8 text-xs gap-1 border-yellow-500/40 text-yellow-700 hover:bg-yellow-500/10"
+                      onClick={() => { setTokenLimitOrg({ id: org.id, name: org.name }); setTokenLimitValue("30000"); }}
+                      title="Установить лимит токенов для всех учителей орги"
+                    >
+                      <Zap className="w-3 h-3" /> Токены
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(org.id)} className="rounded-xl font-sans h-8 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10">
                       <Ban className="w-3 h-3" /> Удалить
                     </Button>
@@ -1163,6 +1215,71 @@ const OrgsView = ({ orgs, isLoading, onRefresh }: { orgs: Org[]; isLoading: bool
         />
       )}
       {statsOrg && <OrgStatsModal orgId={statsOrg} onClose={() => setStatsOrg(null)} />}
+      <AnimatePresence>
+        {tokenLimitOrg && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-foreground/40 z-50 flex items-center justify-center p-4"
+            onClick={() => setTokenLimitOrg(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-yellow-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground font-sans">Лимит токенов</h3>
+                  <p className="text-xs text-muted-foreground font-sans">{tokenLimitOrg.name}</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground font-sans mb-4">
+                Установит одинаковый лимит токенов/месяц для <b>всех учителей</b> этой организации.
+              </p>
+              <div className="space-y-3">
+                <div className="flex gap-2 flex-wrap">
+                  {[30000, 50000, 100000, 200000].map(v => (
+                    <button
+                      key={v}
+                      onClick={() => setTokenLimitValue(String(v))}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-sans border transition-colors ${
+                        tokenLimitValue === String(v) ? "bg-primary text-background border-primary" : "border-border hover:bg-muted"
+                      }`}
+                    >
+                      {(v / 1000).toFixed(0)}k
+                    </button>
+                  ))}
+                </div>
+                <Input
+                  type="number"
+                  value={tokenLimitValue}
+                  onChange={e => setTokenLimitValue(e.target.value)}
+                  className="rounded-xl font-mono"
+                  placeholder="Например: 50000"
+                />
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button variant="outline" className="flex-1 rounded-xl font-sans" onClick={() => setTokenLimitOrg(null)}>Отмена</Button>
+                <Button className="flex-1 rounded-xl font-sans" onClick={async () => {
+                  const limit = parseInt(tokenLimitValue);
+                  if (isNaN(limit) || limit < 0) { toast.error("Некорректное значение"); return; }
+                  try {
+                    const res = await adminService.setOrgTokenLimit(tokenLimitOrg.id, limit);
+                    toast.success(`Лимит обновлён для ${res.updated} учителей`);
+                    setTokenLimitOrg(null);
+                    onRefresh();
+                  } catch { toast.error("Ошибка обновления лимита"); }
+                }}>
+                  Применить
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {usersOrg && (
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -1338,7 +1455,9 @@ const AiMonitorView = ({
   );
 };
 
-const FinancesView = ({ payments, financials, isLoading, orgs }: { payments: Payment[]; financials: FinancialStats; isLoading: boolean; orgs: Org[] }) => {
+const PLAN_PRICES: Record<string, number> = { FREE: 0, PRO: 5, SCHOOL: 20 };
+
+const FinancesView = ({ payments, financials, isLoading, orgs, teachers }: { payments: Payment[]; financials: FinancialStats; isLoading: boolean; orgs: Org[]; teachers: Teacher[] }) => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
 
@@ -1359,6 +1478,44 @@ const FinancesView = ({ payments, financials, isLoading, orgs }: { payments: Pay
     { label: "Истекают", value: orgs.filter(o => o.status === "expiring").length },
     { label: "Истёкшие", value: orgs.filter(o => o.status === "expired").length },
   ];
+
+  const planDistData = [
+    { label: "FREE", value: teachers.filter(t => t.plan === "FREE").length },
+    { label: "PRO", value: teachers.filter(t => t.plan === "PRO").length },
+    { label: "SCHOOL", value: teachers.filter(t => t.plan === "SCHOOL").length },
+  ];
+
+  const teacherStatusData = [
+    {
+      label: "Активные",
+      value: teachers.filter(t => {
+        if (!t.expires_at) return true;
+        const d = Math.ceil((new Date(t.expires_at).getTime() - Date.now()) / 86400000);
+        return d > 7;
+      }).length,
+    },
+    {
+      label: "Истекают скоро",
+      value: teachers.filter(t => {
+        if (!t.expires_at) return false;
+        const d = Math.ceil((new Date(t.expires_at).getTime() - Date.now()) / 86400000);
+        return d > 0 && d <= 7;
+      }).length,
+    },
+    {
+      label: "Истёкшие",
+      value: teachers.filter(t => {
+        if (!t.expires_at) return false;
+        return new Date(t.expires_at).getTime() < Date.now();
+      }).length,
+    },
+  ];
+
+  const revByPlan = (["FREE", "PRO", "SCHOOL"] as const).map(plan => {
+    const count = teachers.filter(t => t.plan === plan).length;
+    const mrr = count * PLAN_PRICES[plan];
+    return { plan, count, mrr };
+  });
 
   const mrrData = [
     { month: "Aug", mrr: 1200 },
@@ -1427,22 +1584,65 @@ const FinancesView = ({ payments, financials, isLoading, orgs }: { payments: Pay
         </div>
       </div>
 
-      {/* Analytics */}
+      {/* Analytics — 4 pie charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card border border-border rounded-2xl p-5">
           <h3 className="font-semibold text-foreground mb-4">Статус платежей</h3>
-          <PieChart
-            data={paymentStatusData}
-            colors={["#10b981", "#f59e0b", "#ef4444"]}
-          />
+          <PieChart data={paymentStatusData} colors={["#10b981", "#f59e0b", "#ef4444"]} />
         </div>
         <div className="bg-card border border-border rounded-2xl p-5">
           <h3 className="font-semibold text-foreground mb-4">Статус организаций</h3>
-          <PieChart
-            data={orgStatusData}
-            colors={["#10b981", "#f59e0b", "#ef4444"]}
-          />
+          <PieChart data={orgStatusData} colors={["#10b981", "#f59e0b", "#ef4444"]} />
         </div>
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <h3 className="font-semibold text-foreground mb-4">Распределение планов (учителя)</h3>
+          <PieChart data={planDistData} colors={["#94a3b8", "#3b82f6", "#8b5cf6"]} />
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <h3 className="font-semibold text-foreground mb-4">Статус подписок учителей</h3>
+          <PieChart data={teacherStatusData} colors={["#10b981", "#f59e0b", "#ef4444"]} />
+        </div>
+      </div>
+
+      {/* Revenue per plan */}
+      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-border">
+          <h3 className="font-semibold text-foreground">Выручка по планам (оценка)</h3>
+          <p className="text-xs text-muted-foreground font-sans mt-0.5">FREE $0 · PRO $5/уч · SCHOOL $20/уч</p>
+        </div>
+        <table className="w-full">
+          <thead>
+            <tr className="bg-muted/40 border-b border-border">
+              {["План", "Учителей", "Оценка MRR", "Доля"].map(h => (
+                <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider font-sans">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {revByPlan.map(({ plan, count, mrr }, i) => {
+              const totalMrrEst = revByPlan.reduce((s, r) => s + r.mrr, 0) || 1;
+              const pct = Math.round((mrr / totalMrrEst) * 100);
+              const cls = plan === "FREE" ? "bg-muted text-muted-foreground" : plan === "PRO" ? "bg-blue-500/10 text-blue-600" : "bg-purple-500/10 text-purple-600";
+              return (
+                <tr key={plan} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/10"}`}>
+                  <td className="px-5 py-3">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cls}`}>{plan}</span>
+                  </td>
+                  <td className="px-5 py-3 text-sm font-medium text-foreground font-sans">{count}</td>
+                  <td className="px-5 py-3 text-sm font-bold text-foreground font-sans">${mrr.toLocaleString()}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[80px]">
+                        <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-xs text-muted-foreground font-sans">{pct}%</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Payment history */}
@@ -1518,16 +1718,34 @@ const FinancesView = ({ payments, financials, isLoading, orgs }: { payments: Pay
   );
 };
 
+const LOG_TYPE_STYLES: Record<string, string> = {
+  success: "bg-green-500/10 text-green-700 border-green-500/20",
+  warning: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20",
+  danger: "bg-red-500/10 text-red-700 border-red-500/20",
+  info: "bg-primary/10 text-primary border-primary/20",
+};
+
+function getLogCategory(action: string): "user" | "org" | "system" {
+  const lower = action.toLowerCase();
+  if (lower.includes("org") || lower.includes("csv import") || lower.includes("invite")) return "org";
+  if (lower.includes("teacher") || lower.includes("block") || lower.includes("unblock") || lower.includes("plan") || lower.includes("extend") || lower.includes("password") || lower.includes("bulk")) return "user";
+  return "system";
+}
+
 const SystemView = ({
   aiProvider, systemAlert, setSystemAlert, alertEnabled, setAlertEnabled, auditLogs, isLoading,
+  adminTelegram, setAdminTelegram,
 }: {
   aiProvider: string; systemAlert: string; setSystemAlert: (v: string) => void;
   alertEnabled: boolean; setAlertEnabled: (v: boolean) => void;
   auditLogs: any[]; isLoading: boolean;
+  adminTelegram: string; setAdminTelegram: (v: string) => void;
 }) => {
   const { t } = useTranslation();
   const [logFilter, setLogFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [actionFilter, setActionFilter] = useState<string>("");
+  const [targetFilter, setTargetFilter] = useState<"all" | "user" | "org" | "system">("all");
+  const [detailLog, setDetailLog] = useState<any | null>(null);
 
   const filteredLogs = auditLogs.filter(log => {
     const logDate = new Date(log.time);
@@ -1545,9 +1763,17 @@ const SystemView = ({
     }
 
     if (actionFilter && !log.action.toLowerCase().includes(actionFilter.toLowerCase())) return false;
+    if (targetFilter !== "all" && getLogCategory(log.action) !== targetFilter) return false;
 
     return true;
   });
+
+  // Action counts for summary bar
+  const actionCounts = filteredLogs.reduce<Record<string, number>>((acc, log) => {
+    acc[log.action] = (acc[log.action] || 0) + 1;
+    return acc;
+  }, {});
+  const topActions = Object.entries(actionCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -1611,6 +1837,37 @@ const SystemView = ({
               ))}
             </div>
           </div>
+
+          <div className="p-4 bg-muted/30 rounded-2xl border border-border">
+            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-primary" /> Telegram для связи с организациями
+            </h4>
+            <p className="text-xs text-muted-foreground mb-4 font-sans">
+              Ваш Telegram username (без @). Org-admin видят кнопку «Написать» и попадают напрямую к вам.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="your_telegram_username"
+                value={adminTelegram}
+                onChange={e => setAdminTelegram(e.target.value.replace(/^@/, ""))}
+                className="rounded-xl font-mono text-sm max-w-xs"
+              />
+              <Button
+                onClick={() => {
+                  adminService.setSetting("admin_telegram", adminTelegram);
+                  toast.success("Telegram сохранён");
+                }}
+                className="rounded-xl font-sans"
+              >
+                Сохранить
+              </Button>
+            </div>
+            {adminTelegram && (
+              <p className="text-xs text-muted-foreground mt-2 font-sans">
+                Ссылка: <span className="text-primary font-mono">t.me/{adminTelegram}</span>
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1624,33 +1881,37 @@ const SystemView = ({
               <Download className="w-3.5 h-3.5" /> {t("admin_export")}
             </Button>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
               {(["all", "today", "week", "month"] as const).map(f => (
-                <Button
-                  key={f}
-                  variant={logFilter === f ? "default" : "outline"}
-                  size="sm"
-                  className="rounded-lg h-8 text-xs font-sans"
-                  onClick={() => setLogFilter(f)}
-                >
-                  {f === "all" ? "Все" : f === "today" ? "Сегодня" : f === "week" ? "Неделя" : "Месяц"}
+                <Button key={f} variant={logFilter === f ? "default" : "outline"} size="sm" className="rounded-lg h-8 text-xs font-sans" onClick={() => setLogFilter(f)}>
+                  {f === "all" ? "Все даты" : f === "today" ? "Сегодня" : f === "week" ? "Неделя" : "Месяц"}
+                </Button>
+              ))}
+              <div className="h-6 w-px bg-border self-center" />
+              {(["all", "user", "org", "system"] as const).map(c => (
+                <Button key={c} variant={targetFilter === c ? "default" : "outline"} size="sm" className="rounded-lg h-8 text-xs font-sans" onClick={() => setTargetFilter(c)}>
+                  {c === "all" ? "Все типы" : c === "user" ? "👤 Учителя" : c === "org" ? "🏢 Орг" : "⚙️ Система"}
                 </Button>
               ))}
             </div>
-            <Input
-              placeholder="Поиск по действию..."
-              value={actionFilter}
-              onChange={e => setActionFilter(e.target.value)}
-              className="h-8 text-xs rounded-lg font-sans"
-            />
+            <Input placeholder="Поиск по действию..." value={actionFilter} onChange={e => setActionFilter(e.target.value)} className="h-8 text-xs rounded-lg font-sans" />
+            {topActions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {topActions.map(([action, count]) => (
+                  <span key={action} className="inline-flex items-center gap-1 text-[10px] font-sans bg-muted px-2 py-1 rounded-full text-muted-foreground">
+                    {action} <strong className="text-foreground">{count}</strong>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-muted/40 border-b border-border">
-                {[t("exp_time"), t("exp_action"), t("exp_target")].map(h => (
+                {[t("exp_time"), t("exp_action"), t("exp_target"), "Тип"].map(h => (
                   <th key={h} className="px-6 py-3 text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans">{h}</th>
                 ))}
               </tr>
@@ -1670,12 +1931,19 @@ const SystemView = ({
                 </tr>
               ) : (
                 filteredLogs.map((log, i) => (
-                  <tr key={log.id} className={`border-b border-border last:border-0 ${i % 2 === 0 ? "" : "bg-muted/10 h-10"}`}>
+                  <tr
+                    key={log.id}
+                    className={`border-b border-border last:border-0 cursor-pointer hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/10"}`}
+                    onClick={() => setDetailLog(log)}
+                  >
                     <td className="px-6 py-3 text-sm text-muted-foreground font-sans">{log.time}</td>
                     <td className="px-6 py-3">
-                      <span className="text-sm font-medium text-foreground font-sans">{log.action}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${LOG_TYPE_STYLES[log.type] ?? LOG_TYPE_STYLES.info}`}>{log.action}</span>
                     </td>
                     <td className="px-6 py-3 text-sm text-muted-foreground font-sans">{log.target}</td>
+                    <td className="px-6 py-3">
+                      <span className="text-[10px] text-muted-foreground font-sans bg-muted px-1.5 py-0.5 rounded">{getLogCategory(log.action)}</span>
+                    </td>
                   </tr>
                 ))
               )}
@@ -1683,6 +1951,52 @@ const SystemView = ({
           </table>
         </div>
       </div>
+
+      {/* Log detail modal */}
+      <AnimatePresence>
+        {detailLog && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-foreground/40 z-50 flex items-center justify-center p-4"
+            onClick={() => setDetailLog(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-foreground">Детали записи</h3>
+                <button onClick={() => setDetailLog(null)} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="text-xs text-muted-foreground font-sans uppercase tracking-wide">Действие</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${LOG_TYPE_STYLES[detailLog.type] ?? LOG_TYPE_STYLES.info}`}>{detailLog.action}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="text-xs text-muted-foreground font-sans uppercase tracking-wide">Цель</span>
+                  <span className="text-sm font-medium text-foreground font-sans">{detailLog.target}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="text-xs text-muted-foreground font-sans uppercase tracking-wide">Время</span>
+                  <span className="text-sm text-muted-foreground font-sans">{detailLog.time}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="text-xs text-muted-foreground font-sans uppercase tracking-wide">Тип</span>
+                  <span className="text-xs bg-muted px-2 py-0.5 rounded font-sans">{getLogCategory(detailLog.action)}</span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-xs text-muted-foreground font-sans uppercase tracking-wide">ID записи</span>
+                  <span className="text-xs text-muted-foreground font-mono">#{detailLog.id}</span>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -1699,6 +2013,7 @@ const AdminPanel = () => {
   const [aiProvider, setAiProvider] = useState<"gemini" | "openai">("gemini");
   const [systemAlert, setSystemAlert] = useState("");
   const [alertEnabled, setAlertEnabled] = useState(false);
+  const [adminTelegram, setAdminTelegram] = useState("");
   const [showResetModal, setShowResetModal] = useState<number | null>(null);
 
   // Real Data State
@@ -1719,7 +2034,8 @@ const AdminPanel = () => {
     try {
       const data = await adminService.impersonateUser(id);
       login(data.access_token, data.user);
-      navigate("/dashboard");
+      const role = data.user?.role;
+      navigate(role === "super_admin" ? "/admin" : role === "org_admin" ? "/org-admin" : "/teacher");
       toast.success("Вход в аккаунт выполнен");
     } catch {
       toast.error("Ошибка при входе в аккаунт");
@@ -1750,7 +2066,7 @@ const AdminPanel = () => {
     setIsLoading(true);
     try {
       const skip = (page - 1) * LIMIT;
-      const [teachersData, analyticsData, orgsData, paymentsData, logsData, alertData, enabledData, providerData, financialsData] = await Promise.all([
+      const [teachersData, analyticsData, orgsData, paymentsData, logsData, alertData, enabledData, providerData, financialsData, telegramData] = await Promise.all([
         adminService.getTeachers(skip, LIMIT, searchQuery),
         adminService.getAnalytics(),
         adminService.getOrganizations(skip, LIMIT),
@@ -1760,11 +2076,13 @@ const AdminPanel = () => {
         adminService.getSetting("alert_enabled").catch(() => null),
         adminService.getSetting("ai_provider").catch(() => null),
         adminService.getFinancials().catch(() => null),
+        adminService.getSetting("admin_telegram").catch(() => null),
       ]);
 
       if (alertData) setSystemAlert(alertData.value);
       if (enabledData) setAlertEnabled(enabledData.value === "true");
       if (providerData) setAiProvider(providerData.value as any);
+      if (telegramData) setAdminTelegram(telegramData.value || "");
       if (financialsData) setFinancials({
         mrr: financialsData.mrr ?? 0,
         total_revenue: financialsData.total_revenue ?? 0,
@@ -1787,7 +2105,9 @@ const AdminPanel = () => {
           ip: "—",
           is_active: u.is_active,
           tokens_limit: u.tokens_limit || 0,
-          expires_at: u.expires_at || null
+          expires_at: u.expires_at || null,
+          organization_id: u.organization_id ?? null,
+          role: u.role || "teacher",
         };
       });
       setTeachers(mappedTeachers);
@@ -1838,6 +2158,26 @@ const AdminPanel = () => {
       toast.success("Статус изменен");
     } catch {
       toast.error("Ошибка при изменении статуса");
+    }
+  };
+
+  const handlePromote = async (id: number) => {
+    try {
+      await adminService.promoteToOrgAdmin(id);
+      fetchData();
+      toast.success("Роль обновлена: org_admin. Пользователь должен перезайти.");
+    } catch {
+      toast.error("Ошибка при назначении роли");
+    }
+  };
+
+  const handleDemote = async (id: number) => {
+    try {
+      await adminService.demoteFromOrgAdmin(id);
+      fetchData();
+      toast.success("Роль возвращена: teacher. Пользователь должен перезайти.");
+    } catch {
+      toast.error("Ошибка при снятии роли");
     }
   };
 
@@ -1964,6 +2304,8 @@ const AdminPanel = () => {
                   onImpersonate={handleImpersonate}
                   selectedIds={selectedIds}
                   setSelectedIds={setSelectedIds}
+                  onPromote={handlePromote}
+                  onDemote={handleDemote}
                 />
               )}
               {activeSection === "organizations" && <OrgsView orgs={orgs} isLoading={isLoading} onRefresh={fetchData} />}
@@ -1977,7 +2319,7 @@ const AdminPanel = () => {
                   isLoading={isLoading}
                 />
               )}
-              {activeSection === "finances" && <FinancesView payments={payments} financials={financials} isLoading={isLoading} orgs={orgs} />}
+              {activeSection === "finances" && <FinancesView payments={payments} financials={financials} isLoading={isLoading} orgs={orgs} teachers={teachers} />}
               {activeSection === "system" && (
                 <SystemView
                   aiProvider={aiProvider}
@@ -1987,6 +2329,8 @@ const AdminPanel = () => {
                   setAlertEnabled={setAlertEnabled}
                   auditLogs={auditLogs}
                   isLoading={isLoading}
+                  adminTelegram={adminTelegram}
+                  setAdminTelegram={setAdminTelegram}
                 />
               )}
             </motion.div>

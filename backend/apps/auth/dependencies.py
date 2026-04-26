@@ -48,3 +48,16 @@ def require_admin(current_user: User = Depends(get_current_user)):
             detail="Admin privileges required"
         )
     return current_user
+
+def require_org_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role not in ("super_admin", "org_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Org admin privileges required"
+        )
+    if not current_user.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No organization assigned to this account"
+        )
+    return current_user

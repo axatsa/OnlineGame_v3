@@ -10,83 +10,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-const FEATURES = [
-  {
-    icon: Sparkles,
-    colorClass: "text-primary",
-    bg: "bg-primary/5 border-primary/10",
-    iconBg: "bg-primary/10",
-    title: "ИИ-Генераторы",
-    desc: "Создавайте тесты, карточки и задания за секунды с помощью ИИ.",
-  },
-  {
-    icon: Gamepad2,
-    colorClass: "text-accent",
-    bg: "bg-accent/5 border-accent/10",
-    iconBg: "bg-accent/10",
-    title: "Интерактивные Игры",
-    desc: "6 игр для живого урока — Jeopardy, Memory, Word Search и другие.",
-  },
-  {
-    icon: BookOpen,
-    colorClass: "text-secondary",
-    bg: "bg-secondary/10 border-secondary/20",
-    iconBg: "bg-secondary/20",
-    title: "Персональные Книги",
-    desc: "ИИ пишет книгу с именем ученика как главным героем.",
-  },
-  {
-    icon: BarChart3,
-    colorClass: "text-emerald-600",
-    bg: "bg-emerald-50 border-emerald-100",
-    iconBg: "bg-emerald-100",
-    title: "Аналитика Класса",
-    desc: "XP-тренды, использование монет и выполнение заданий в одном месте.",
-  },
-  {
-    icon: Trophy,
-    colorClass: "text-primary",
-    bg: "bg-primary/5 border-primary/10",
-    iconBg: "bg-primary/10",
-    title: "Лидерборды",
-    desc: "Живые рейтинги класса мотивируют учеников улучшаться каждый день.",
-  },
-  {
-    icon: Shield,
-    colorClass: "text-sky-500",
-    bg: "bg-sky-50 border-sky-100",
-    iconBg: "bg-sky-100",
-    title: "Безопасность",
-    desc: "Ролевой доступ, управление организацией и конфиденциальность с первого дня.",
-  },
+const FEATURES_CONFIG = [
+  { icon: Sparkles, colorClass: "text-primary", bg: "bg-primary/5 border-primary/10", iconBg: "bg-primary/10", key: 0 },
+  { icon: Gamepad2, colorClass: "text-accent", bg: "bg-accent/5 border-accent/10", iconBg: "bg-accent/10", key: 1 },
+  { icon: BookOpen, colorClass: "text-secondary", bg: "bg-secondary/10 border-secondary/20", iconBg: "bg-secondary/20", key: 2 },
+  { icon: BarChart3, colorClass: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100", iconBg: "bg-emerald-100", key: 3 },
+  { icon: Trophy, colorClass: "text-primary", bg: "bg-primary/5 border-primary/10", iconBg: "bg-primary/10", key: 4 },
+  { icon: Shield, colorClass: "text-sky-500", bg: "bg-sky-50 border-sky-100", iconBg: "bg-sky-100", key: 5 },
 ];
 
-const STEPS = [
-  {
-    step: "01",
-    icon: Zap,
-    colorClass: "text-secondary",
-    iconBg: "bg-secondary/20",
-    title: "Создайте класс",
-    desc: "Настройте организацию и пригласите учеников за несколько минут.",
-  },
-  {
-    step: "02",
-    icon: Brain,
-    colorClass: "text-primary",
-    iconBg: "bg-primary/10",
-    title: "ИИ создаёт за вас",
-    desc: "Введите тему — ИИ напишет задания, вопросы или книгу за секунды.",
-  },
-  {
-    step: "03",
-    icon: Rocket,
-    colorClass: "text-accent",
-    iconBg: "bg-accent/10",
-    title: "Запустите на уроке",
-    desc: "Игры запускаются в один клик прямо на интерактивной доске. Ученики конкурируют.",
-  },
+const STEPS_CONFIG = [
+  { step: "01", icon: Zap, colorClass: "text-secondary", iconBg: "bg-secondary/20", key: 0 },
+  { step: "02", icon: Brain, colorClass: "text-primary", iconBg: "bg-primary/10", key: 1 },
+  { step: "03", icon: Rocket, colorClass: "text-accent", iconBg: "bg-accent/10", key: 2 },
 ];
 
 const LEADERBOARD_DEMO = [
@@ -97,37 +35,66 @@ const LEADERBOARD_DEMO = [
   { name: "Miraliev D.", level: 9, xp: 2301, rank: 5 },
 ];
 
-const GAMES = [
-  { name: "Jeopardy", emoji: "🎯", desc: "Командные вопросы", tag: "TEAM" },
-  { name: "Memory Matrix", emoji: "🧠", desc: "Тренировка памяти", tag: "SOLO" },
-  { name: "Word Search", emoji: "🔍", desc: "Поиск слов", tag: "SOLO" },
-  { name: "Tug of War", emoji: "🏆", desc: "Командная битва", tag: "TEAM" },
-  { name: "Balance Scales", emoji: "⚖️", desc: "Математика", tag: "SOLO" },
-  { name: "Crossword", emoji: "✏️", desc: "Кроссворды", tag: "SOLO" },
+const GAMES_NAMES = [
+  { name: "Jeopardy", emoji: "🎯" },
+  { name: "Memory Matrix", emoji: "🧠" },
+  { name: "Word Search", emoji: "🔍" },
+  { name: "Tug of War", emoji: "🏆" },
+  { name: "Balance Scales", emoji: "⚖️" },
+  { name: "Crossword", emoji: "✏️" },
 ];
 
-const STATS = [
-  { value: "12k+", label: "Учеников", icon: Users },
-  { value: "6+", label: "Мини-игр", icon: Gamepad2 },
-  { value: "AI", label: "Генератор", icon: BrainCircuit },
-  { value: "Нет ограничений", label: "Контента", icon: Layers },
+const STATS_CONFIG = [
+  { icon: Users, key: 0 },
+  { icon: Gamepad2, key: 1 },
+  { icon: BrainCircuit, key: 2 },
+  { icon: Layers, key: 3 },
 ];
 
-const FAQS = [
-  { q: "Это бесплатно?", a: "Базовый план полностью бесплатен для одного учителя и одного класса без ограничений по времени." },
-  { q: "Нужна ли карта для регистрации?", a: "Нет. Вы можете зарегистрироваться и начать работу без банковской карты." },
-  { q: "Какие игры доступны?", a: "Jeopardy, Memory Matrix, Word Search, Tug of War, Balance Scales и Crossword — всего 6 режимов." },
-  { q: "Можно ли использовать на мобильных?", a: "Да, но лучше использовать ее на экранах больше 10 дюймов. Так как платформа расчитана изночально на большие экраны." },
-  { q: "Как работает ИИ-генератор?", a: "Вы вводите тему или загружаете текст — ИИ создаёт тест, карточки или персональную книгу автоматически." },
+const FAQS_CONFIG = [
+  { key: 0 },
+  { key: 1 },
+  { key: 2 },
+  { key: 3 },
+  { key: 4 },
 ];
 
 export default function Landing() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const FEATURES = FEATURES_CONFIG.map(config => ({
+    ...config,
+    title: t(`land_features_${config.key}_title`),
+    desc: t(`land_features_${config.key}_desc`),
+  }));
+
+  const STEPS = STEPS_CONFIG.map(config => ({
+    ...config,
+    title: t(`land_steps_${config.key}_title`),
+    desc: t(`land_steps_${config.key}_desc`),
+  }));
+
+  const GAMES = GAMES_NAMES.map((game, idx) => ({
+    ...game,
+    desc: t(`land_games_${idx}_desc`),
+    tag: t(`land_games_${idx}_tag`),
+  }));
+
+  const STATS = STATS_CONFIG.map(config => ({
+    ...config,
+    value: t(`land_stats_${config.key}_value`),
+    label: t(`land_stats_${config.key}_label`),
+  }));
+
+  const FAQS = FAQS_CONFIG.map(config => ({
+    q: t(`land_faq_${config.key}_q`),
+    a: t(`land_faq_${config.key}_a`),
+  }));
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -158,13 +125,7 @@ export default function Landing() {
           </nav>
 
           <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={() => i18n.changeLanguage(i18n.language === "ru" ? "uz" : "ru")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer bg-transparent border-none"
-            >
-              <Globe className="w-3.5 h-3.5" />
-              {i18n.language === "ru" ? "RU" : "UZ"}
-            </button>
+            <LanguageSwitcher />
 
             {user ? (
               <div className="relative">
@@ -190,13 +151,13 @@ export default function Landing() {
                         onClick={() => navigate(user.role === "super_admin" ? "/admin" : "/teacher")}
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-foreground hover:bg-muted transition-colors bg-transparent border-none cursor-pointer"
                       >
-                        <Settings className="w-4 h-4 opacity-50" /> Дашборд
+                        <Settings className="w-4 h-4 opacity-50" /> {t("land_dashboard")}
                       </button>
                       <button
                         onClick={logout}
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-colors bg-transparent border-none cursor-pointer"
                       >
-                        <LogOut className="w-4 h-4" /> Выйти
+                        <LogOut className="w-4 h-4" /> {t("logout")}
                       </button>
                     </motion.div>
                   )}

@@ -3,7 +3,7 @@ from rate_limiter import limiter
 from sqlalchemy.orm import Session
 from database import get_db
 from apps.auth.models import User, PasswordResetToken
-from apps.auth.schemas import UserLogin, Token, ChangePasswordRequest, UserRegister, ForgotPasswordRequest, ResetPasswordRequest
+from apps.auth.schemas import UserLogin, Token, ChangePasswordRequest, UserRegister, ForgotPasswordRequest, ResetPasswordRequest, BotVerifyOtpRequest
 from apps.admin.schemas import RegisterWithInviteRequest
 from apps.admin.models import InviteToken, Organization, GlobalSetting
 from apps.auth.dependencies import get_current_user
@@ -13,7 +13,7 @@ from jose import jwt
 from passlib.context import CryptContext
 import secrets
 import os
-from services.email_service import send_reset_email
+from services.email_service import send_reset_email, send_otp_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -242,6 +242,76 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Пароль успешно изменён"}
+
+
+@router.post("/bot/request-otp")
+def bot_request_otp(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        return {"exists": False}
+
+    db.query(PasswordResetToken).filter(
+        PasswordResetToken.user_id == user.id,
+        PasswordResetToken.is_used == False
+    ).update({"is_used": True})
+
+    code = str(secrets.randbelow(900000) + 100000)
+    expires = datetime.utcnow() + timedelta(minutes=10)
+    reset_token = PasswordResetToken(user_id=user.id, token=code, expires_at=expires)
+    db.add(reset_token)
+    db.commit()
+
+    send_otp_email(user.email, code)
+    return {"exists": True, "name": user.full_name or user.email.split("@")[0]}
+
+
+@router.post("/bot/verify-otp", response_model=Token)
+def bot_verify_otp(req: BotVerifyOtpRequest, db: Session = Depends(get_db)):
+    user = db.query(User).join(
+        PasswordResetToken, PasswordResetToken.user_id == User.id
+    ).filter(
+        PasswordResetToken.token == req.code,
+        PasswordResetToken.is_used == False,
+        PasswordResetToken.expires_at > datetime.utcnow()
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="invalid_otp")
+
+    db.query(PasswordResetToken).filter(
+        PasswordResetToken.token == req.code
+    ).update({"is_used": True})
+    db.commit()
+
+    access_token = create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer", "user": user}
+
+
+@router.post("/bot/register", response_model=Token)
+def bot_register(req: UserRegister, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.email == req.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="email_taken")
+
+    new_user = User(
+        email=req.email,
+        full_name=req.full_name,
+        hashed_password=pwd_context.hash(secrets.token_urlsafe(24)),
+        role="teacher",
+        is_active=True,
+        tokens_limit=30000,
+    )
+    db.add(new_user)
+    db.flush()
+
+    from apps.payments.models import UserSubscription
+    sub = UserSubscription(user_id=new_user.id, plan="free")
+    db.add(sub)
+    db.commit()
+    db.refresh(new_user)
+
+    access_token = create_access_token(data={"sub": new_user.email})
+    return {"access_token": access_token, "token_type": "bearer", "user": new_user}
 
 
 @router.get("/announcement")

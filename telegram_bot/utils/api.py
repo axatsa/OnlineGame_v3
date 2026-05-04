@@ -75,6 +75,45 @@ async def get_subscription_status(telegram_user_id: int) -> dict | None:
     return None
 
 
+async def request_otp(email: str) -> dict:
+    """Returns {exists, name?}."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{BACKEND_URL}/api/v1/auth/bot/request-otp",
+            json={"email": email},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            return resp.json()
+    return {"exists": False}
+
+
+async def verify_otp(code: str) -> dict | None:
+    """Returns {access_token, user} on success, None on failure."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{BACKEND_URL}/api/v1/auth/bot/verify-otp",
+            json={"code": code},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            return resp.json()
+    return None
+
+
+async def register_bot_user(email: str, full_name: str) -> dict | None:
+    """Returns {access_token, user} on success, None on failure."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{BACKEND_URL}/api/v1/auth/bot/register",
+            json={"email": email, "full_name": full_name, "password": ""},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            return resp.json()
+    return None
+
+
 async def admin_approve(payment_id: int, admin_token: str) -> bool:
     async with httpx.AsyncClient() as client:
         resp = await client.post(

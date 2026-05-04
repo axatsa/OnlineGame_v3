@@ -724,6 +724,7 @@ i18n
                     land_stats_3_value: "Нет ограничений",
                     land_stats_3_label: "Контента",
 
+                    land_faq_title: "Частые вопросы",
                     land_faq_0_q: "Это бесплатно?",
                     land_faq_0_a: "Базовый план полностью бесплатен для одного учителя и одного класса без ограничений по времени.",
                     land_faq_1_q: "Нужна ли карта для регистрации?",
@@ -1699,6 +1700,7 @@ i18n
                     land_stats_3_value: "Cheksiz",
                     land_stats_3_label: "Kontent",
 
+                    land_faq_title: "Ko'p so'raladigan savollar",
                     land_faq_0_q: "Bu bepul?",
                     land_faq_0_a: "Asosiy rejim bitta o'qituvchi va bitta sinf uchun vaqt cheklovisiz bepul.",
                     land_faq_1_q: "Ro'yxatga olish uchun karta kerakmi?",
@@ -2675,6 +2677,7 @@ i18n
                     land_stats_3_value: "Unlimited",
                     land_stats_3_label: "Content",
 
+                    land_faq_title: "Frequently Asked Questions",
                     land_faq_0_q: "Is it free?",
                     land_faq_0_a: "The basic plan is completely free for one teacher and one class with no time limits.",
                     land_faq_1_q: "Do I need a card to sign up?",

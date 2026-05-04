@@ -9,7 +9,27 @@ from handlers.start import handle_start
 from handlers.payment import handle_pay_command, handle_plan_selection, handle_screenshot
 from handlers.status import handle_status
 from handlers.admin import handle_admin_callback
-from handlers.auth import handle_login, handle_logout
+from handlers.auth import handle_email_input, handle_otp_input, handle_name_input, handle_logout
+from utils.api import get_token
+from utils.sessions import get_session
+
+
+async def handle_text_message(update: Update, context):
+    """Route plain text messages based on session step."""
+    user = update.effective_user
+    text = update.message.text
+
+    if not get_token(user.id):
+        session = get_session(user.id)
+        if session.step == "waiting_otp":
+            await handle_otp_input(text, update, context)
+        elif session.step == "waiting_name":
+            await handle_name_input(text, update, context)
+        else:
+            # Any unrecognised message triggers email prompt
+            session.step = "waiting_email"
+            await handle_email_input(text, update, context)
+    # Authenticated users' text messages are ignored (they use keyboards/commands)
 
 
 async def handle_menu_callback(update: Update, context):
@@ -47,7 +67,6 @@ def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", handle_start))
-    app.add_handler(CommandHandler("login", handle_login))
     app.add_handler(CommandHandler("logout", handle_logout))
     app.add_handler(CommandHandler("pay", handle_pay_command))
     app.add_handler(CommandHandler("status", handle_status))
@@ -59,8 +78,11 @@ def main():
     # Admin approve/reject callbacks
     app.add_handler(CallbackQueryHandler(handle_admin_callback, pattern=r"^(approve_|reject_|rejectreason_)"))
 
-    # Screenshot upload
+    # Screenshot upload (must come before text handler)
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_screenshot))
+
+    # Universal text handler for auth flow + authenticated screenshot step
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
 
     print("Bot started. Polling...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)

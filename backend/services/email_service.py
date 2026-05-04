@@ -45,6 +45,49 @@ def send_reset_email(email: str, reset_link: str):
         return True
 
 
+def send_otp_email(email: str, code: str):
+    """Send a 6-digit OTP code for Telegram bot authentication."""
+    import os
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASS")
+    from_email = os.getenv("SMTP_FROM", smtp_user or "noreply@classplay.uz")
+
+    subject = "Код подтверждения ClassPlay"
+    body = (
+        f"Ваш код подтверждения для входа в ClassPlay через Telegram:\n\n"
+        f"  {code}\n\n"
+        f"Код действителен 10 минут. Не передавайте его никому.\n\n"
+        f"Если вы не запрашивали этот код — просто проигнорируйте письмо.\n\n"
+        f"С уважением,\nКоманда ClassPlay"
+    )
+
+    if smtp_host and smtp_user and smtp_pass and smtp_user != "your@gmail.com":
+        import smtplib
+        from email.mime.text import MIMEText
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = email
+        try:
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(from_email, [email], msg.as_string())
+            return True
+        except Exception as e:
+            print(f"SMTP error sending OTP: {e}")
+            return False
+    else:
+        print(f"\n{'='*40}")
+        print(f"📧 OTP EMAIL (stub — configure real SMTP credentials)")
+        print(f"To: {email}")
+        print(f"OTP Code: {code}")
+        print(f"{'='*40}\n")
+        return True
+
+
 def send_resource_email(email: str, topic: str, content: str):
     """
     Simulates sending an email with the generated material.

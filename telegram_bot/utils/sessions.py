@@ -1,12 +1,16 @@
-"""In-memory session storage for user state during payment flow."""
+"""In-memory session storage for user state during payment/auth flow."""
 from dataclasses import dataclass, field
 from typing import Optional
 
-# Steps: idle | plan_selection | waiting_screenshot
+# Steps: idle | waiting_email | waiting_otp | waiting_name | plan_selection | waiting_screenshot
 @dataclass
 class UserSession:
     telegram_user_id: int
     step: str = "idle"
+    # auth state
+    email: Optional[str] = None
+    otp_attempts: int = 0
+    # payment state
     selected_plan: Optional[str] = None
     payment_code: Optional[str] = None
     payment_id: Optional[int] = None

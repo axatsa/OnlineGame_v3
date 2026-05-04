@@ -69,7 +69,8 @@ async def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) ->
             result, tokens = await gemini_service.generate_content(
                 prompt=user_prompt,
                 system_instruction=system_prompt,
-                temperature=0.7
+                temperature=0.7,
+                use_math_format=True,
             )
             if result:
                 return result, tokens

@@ -19,8 +19,92 @@ import re
 import traceback
 from typing import Optional
 import threading
+import httpx
 
 logger = logging.getLogger(__name__)
+
+# ─── Math formatting instruction ─────────────────────────────────────────────
+# Instruct the model to output proper mathematical notation
+MATH_FORMAT_INSTRUCTION = (
+    "For ALL mathematical expressions use proper notation:\n"
+    "- Fractions: LaTeX inline \\(\\frac{numerator}{denominator}\\)  e.g. \\(\\frac{2}{3}\\)\n"
+    "- Powers: Unicode superscripts for simple cases (x², x³, x⁴) or \\(x^{n}\\)\n"
+    "- Square roots: \\(\\sqrt{x}\\)\n"
+    "- Subscripts: Unicode (x₁, x₂) or \\(x_{n}\\)\n"
+    "- Equations: \\( ... \\) for inline, \\[ ... \\] for block display\n"
+    "Never write 2/3 as plain text — always use \\(\\frac{2}{3}\\). "
+    "Never write x^2 as plain text — always use x² or \\(x^{2}\\).\n"
+)
+
+# ─── Model discovery cache ────────────────────────────────────────────────────
+_MODEL_CACHE_TTL = 3 * 3600  # refresh every 3 hours
+_model_cache: list[str] = []
+_model_cache_ts: float = 0
+_model_cache_lock = threading.Lock()
+
+# Fallback order used when discovery is unavailable
+_FALLBACK_TEXT_MODELS = [
+    "gemma-3-27b-it",
+    "gemma-3-12b-it",
+    "gemma-3-4b-it",
+    "gemini-2.5-flash-preview-05-20",
+    "gemini-2.5-pro-preview-05-06",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-1.5-flash-8b",
+    "gemini-2.0-flash-lite",
+]
+
+def _model_priority(name: str) -> int:
+    """Lower = higher priority."""
+    if name.startswith("gemma-3-27b"): return 0
+    if name.startswith("gemma-3-12b"): return 1
+    if name.startswith("gemma-3"):     return 2
+    if "2.5" in name and "pro" in name: return 3
+    if "2.5" in name:                  return 4
+    if "2.0-flash" in name and "lite" not in name and "exp" not in name: return 5
+    if "1.5-flash" in name and "8b" not in name: return 6
+    if "1.5-pro" in name:              return 7
+    if "1.5-flash-8b" in name:        return 8
+    return 9
+
+async def _discover_text_models(api_key: str) -> list[str]:
+    """Fetch generateContent-capable models from Gemini API, cached for 3 h."""
+    global _model_cache, _model_cache_ts
+    now = time.time()
+    with _model_cache_lock:
+        if _model_cache and (now - _model_cache_ts) < _MODEL_CACHE_TTL:
+            return list(_model_cache)
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}&pageSize=100"
+            )
+        if resp.status_code == 200:
+            raw_models = resp.json().get("models", [])
+            discovered = []
+            for m in raw_models:
+                name = m.get("name", "").replace("models/", "")
+                methods = m.get("supportedGenerationMethods", [])
+                if "generateContent" in methods and name not in discovered:
+                    # Skip image-only and embedding models
+                    if any(x in name for x in ("embedding", "aqa", "image-generation")):
+                        continue
+                    discovered.append(name)
+
+            if discovered:
+                discovered.sort(key=_model_priority)
+                with _model_cache_lock:
+                    _model_cache = discovered
+                    _model_cache_ts = now
+                logger.info(f"Model discovery: {len(discovered)} models, top5={discovered[:5]}")
+                return discovered
+    except Exception as e:
+        logger.warning(f"Model discovery failed: {e}")
+
+    return list(_FALLBACK_TEXT_MODELS)
 
 from config import GEMINI_API_KEYS_LIST, OPENAI_API_KEY, get_env_int
 
@@ -188,44 +272,55 @@ async def generate_storybook(
 
     story_data = None
 
-    # ── STEP 1: Generate story text (with retries) ───────────────────────
+    # ── STEP 1: Generate story text (key + model rotation) ───────────────
+    if custom_api_key:
+        story_models = ["gemma-3-27b-it", "gemini-2.0-flash", "gemini-1.5-flash"]
+    else:
+        first_key = key_manager.keys[0] if key_manager.keys else None
+        story_models = (await _discover_text_models(first_key)) if first_key else list(_FALLBACK_TEXT_MODELS)
+
     for attempt in range(max_retries):
         api_key = _get_key()
         if not api_key:
             break
         client = genai.Client(api_key=api_key)
-        
-        logger.info(f"Generating story text with gemini-2.0-flash (attempt {attempt + 1}/{max_retries})...")
-        try:
-            story_response = await asyncio.to_thread(
-                client.models.generate_content,
-                model="gemini-2.0-flash",
-                contents=_story_prompt(title, topic, age_group, language, genre),
-                config=genai_types.GenerateContentConfig(
-                    system_instruction=STORY_SYSTEM,
-                    temperature=0.9,
-                    max_output_tokens=8192,
-                ),
-            )
-            raw = story_response.text.strip()
-            
-            # Parse story JSON
-            story_data = _parse_json(raw)
-            if not story_data or "pages" not in story_data:
-                logger.error(f"Could not parse story JSON. Raw output was likely not JSON.")
-                story_data = None
-                continue # Try another key or just fail? Usually JSON failure is not a 429, but could retry just in case.
-                
-            break # Success!
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg or "too many requests" in error_msg:
-                logger.warning(f"Rate limit exceeded (429) on attempt {attempt + 1}.")
-                _mark_limited(api_key)
-                continue
-            else:
-                logger.error(f"Story generation failed on attempt {attempt + 1}: {e}")
-                continue
+        all_exhausted = True
+
+        for s_model in story_models:
+            logger.info(f"Story text with {s_model} (attempt {attempt+1}/{max_retries})...")
+            try:
+                story_response = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model=s_model,
+                    contents=_story_prompt(title, topic, age_group, language, genre),
+                    config=genai_types.GenerateContentConfig(
+                        system_instruction=STORY_SYSTEM,
+                        temperature=0.9,
+                        max_output_tokens=8192,
+                    ),
+                )
+                raw = story_response.text.strip()
+                story_data = _parse_json(raw)
+                if not story_data or "pages" not in story_data:
+                    logger.error(f"JSON parse failed from {s_model}.")
+                    story_data = None
+                    all_exhausted = False
+                    break
+                break  # success
+            except Exception as e:
+                error_msg = str(e).lower()
+                if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg or "too many requests" in error_msg:
+                    logger.warning(f"Rate limit on {s_model} attempt {attempt+1}, trying next model...")
+                    continue
+                else:
+                    logger.error(f"Story gen failed {s_model} attempt {attempt+1}: {e}")
+                    all_exhausted = False
+                    break
+
+        if story_data:
+            break
+        if all_exhausted:
+            _mark_limited(api_key)
 
     if not story_data:
         if OPENAI_API_KEY:
@@ -354,57 +449,74 @@ async def generate_content(
     model: str = "gemini-2.0-flash",
     temperature: float = 0.7,
     max_tokens: int = 4096,
+    use_math_format: bool = False,
 ) -> tuple:
     """
-    Generic content generation with rotation and OpenAI fallback.
+    Generic content generation with full key × model rotation and OpenAI fallback.
+    - Discovers all available models every 3 hours via API
+    - On 429: tries next model (separate quota) before switching key
+    - Gemma models are highest priority (large output, free quota)
     Returns (json_data, estimated_tokens).
     """
     if not key_manager.keys:
         logger.error("No Gemini API keys configured")
         return None, 0
 
-    max_retries = len(key_manager.keys)
-    result_data = None
+    if use_math_format:
+        system_instruction = system_instruction + "\n\n" + MATH_FORMAT_INSTRUCTION
 
     if not key_manager.is_rpm_available():
         logger.warning("Global RPM limit reached, backing off 5s...")
         await asyncio.sleep(5)
     key_manager.record_request()
 
-    for attempt in range(max_retries):
+    # Discover models using first available key; cache 3 h
+    first_key = key_manager.get_next_key() or key_manager.keys[0]
+    all_models = await _discover_text_models(first_key)
+    # Preferred model always first, rest follow discovery order
+    models_to_try = [model] + [m for m in all_models if m != model]
+
+    for attempt in range(len(key_manager.keys)):
         api_key = key_manager.get_next_key()
-        if not api_key: break
-        
+        if not api_key:
+            break
+
         client = genai.Client(api_key=api_key)
-        try:
-            response = await asyncio.to_thread(
-                client.models.generate_content,
-                model=model,
-                contents=prompt,
-                config=genai_types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=temperature,
-                    max_output_tokens=max_tokens,
-                ),
-            )
-            raw = response.text.strip()
-            result_data = _parse_json(raw)
-            if result_data:
-                # Estimate tokens (simplistic: chars / 4)
-                tokens = len(raw) // 4 + len(prompt) // 4
-                return result_data, tokens
-            
-            logger.error(f"Failed to parse JSON from Gemini response (attempt {attempt+1})")
-            continue
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg or "too many requests" in error_msg:
-                logger.warning(f"Rate limit exceeded (429) for Gemini on attempt {attempt+1}.")
-                key_manager.mark_limited(api_key)
-                continue
-            else:
-                logger.error(f"Gemini generation failed on attempt {attempt+1}: {e}")
-                continue
+        all_models_exhausted = True
+
+        for current_model in models_to_try:
+            try:
+                response = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model=current_model,
+                    contents=prompt,
+                    config=genai_types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        temperature=temperature,
+                        max_output_tokens=max_tokens,
+                    ),
+                )
+                raw = response.text.strip()
+                result_data = _parse_json(raw)
+                if result_data:
+                    logger.info(f"Generated with {current_model} (attempt {attempt+1})")
+                    tokens = len(raw) // 4 + len(prompt) // 4
+                    return result_data, tokens
+                logger.error(f"JSON parse failed from {current_model} (attempt {attempt+1})")
+                all_models_exhausted = False
+                break  # JSON error — not a quota issue, try next key
+            except Exception as e:
+                error_msg = str(e).lower()
+                if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg or "too many requests" in error_msg:
+                    logger.warning(f"Rate limit on {current_model} attempt {attempt+1}, trying next model...")
+                    continue  # quota: try next model (different quota pool)
+                else:
+                    logger.error(f"Gemini {current_model} failed attempt {attempt+1}: {e}")
+                    all_models_exhausted = False
+                    break  # non-quota error: skip to next key
+
+        if all_models_exhausted:
+            key_manager.mark_limited(api_key)
 
     # ── FALLBACK TO OPENAI (direct call, no circular import) ─────────────────
     if OPENAI_API_KEY:

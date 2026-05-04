@@ -27,7 +27,7 @@ class UserPayment(Base):
     # Telegram-specific fields
     payment_code = Column(String, nullable=True, unique=True, index=True)  # PLAN_PRO_USER123_ABC456
     screenshot_url = Column(String, nullable=True)
-    telegram_user_id = Column(Integer, nullable=True, index=True)
+    telegram_user_id = Column(BigInteger, nullable=True, index=True)
     telegram_username = Column(String, nullable=True)
     admin_notes = Column(String, nullable=True)
     code_expires_at = Column(DateTime, nullable=True)  # 24h from creation

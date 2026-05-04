@@ -76,7 +76,7 @@ export default function Checkout() {
         }
     };
 
-    const handleAuthAndPay = async (method: PaymentMethod) => {
+    const handleAuthAndPay = async (method: PaymentMethod | "telegram") => {
         setLoading(method);
         try {
             let activeUser = user;
@@ -99,11 +99,19 @@ export default function Checkout() {
                 }
                 setAuthLoading(false);
             }
-            const res = await paymentService.initiate({ plan: plan.planKey, method });
-            window.location.href = res.redirect_url;
+            
+            if (method === "telegram") {
+                const data = await paymentService.initiateTelegram(plan.planKey);
+                setTgPayment(data);
+            } else {
+                const res = await paymentService.initiate({ plan: plan.planKey, method });
+                window.location.href = res.redirect_url;
+            }
         } catch (err: any) {
             toast.error(err.response?.data?.detail || t("checkoutPaymentError"));
             setLoading(null);
+        } finally {
+            if (method === "telegram") setLoading(null);
         }
     };
 
@@ -136,7 +144,16 @@ export default function Checkout() {
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center px-6 py-20">
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-20">
+                <div className="max-w-md w-full mb-6">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition bg-transparent border-none cursor-pointer p-0"
+                    >
+                        <ArrowLeft size={15} /> {t("checkoutBack")}
+                    </button>
+                </div>
+
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -180,16 +197,28 @@ export default function Checkout() {
                                 >
                                     {authLoading ? <Loader2 size={16} className="animate-spin" /> : (authMode === "login" ? t("land_login") : t("land_hero_cta"))}
                                 </Button>
-                            ) : PAYMENT_METHODS.map(m => (
-                                <Button
-                                    key={m.id}
-                                    disabled={loading !== null || !email || !password}
-                                    onClick={() => handleAuthAndPay(m.id)}
-                                    className="w-full rounded-2xl py-6 text-sm font-bold"
-                                >
-                                    {loading === m.id ? <Loader2 size={16} className="animate-spin" /> : <>{t("checkoutPayWith")} {m.label}</>}
-                                </Button>
-                            ))}
+                            ) : (
+                                <>
+                                    {/* Telegram is the main active method */}
+                                    <Button
+                                        disabled={loading !== null || !email || !password}
+                                        onClick={() => handleAuthAndPay("telegram")}
+                                        className="w-full rounded-2xl py-6 text-sm font-bold bg-[#229ED9] hover:bg-[#1e8ec3] text-white"
+                                    >
+                                        {loading === "telegram" ? <Loader2 size={16} className="animate-spin" /> : <>Оплатить через Telegram</>}
+                                    </Button>
+
+                                    {PAYMENT_METHODS.map(m => (
+                                        <Button
+                                            key={m.id}
+                                            disabled={true}
+                                            className="w-full rounded-2xl py-6 text-sm font-bold opacity-60"
+                                        >
+                                            {m.label} (Coming soon)
+                                        </Button>
+                                    ))}
+                                </>
+                            )}
                         </div>
                     </form>
 
@@ -257,16 +286,9 @@ export default function Checkout() {
                 {/* Payment methods */}
                 <div className="flex flex-col gap-3">
                     {PAYMENT_METHODS.map((m, i) => (
-                        <motion.button
+                        <div
                             key={m.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.05 + i * 0.06 }}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
-                            disabled={loading !== null}
-                            onClick={() => handleAuthAndPay(m.id)}
-                            className="w-full px-5 py-4 bg-card border border-border rounded-2xl cursor-pointer flex items-center justify-between hover:border-primary/30 hover:bg-accent/5 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="w-full px-5 py-4 bg-card border border-border rounded-2xl flex items-center justify-between opacity-60"
                         >
                             <div className="flex items-center gap-3.5">
                                 <div className="w-11 h-11 rounded-xl bg-white border border-border flex items-center justify-center shrink-0 shadow-sm">
@@ -277,14 +299,10 @@ export default function Checkout() {
                                     <p className="text-xs text-muted-foreground">{t("checkoutPayVia")} {m.label}</p>
                                 </div>
                             </div>
-                            {loading === m.id ? (
-                                <Loader2 size={18} className="text-muted-foreground animate-spin" />
-                            ) : (
-                                <span className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold">
-                                    {t("checkoutPay")}
-                                </span>
-                            )}
-                        </motion.button>
+                            <span className="px-4 py-1.5 rounded-xl bg-muted text-muted-foreground text-xs font-bold">
+                                Coming soon
+                            </span>
+                        </div>
                     ))}
 
                     {/* Telegram */}

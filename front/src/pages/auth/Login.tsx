@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
@@ -114,7 +114,16 @@ const Login = () => {
         transition={{ duration: 0.6 }}
         className="w-full lg:w-1/2 flex items-center justify-center bg-card p-8"
       >
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex justify-between items-center w-full mb-4">
+            <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition bg-transparent border-none cursor-pointer p-0"
+            >
+                <ArrowLeft size={15} /> {t("checkoutBack")}
+            </button>
+          </div>
+          
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
             <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center p-2 shadow-lg">

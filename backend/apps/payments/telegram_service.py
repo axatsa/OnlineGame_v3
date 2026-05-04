@@ -66,6 +66,36 @@ async def notify_admin_group_new_payment(payment_data: dict) -> int | None:
     return None
 
 
+async def notify_admin_group_auto_approved(payment_data: dict):
+    """Notify admin group that payment was auto-verified by AI."""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_GROUP_ID:
+        return
+    plan_label = PLAN_NAMES.get(payment_data["plan"], payment_data["plan"].upper())
+    confidence_pct = int(payment_data.get("confidence", 0) * 100)
+    text = (
+        f"🤖 <b>АВТО-ПОДТВЕРЖДЕНО</b> (уверенность {confidence_pct}%)\n\n"
+        f"👤 @{payment_data['telegram_username']}\n"
+        f"📧 {payment_data['user_email']}\n"
+        f"📋 {plan_label}\n"
+        f"💵 {payment_data['amount_uzs']:,} сўм\n"
+        f"🔐 <code>{payment_data['payment_code']}</code>"
+    )
+    async with httpx.AsyncClient() as client:
+        if payment_data.get("screenshot_url"):
+            await client.post(f"{BOT_API_URL}/sendPhoto", json={
+                "chat_id": TELEGRAM_GROUP_ID,
+                "photo": payment_data["screenshot_url"],
+                "caption": text,
+                "parse_mode": "HTML",
+            })
+        else:
+            await client.post(f"{BOT_API_URL}/sendMessage", json={
+                "chat_id": TELEGRAM_GROUP_ID,
+                "text": text,
+                "parse_mode": "HTML",
+            })
+
+
 async def notify_user_payment_approved(telegram_user_id: int, plan: str):
     if not TELEGRAM_BOT_TOKEN or not telegram_user_id:
         return

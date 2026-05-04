@@ -25,19 +25,19 @@ export default function Checkout() {
         accent: string; planKey: Plan; free?: boolean;
     }> = {
         free: {
-            name: t("planFreeName"), price: "$0", period: t("checkoutForever"),
+            name: t("planFreeName"), price: "0 сум", period: t("checkoutForever"),
             planKey: "pro" as Plan, free: true,
             accent: "from-emerald-500 to-teal-400",
             features: [t("planFreeF1"), t("planFreeF2"), t("planFreeF3"), t("planFreeF4")],
         },
         pro: {
-            name: t("planProName"), price: "$15", period: t("checkoutPerMonth"),
+            name: t("planProName"), price: "190 000 сум", period: t("checkoutPerMonth"),
             planKey: "pro",
             accent: "from-primary via-accent to-secondary",
             features: [t("planProF1"), t("planProF2"), t("planProF3"), t("planProF4"), t("planProF5")],
         },
         school: {
-            name: t("planSchoolName"), price: "$49", period: t("checkoutPerMonth"),
+            name: t("planSchoolName"), price: "620 000 сум", period: t("checkoutPerMonth"),
             planKey: "school",
             accent: "from-orange-500 to-amber-400",
             features: [t("planSchoolF1"), t("planSchoolF2"), t("planSchoolF3"), t("planSchoolF4"), t("planSchoolF5")],

@@ -290,7 +290,7 @@ async def telegram_verify_payment(
     db.refresh(payment)
 
     user = db.query(User).filter(User.id == payment.user_id).first()
-    await notify_admin_group_new_payment({
+    payment_data = {
         "payment_id": payment.id,
         "user_email": user.email if user else "—",
         "user_phone": user.phone if user else "—",
@@ -300,8 +300,28 @@ async def telegram_verify_payment(
         "payment_code": payment.payment_code,
         "screenshot_url": body.screenshot_url,
         "expires_at": payment.code_expires_at.strftime("%d.%m.%Y %H:%M UTC") if payment.code_expires_at else "—",
-    })
+    }
 
+    # Try AI auto-verification
+    from services.vision_service import verify_receipt
+    from urllib.parse import urlparse
+    image_filename = os.path.basename(urlparse(body.screenshot_url).path)
+    image_path = os.path.join(UPLOADS_DIR, image_filename)
+    card_number = os.getenv("PAYMENT_CARD_NUMBER", "")
+    vision = await verify_receipt(image_path, payment.amount_tiyin // 100, card_number)
+
+    if vision["auto_approve"]:
+        payment.status = "completed"
+        payment.verified_at = datetime.utcnow()
+        _activate_subscription(db, payment.user_id, payment.plan, payment.id)
+        db.commit()
+
+        from apps.payments.telegram_service import notify_user_payment_approved, notify_admin_group_auto_approved
+        await notify_user_payment_approved(payment.telegram_user_id, payment.plan)
+        await notify_admin_group_auto_approved({**payment_data, "confidence": vision["confidence"]})
+        return {"status": "auto_approved", "message": "Оплата подтверждена автоматически"}
+
+    await notify_admin_group_new_payment(payment_data)
     return {"status": "pending_admin_verification", "message": "Скриншот получен, ожидаем подтверждения администратора"}
 
 

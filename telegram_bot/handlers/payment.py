@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from config import PLAN_LABELS
 from utils.api import get_token, initiate_payment, upload_screenshot, verify_payment
-from utils.sessions import get_session, clear_session
+from utils.sessions import get_session
 from keyboards.payment_keyboards import plan_keyboard, main_menu_keyboard, login_keyboard
 
 
@@ -95,18 +95,26 @@ async def handle_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     telegram_username = user.username or user.first_name or str(user.id)
-    ok = await verify_payment(
+    status = await verify_payment(
         payment_code=session.payment_code,
         telegram_user_id=user.id,
         telegram_username=telegram_username,
         screenshot_url=screenshot_url,
     )
 
-    if ok:
+    if status == "auto_approved":
         session.step = "idle"
         await update.message.reply_text(
-            "✅ Скриншот получен!\n\n"
-            "Ожидаем подтверждения администратора (обычно 5-15 минут).\n"
+            "✅ <b>Оплата подтверждена автоматически!</b>\n\n"
+            "Твоя подписка уже активна. Заходи в ClassPlay!",
+            parse_mode="HTML",
+            reply_markup=main_menu_keyboard(),
+        )
+    elif status == "pending_admin_verification":
+        session.step = "idle"
+        await update.message.reply_text(
+            "⏳ Скриншот получен и отправлен на проверку.\n\n"
+            "Обычно подтверждение занимает 5–15 минут.\n"
             "Ты получишь уведомление здесь.",
             reply_markup=main_menu_keyboard(),
         )

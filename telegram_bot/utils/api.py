@@ -30,7 +30,8 @@ async def initiate_payment(telegram_user_id: int, plan: str) -> dict | None:
     return None
 
 
-async def verify_payment(payment_code: str, telegram_user_id: int, telegram_username: str, screenshot_url: str) -> bool:
+async def verify_payment(payment_code: str, telegram_user_id: int, telegram_username: str, screenshot_url: str) -> str:
+    """Returns 'auto_approved', 'pending_admin_verification', or 'error'."""
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             f"{BACKEND_URL}/api/v1/payments/telegram/verify",
@@ -40,9 +41,11 @@ async def verify_payment(payment_code: str, telegram_user_id: int, telegram_user
                 "telegram_username": telegram_username,
                 "screenshot_url": screenshot_url,
             },
-            timeout=15,
+            timeout=30,
         )
-        return resp.status_code == 200
+        if resp.status_code == 200:
+            return resp.json().get("status", "pending_admin_verification")
+    return "error"
 
 
 async def upload_screenshot(file_bytes: bytes, filename: str, telegram_user_id: int) -> str | None:

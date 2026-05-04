@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RichTextRenderer } from "@/components/common/RichTextRenderer";
 import { Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import GameShell from "./GameShell";
@@ -219,20 +220,20 @@ function FlashcardGame({ pairs, src, tgt, onBack }: { pairs: WordPair[]; src: st
           {/* Front */}
           <div className="absolute inset-0 backface-hidden bg-white rounded-2xl border-2 border-primary/20 shadow-md flex flex-col items-center justify-center gap-2 p-6">
             <p className="text-xs font-medium text-primary uppercase tracking-wider">{LANG_LABELS[src]}</p>
-            <p className="text-3xl font-bold text-gray-800">{current.source}</p>
+            <p className="text-3xl font-bold text-gray-800"><RichTextRenderer text={current.source} /></p>
             <p className="text-xs text-muted-foreground mt-2">Нажмите чтобы перевернуть</p>
           </div>
           {/* Back */}
           <div className="absolute inset-0 backface-hidden bg-primary rounded-2xl shadow-md flex flex-col items-center justify-center gap-2 p-6"
                style={{ transform: "rotateY(180deg)" }}>
             <p className="text-xs font-medium text-primary-foreground/70 uppercase tracking-wider">{LANG_LABELS[tgt]}</p>
-            <p className="text-3xl font-bold text-primary-foreground">{current.target}</p>
+            <p className="text-3xl font-bold text-primary-foreground"><RichTextRenderer text={current.target} /></p>
             {current.alternatives && current.alternatives.length > 0 && (
               <p className="text-xs text-primary-foreground/60 text-center">
                 также: {current.alternatives.join(", ")}
               </p>
             )}
-            <p className="text-xs text-primary-foreground/70 text-center mt-1 italic">{current.example}</p>
+            <p className="text-xs text-primary-foreground/70 text-center mt-1 italic"><RichTextRenderer text={current.example} /></p>
           </div>
         </motion.div>
       </div>
@@ -309,8 +310,8 @@ function QuizGame({ pairs, src, tgt, onBack }: { pairs: WordPair[]; src: string;
       {/* Question card */}
       <div className="w-full max-w-sm bg-white rounded-2xl border-2 border-primary/20 shadow-md p-6 text-center space-y-1">
         <p className="text-xs font-medium text-primary uppercase tracking-wider">{LANG_LABELS[src]}</p>
-        <p className="text-3xl font-bold text-gray-800">{current.source}</p>
-        <p className="text-xs text-muted-foreground">{current.example}</p>
+        <p className="text-3xl font-bold text-gray-800"><RichTextRenderer text={current.source} /></p>
+        <p className="text-xs text-muted-foreground"><RichTextRenderer text={current.example} /></p>
       </div>
 
       {/* Options */}

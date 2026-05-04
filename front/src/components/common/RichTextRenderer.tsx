@@ -1,69 +1,100 @@
 import React from "react";
+import katex from "katex";
 
 interface RichTextRendererProps {
   text: string;
   className?: string;
 }
 
-/**
- * RichTextRenderer parses special notations in AI-generated text:
- * 1. [FRAC:numerator:denominator] -> Visual fraction with a line
- * 2. x^2 -> Superscript exponents
- * 3. * -> × (multiplication sign)
- * 4. / -> ÷ (division sign, if not part of a fraction notation or URL)
- */
-export const RichTextRenderer: React.FC<RichTextRendererProps> = ({ text, className = "" }) => {
-  if (!text) return null;
-
-  // First, handle fractions [FRAC:N:D]
-  // We'll split the text by the fraction pattern
-  const fracRegex = /\[FRAC:([^:]+):([^\]]+)\]/g;
-  
-  const processExponents = (str: string) => {
-    // Matches standard exponents like x^2 or complex ones with parentheses like (x+1)^2
-    const parts = str.split(/((?:[a-zA-Z0-9]|\([^)]+\))\^\d+)/g);
-    return parts.map((part, i) => {
-      const match = part.match(/^((?:[a-zA-Z0-9]|\([^)]+\)))\^(\d+)$/);
-      if (match) {
-        return <React.Fragment key={`sup-frag-${i}`}>{match[1]}<sup key={`sup-${i}`}>{match[2]}</sup></React.Fragment>;
-      }
-      // Replace * with × and / with ÷ (if it's a simple division like 10 / 2 or 10/2)
-      let formatted = part.replace(/\*/g, "×");
-      // Only replace / if it looks like a division (digits/digits or spaces around it)
-      // to avoid breaking URLs or dates
-      formatted = formatted.replace(/(\d+)\s*\/\s*(\d+)/g, "$1 ÷ $2");
-      formatted = formatted.replace(/\s\/\s/g, " ÷ ");
-      
-      return formatted;
+function renderLatex(latex: string, displayMode: boolean): React.ReactNode {
+  try {
+    const html = katex.renderToString(latex, {
+      displayMode,
+      throwOnError: false,
+      strict: false,
     });
-  };
+    return (
+      <span
+        dangerouslySetInnerHTML={{ __html: html }}
+        style={displayMode ? { display: "block", textAlign: "center", margin: "0.5em 0" } : undefined}
+      />
+    );
+  } catch {
+    return latex;
+  }
+}
 
-  const parts = [];
-  let lastIndex = 0;
-  let match;
+// Split text into segments: LaTeX blocks, legacy [FRAC:n:d], and plain text.
+// Handles: \(...\), \[...\], $$...$$, $...$ (single dollar only if looks like math)
+function parseSegments(text: string): React.ReactNode[] {
+  // Order matters — block before inline
+  const pattern = /(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\[FRAC:[^:]+:[^\]]+\])/g;
 
-  while ((match = fracRegex.exec(text)) !== null) {
-    // Add text before the fraction
-    if (match.index > lastIndex) {
-      parts.push(processExponents(text.substring(lastIndex, match.index)));
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > last) {
+      nodes.push(<span key={key++}>{processPlainText(text.slice(last, match.index))}</span>);
     }
 
-    // Add the fraction
-    const [_, num, den] = match;
-    parts.push(
-      <span key={`frac-${match.index}`} className="math-fraction">
-        <span className="math-num">{num}</span>
-        <span className="math-den">{den}</span>
-      </span>
-    );
+    const seg = match[0];
 
-    lastIndex = fracRegex.lastIndex;
+    if (seg.startsWith("\\[") && seg.endsWith("\\]")) {
+      nodes.push(<span key={key++}>{renderLatex(seg.slice(2, -2).trim(), true)}</span>);
+    } else if (seg.startsWith("\\(") && seg.endsWith("\\)")) {
+      nodes.push(<span key={key++}>{renderLatex(seg.slice(2, -2).trim(), false)}</span>);
+    } else if (seg.startsWith("$$") && seg.endsWith("$$")) {
+      nodes.push(<span key={key++}>{renderLatex(seg.slice(2, -2).trim(), true)}</span>);
+    } else if (seg.startsWith("$") && seg.endsWith("$")) {
+      nodes.push(<span key={key++}>{renderLatex(seg.slice(1, -1).trim(), false)}</span>);
+    } else if (seg.startsWith("[FRAC:")) {
+      const parts = seg.slice(6, -1).split(":");
+      if (parts.length === 2) {
+        nodes.push(
+          <span key={key++} className="math-fraction">
+            <span className="math-num">{parts[0]}</span>
+            <span className="math-den">{parts[1]}</span>
+          </span>
+        );
+      } else {
+        nodes.push(<span key={key++}>{seg}</span>);
+      }
+    }
+
+    last = match.index + seg.length;
   }
 
-  // Add remaining text
-  if (lastIndex < text.length) {
-    parts.push(processExponents(text.substring(lastIndex)));
+  if (last < text.length) {
+    nodes.push(<span key={key++}>{processPlainText(text.slice(last))}</span>);
   }
 
-  return <span className={`rich-text-renderer ${className}`}>{parts}</span>;
+  return nodes;
+}
+
+// Handle plain-text math shortcuts: x^2 → x², * → ×
+function processPlainText(str: string): React.ReactNode[] {
+  const parts = str.split(/((?:[a-zA-Z0-9]|\([^)]+\))\^\d+)/g);
+  return parts.map((part, i) => {
+    const m = part.match(/^((?:[a-zA-Z0-9]|\([^)]+\)))\^(\d+)$/);
+    if (m) {
+      return (
+        <React.Fragment key={i}>
+          {m[1]}
+          <sup>{m[2]}</sup>
+        </React.Fragment>
+      );
+    }
+    let s = part.replace(/\*/g, "×");
+    s = s.replace(/(\d+)\s*\/\s*(\d+)/g, "$1 ÷ $2");
+    s = s.replace(/\s\/\s/g, " ÷ ");
+    return <React.Fragment key={i}>{s}</React.Fragment>;
+  });
+}
+
+export const RichTextRenderer: React.FC<RichTextRendererProps> = ({ text, className = "" }) => {
+  if (!text) return null;
+  return <span className={`rich-text-renderer ${className}`}>{parseSegments(text)}</span>;
 };

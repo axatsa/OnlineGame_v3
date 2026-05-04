@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RichTextRenderer } from "@/components/common/RichTextRenderer";
 import { Loader2, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import GameShell from "./GameShell";
@@ -310,7 +311,7 @@ function SpellingGame({ words, lang, onBack }: { words: SpellingWord[]; lang: st
         </button>
 
         {/* Definition */}
-        <p className="text-sm text-muted-foreground text-center italic">"{current.definition}"</p>
+        <p className="text-sm text-muted-foreground text-center italic">"<RichTextRenderer text={current.definition} />"</p>
 
         {/* Input */}
         <div className="relative">
@@ -347,7 +348,7 @@ function SpellingGame({ words, lang, onBack }: { words: SpellingWord[]; lang: st
                   </div>
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">{current.example}</p>
+              <p className="text-xs text-muted-foreground"><RichTextRenderer text={current.example} /></p>
             </motion.div>
           )}
         </AnimatePresence>

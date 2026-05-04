@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RichTextRenderer } from "@/components/common/RichTextRenderer";
 import { Loader2, CheckCircle, XCircle, Flame, Trophy, RotateCcw, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import GameShell from "./GameShell";
@@ -408,13 +409,13 @@ function OperatorManagedCard({ puzzle, onResult }: { puzzle: OperatorPuzzle; onR
 
   return (
     <div className="space-y-4">
-      <p className="text-3xl font-mono font-bold text-center">{puzzle.puzzle}</p>
+      <p className="text-3xl font-mono font-bold text-center"><RichTextRenderer text={String(puzzle.puzzle)} /></p>
       <Input value={input} onChange={(e) => setInput(e.target.value)} disabled={checked}
         placeholder="+  −  ×  ÷" className="text-center text-xl font-bold"
         onKeyDown={(e) => e.key === "Enter" && !checked && check()} />
       {checked
         ? <p className={`text-center font-bold ${isCorrect ? "text-green-600" : "text-red-500"}`}>
-            {isCorrect ? "🎉 Верно!" : `Ответ: ${puzzle.answer}`}
+            {isCorrect ? "🎉 Верно!" : <><span>Ответ: </span><RichTextRenderer text={String(puzzle.answer)} /></>}
           </p>
         : <Button onClick={check} disabled={!input.trim()} className="w-full">Проверить</Button>}
     </div>
@@ -428,16 +429,16 @@ function ChainManagedCard({ puzzle, onResult }: { puzzle: ChainPuzzle; onResult:
   const check = () => { setChecked(true); onResult(isCorrect); };
   return (
     <div className="space-y-4">
-      <p className="text-2xl font-mono font-bold text-center tracking-widest">{puzzle.puzzle}</p>
+      <p className="text-2xl font-mono font-bold text-center tracking-widest"><RichTextRenderer text={String(puzzle.puzzle)} /></p>
       <Input value={input} onChange={(e) => setInput(e.target.value)} disabled={checked}
         placeholder="Следующее число" className="text-center text-xl font-bold"
         onKeyDown={(e) => e.key === "Enter" && !checked && check()} />
       {checked
         ? <div className="text-center space-y-1">
             <p className={`font-bold ${isCorrect ? "text-green-600" : "text-red-500"}`}>
-              {isCorrect ? "🎉 Верно!" : `Ответ: ${puzzle.answer}`}
+              {isCorrect ? "🎉 Верно!" : <><span>Ответ: </span><RichTextRenderer text={String(puzzle.answer)} /></>}
             </p>
-            <p className="text-xs text-muted-foreground">Правило: {puzzle.rule}</p>
+            <p className="text-xs text-muted-foreground">Правило: <RichTextRenderer text={puzzle.rule} /></p>
           </div>
         : <Button onClick={check} disabled={!input.trim()} className="w-full">Проверить</Button>}
     </div>

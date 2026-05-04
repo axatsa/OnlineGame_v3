@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RichTextRenderer } from "@/components/common/RichTextRenderer";
 import { Loader2, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import GameShell from "./GameShell";
@@ -210,7 +211,7 @@ function HangmanGame({ words, lang, onBack }: { words: WordEntry[]; lang: string
 
       {/* Hint */}
       <p className="text-sm bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-amber-800 text-center max-w-xs">
-        💡 {hint}
+        💡 <RichTextRenderer text={hint} />
       </p>
 
       {/* Additional progressive hints */}
@@ -225,7 +226,7 @@ function HangmanGame({ words, lang, onBack }: { words: WordEntry[]; lang: string
                 exit={{ opacity: 0 }}
                 className="text-sm bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 text-blue-800 text-center"
               >
-                <span className="font-semibold mr-1">Подсказка {i + 1}:</span>{h}
+                <span className="font-semibold mr-1">Подсказка {i + 1}:</span><RichTextRenderer text={h} />
               </motion.div>
             ))}
           </AnimatePresence>

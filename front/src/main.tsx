@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import "katex/dist/katex.min.css";
 import "./i18n";
 import { ThemeProvider } from "./context/ThemeContext";
 import { init, browserTracingIntegration, replayIntegration } from "@sentry/react";

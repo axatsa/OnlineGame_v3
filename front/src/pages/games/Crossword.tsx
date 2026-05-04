@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RichTextRenderer } from "@/components/common/RichTextRenderer";
 import GameShell from "./GameShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -283,7 +284,7 @@ const Crossword = () => {
                       <button key={`a-${w.number}`}
                         onClick={() => setSelectedWord(w)}
                         className={`text-left px-2 py-1.5 rounded-lg text-xs font-sans transition-colors ${selectedWord?.number === w.number && selectedWord?.isAcross ? "bg-blue-100 text-blue-800 font-semibold" : "hover:bg-gray-100 text-gray-700"}`}>
-                        <span className="font-bold text-gray-500 mr-1">{w.number}.</span>{w.clue}
+                        <span className="font-bold text-gray-500 mr-1">{w.number}.</span><RichTextRenderer text={w.clue} />
                       </button>
                     ))}
                   </div>
@@ -297,7 +298,7 @@ const Crossword = () => {
                       <button key={`d-${w.number}`}
                         onClick={() => setSelectedWord(w)}
                         className={`text-left px-2 py-1.5 rounded-lg text-xs font-sans transition-colors ${selectedWord?.number === w.number && !selectedWord?.isAcross ? "bg-blue-100 text-blue-800 font-semibold" : "hover:bg-gray-100 text-gray-700"}`}>
-                        <span className="font-bold text-gray-500 mr-1">{w.number}.</span>{w.clue}
+                        <span className="font-bold text-gray-500 mr-1">{w.number}.</span><RichTextRenderer text={w.clue} />
                       </button>
                     ))}
                   </div>

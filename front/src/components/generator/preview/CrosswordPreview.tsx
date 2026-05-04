@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { CrosswordData } from "@/lib/crossword";
+import { RichTextRenderer } from "@/components/common/RichTextRenderer";
 
 interface CrosswordPreviewProps {
   crosswordData: CrosswordData;
@@ -121,7 +122,7 @@ export const CrosswordPreview = ({
                       {dirWords.map(w => (
                         <div key={w.number} className="text-[11px] leading-relaxed flex gap-2">
                           <span className="font-bold text-primary shrink-0 w-4">{w.number}.</span>
-                          <span className="text-gray-700">{w.clue}</span>
+                          <span className="text-gray-700"><RichTextRenderer text={w.clue} /></span>
                         </div>
                       ))}
                     </div>

@@ -1,0 +1,48 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle grid pattern -->
+  <rect width="1200" height="630" fill="none" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+
+  <!-- Glow circle -->
+  <circle cx="900" cy="300" r="260" fill="white" fill-opacity="0.05"/>
+  <circle cx="900" cy="300" r="180" fill="white" fill-opacity="0.05"/>
+
+  <!-- Logo circle -->
+  <circle cx="120" cy="120" r="48" fill="white" fill-opacity="0.15"/>
+  <text x="120" y="130" font-family="system-ui,sans-serif" font-size="36" text-anchor="middle" fill="white">🎮</text>
+
+  <!-- Main title -->
+  <text x="100" y="290" font-family="Georgia,serif" font-size="88" font-weight="bold" fill="white" letter-spacing="-2">ClassPlay</text>
+
+  <!-- Tagline -->
+  <text x="100" y="360" font-family="system-ui,sans-serif" font-size="34" fill="white" fill-opacity="0.85">ИИ-платформа для учителей Узбекистана</text>
+
+  <!-- Feature pills -->
+  <rect x="100" y="410" width="180" height="44" rx="22" fill="white" fill-opacity="0.18"/>
+  <text x="190" y="438" font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" fill="white">🎯 Квизы</text>
+
+  <rect x="298" y="410" width="200" height="44" rx="22" fill="white" fill-opacity="0.18"/>
+  <text x="398" y="438" font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" fill="white">🧩 Кроссворды</text>
+
+  <rect x="516" y="410" width="200" height="44" rx="22" fill="white" fill-opacity="0.18"/>
+  <text x="616" y="438" font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" fill="white">🎲 10 игр</text>
+
+  <rect x="734" y="410" width="220" height="44" rx="22" fill="white" fill-opacity="0.18"/>
+  <text x="844" y="438" font-family="system-ui,sans-serif" font-size="20" text-anchor="middle" fill="white">📄 DOCX экспорт</text>
+
+  <!-- URL -->
+  <text x="100" y="560" font-family="system-ui,sans-serif" font-size="28" fill="white" fill-opacity="0.6">classplay.uz</text>
+</svg>

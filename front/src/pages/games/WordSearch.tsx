@@ -78,7 +78,7 @@ const WordSearch = () => {
   const handlePrint = () => {
     const el = printRef.current;
     if (!el) return;
-    const win = window.open("", "", "width=800,height=900");
+    const win = window.open("", "_blank");
     if (!win) return;
     win.document.write(`<html><head><title>Поиск слов — ${currentTopic}</title>
       <style>

@@ -270,26 +270,30 @@ const AssignmentPrintView = ({
   const handlePrint = () => {
     const printContent = printRef.current;
     if (!printContent) return;
-    const windowPrint = window.open("", "", "left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0");
+    const windowPrint = window.open("", "_blank");
     if (!windowPrint) return;
     windowPrint.document.write(`
       <html>
         <head>
           <title>${assignment.title}</title>
           <style>
+            * { box-sizing: border-box; }
+            body { margin: 0; padding: 0; font-family: "Times New Roman", serif; }
+            .page { padding: 20mm; page-break-after: always; }
+            h1 { text-align: center; font-size: 18pt; margin-bottom: 5pt; }
+            h2 { text-align: center; font-size: 14pt; margin-bottom: 15pt; color: #333; }
+            .meta { display: flex; justify-content: space-between; border-bottom: 1pt solid #000; padding-bottom: 10pt; margin-bottom: 20pt; font-size: 11pt; }
+            .question { margin-bottom: 12pt; }
+            .question-text { font-weight: bold; margin-bottom: 4pt; }
+            .options { display: grid; grid-template-columns: 1fr 1fr; gap: 6pt; padding-left: 20pt; font-size: 10pt; }
+            .fill-line { display: inline-block; width: 150pt; border-bottom: 1pt solid #000; }
+            .answer-key { background: #fef3c7; border: 1pt solid #f59e0b; padding: 10pt; margin-bottom: 20pt; font-weight: bold; text-align: center; }
+            .answers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5pt; }
+            .answer-item { border: 0.5pt solid #ccc; padding: 5pt; text-align: center; font-size: 10pt; }
+            .answer-num { color: #666; font-size: 8pt; }
             @media print {
-              .page { page-break-after: always; padding: 20pt; font-family: "Times New Roman", serif; }
-              h1 { text-align: center; font-size: 18pt; margin-bottom: 5pt; }
-              h2 { text-align: center; font-size: 14pt; margin-bottom: 15pt; color: #333; }
-              .meta { display: flex; justify-content: space-between; border-bottom: 1pt solid #000; padding-bottom: 10pt; margin-bottom: 20pt; font-size: 11pt; }
-              .question { margin-bottom: 15pt; }
-              .question-text { font-weight: bold; margin-bottom: 5pt; }
-              .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; padding-left: 20pt; }
-              .fill-line { display: inline-block; width: 150pt; border-bottom: 1pt solid #000; }
-              .answer-key { background: #fef3c7; border: 1pt solid #f59e0b; padding: 10pt; margin-bottom: 20pt; font-weight: bold; text-align: center; }
-              .answers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5pt; }
-              .answer-item { border: 0.5pt solid #ccc; padding: 5pt; text-align: center; font-size: 10pt; }
-              .answer-num { color: #666; font-size: 8pt; }
+              body { margin: 0; }
+              .page { padding: 15mm; }
             }
           </style>
         </head>

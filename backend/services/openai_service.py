@@ -56,8 +56,7 @@ def build_class_context_block(grade: str, context: str) -> str:
 
 async def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple[Any, int]:
     """
-    Tries Gemini first (free with rotation), then falls back to OpenAI.
-    Retries up to 3 attempts total on transient failures.
+    Uses Gemini exclusively with key rotation. Retries up to 3 times on transient failures.
     """
     system_prompt = next((m["content"] for m in messages if m["role"] == "system"), "")
     user_prompt = next((m["content"] for m in messages if m["role"] == "user"), "")
@@ -66,61 +65,29 @@ async def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) ->
 
     for attempt in range(3):
         if attempt > 0:
-            logger.info(f"Retry attempt {attempt + 1}/3 for AI completion...")
-            await asyncio.sleep(1)
+            logger.info(f"Gemini retry attempt {attempt + 1}/3...")
+            await asyncio.sleep(2)
 
-        # ── TRY GEMINI FIRST ─────────────────────────────────────────────────
-        if gemini_service.key_manager.has_available_keys():
-            try:
-                logger.info("Universal AI Service: Trying Gemini first...")
-                result, tokens = await gemini_service.generate_content(
-                    prompt=user_prompt,
-                    system_instruction=system_prompt,
-                    temperature=0.7,
-                    use_math_format=True,
-                )
-                if result:
-                    return result, tokens
-                logger.warning("Gemini returned empty result, trying OpenAI...")
-            except Exception as e:
-                logger.warning(f"Gemini failed (attempt {attempt + 1}): {e}")
+        if not gemini_service.key_manager.has_available_keys():
+            logger.error("No available Gemini keys (all in cooldown)")
+            await asyncio.sleep(5)
+            continue
 
-        # ── FALLBACK TO OPENAI ────────────────────────────────────────────────
         try:
-            logger.info(f"Using OpenAI ({model}) as primary or fallback provider...")
-            response = await asyncio.to_thread(
-                client.chat.completions.create,
-                model=model,
-                messages=messages,
+            logger.info(f"Gemini request (attempt {attempt + 1}/3)...")
+            result, tokens = await gemini_service.generate_content(
+                prompt=user_prompt,
+                system_instruction=system_prompt,
                 temperature=0.7,
+                use_math_format=True,
             )
-            content = response.choices[0].message.content
-            usage = response.usage.total_tokens if response.usage else 0
-
-            # Robust JSON extraction
-            try:
-                return json.loads(content), usage
-            except json.JSONDecodeError:
-                pass
-
-            json_match = re.search(r"```(?:json)?\s*(.*?)```", content, re.DOTALL)
-            if json_match:
-                try:
-                    return json.loads(json_match.group(1).strip()), usage
-                except json.JSONDecodeError:
-                    pass
-
-            structure_match = re.search(r"(\{.*\}|\[.*\])", content, re.DOTALL)
-            if structure_match:
-                try:
-                    return json.loads(structure_match.group(1).strip()), usage
-                except json.JSONDecodeError:
-                    pass
-
-            logger.error(f"Failed to parse JSON from content (attempt {attempt + 1}): {content[:200]}...")
+            if result:
+                return result, tokens
+            logger.warning(f"Gemini returned empty result on attempt {attempt + 1}")
         except Exception as e:
-            logger.error(f"OpenAI Error (attempt {attempt + 1}): {e}")
+            logger.warning(f"Gemini failed (attempt {attempt + 1}): {e}")
 
+    logger.error("All 3 Gemini attempts failed")
     return None, 0
 
 def _sanitize_quiz_questions(questions: Any) -> List[Dict]:

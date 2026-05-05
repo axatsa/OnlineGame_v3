@@ -3,9 +3,23 @@
 .env.local
 .env.*.local
 .env.production.local
+
+# AI tooling (not project docs)
 .claude
 .claude-flow/
 .agent/
+
+# Archived docs (replaced by README.md)
+docs/plans/
+docs/todo/
+docs/CHANGELOG_SESSION.md
+docs/REMAINING_WORK.md
+docs/ROADMAP.md
+docs/SECRETS.md
+docs/adminupdate.md
+docs/gamification.md
+front/.lovable/
+front/docs/
 
 # Python
 __pycache__/

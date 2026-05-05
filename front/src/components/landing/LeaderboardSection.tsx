@@ -8,7 +8,7 @@ const LEADERBOARD_DEMO = [
   { name: "Salamov A.", level: 11, xp: 2980, rank: 2 },
   { name: "Abdullaev B.", level: 10, xp: 2710, rank: 3 },
   { name: "Ibragimov F.", level: 9, xp: 2490, rank: 4 },
-  { name: "Miraliev D.", level: 9, xp: 2301, rank: 5 },
+  { name: "Khegai P.", level: 9, xp: 2301, rank: 5 },
 ];
 
 export default function LeaderboardSection() {

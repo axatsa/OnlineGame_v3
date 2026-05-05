@@ -223,7 +223,7 @@ const Crossword = () => {
                   ))}
                 </div>
               </div>
-              <Button onClick={startGame} className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold font-sans">
+              <Button onClick={startGame} disabled={status === "loading"} className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-semibold font-sans">
                 Начать
               </Button>
             </div>

@@ -56,63 +56,72 @@ def build_class_context_block(grade: str, context: str) -> str:
 
 async def _get_completion(messages: List[Dict[str, str]], model=OPENAI_MODEL) -> Tuple[Any, int]:
     """
-    Improved helper: Tries Gemini first (free with rotation), then falls back to OpenAI.
+    Tries Gemini first (free with rotation), then falls back to OpenAI.
+    Retries up to 3 attempts total on transient failures.
     """
     system_prompt = next((m["content"] for m in messages if m["role"] == "system"), "")
     user_prompt = next((m["content"] for m in messages if m["role"] == "user"), "")
 
-    # ── TRY GEMINI FIRST (Optimization) ──────────────────────────────────────
     from services import gemini_service
-    if gemini_service.key_manager.has_available_keys():
-        try:
-            logger.info("Universal AI Service: Trying Gemini first...")
-            result, tokens = await gemini_service.generate_content(
-                prompt=user_prompt,
-                system_instruction=system_prompt,
-                temperature=0.7,
-                use_math_format=True,
-            )
-            if result:
-                return result, tokens
-        except Exception as e:
-            logger.warning(f"Gemini pre-check failed, falling back to OpenAI: {e}")
 
-    # ── FALLBACK TO OPENAI ───────────────────────────────────────────────────
-    try:
-        logger.info(f"Using OpenAI ({model}) as primary or fallback provider...")
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=0.7
-        )
-        content = response.choices[0].message.content
-        usage = response.usage.total_tokens if response.usage else 0
-        
-        # Robust JSON extraction
+    for attempt in range(3):
+        if attempt > 0:
+            logger.info(f"Retry attempt {attempt + 1}/3 for AI completion...")
+            await asyncio.sleep(1)
+
+        # ── TRY GEMINI FIRST ─────────────────────────────────────────────────
+        if gemini_service.key_manager.has_available_keys():
+            try:
+                logger.info("Universal AI Service: Trying Gemini first...")
+                result, tokens = await gemini_service.generate_content(
+                    prompt=user_prompt,
+                    system_instruction=system_prompt,
+                    temperature=0.7,
+                    use_math_format=True,
+                )
+                if result:
+                    return result, tokens
+                logger.warning("Gemini returned empty result, trying OpenAI...")
+            except Exception as e:
+                logger.warning(f"Gemini failed (attempt {attempt + 1}): {e}")
+
+        # ── FALLBACK TO OPENAI ────────────────────────────────────────────────
         try:
-            return json.loads(content), usage
-        except json.JSONDecodeError:
-            pass
-            
-        json_match = re.search(r"```(?:json)?\s*(.*?)```", content, re.DOTALL)
-        if json_match:
+            logger.info(f"Using OpenAI ({model}) as primary or fallback provider...")
+            response = await asyncio.to_thread(
+                client.chat.completions.create,
+                model=model,
+                messages=messages,
+                temperature=0.7,
+            )
+            content = response.choices[0].message.content
+            usage = response.usage.total_tokens if response.usage else 0
+
+            # Robust JSON extraction
             try:
-                return json.loads(json_match.group(1).strip()), usage
+                return json.loads(content), usage
             except json.JSONDecodeError:
                 pass
-                
-        structure_match = re.search(r"(\{.*\}|\[.*\])", content, re.DOTALL)
-        if structure_match:
-            try:
-                return json.loads(structure_match.group(1).strip()), usage
-            except json.JSONDecodeError:
-                pass
-                
-        logger.error(f"Failed to parse JSON from content: {content[:100]}...")
-        return None, usage
-    except Exception as e:
-        logger.error(f"OpenAI Error: {e}")
-        return None, 0
+
+            json_match = re.search(r"```(?:json)?\s*(.*?)```", content, re.DOTALL)
+            if json_match:
+                try:
+                    return json.loads(json_match.group(1).strip()), usage
+                except json.JSONDecodeError:
+                    pass
+
+            structure_match = re.search(r"(\{.*\}|\[.*\])", content, re.DOTALL)
+            if structure_match:
+                try:
+                    return json.loads(structure_match.group(1).strip()), usage
+                except json.JSONDecodeError:
+                    pass
+
+            logger.error(f"Failed to parse JSON from content (attempt {attempt + 1}): {content[:200]}...")
+        except Exception as e:
+            logger.error(f"OpenAI Error (attempt {attempt + 1}): {e}")
+
+    return None, 0
 
 def _sanitize_quiz_questions(questions: Any) -> List[Dict]:
     """
@@ -163,9 +172,9 @@ def _sanitize_quiz_questions(questions: Any) -> List[Dict]:
                 break
         
         if not fixed:
-            logger.error(f"Dropping question because answer '{answer}' doesn't match any option: {options}")
-            # Still include it but fix by using first option (so game doesn't break)
-            # The question will just be harder to answer correctly
+            q["a"] = options[0]
+            sanitized.append(q)
+            logger.warning(f"Last-resort fix: answer set to first option for: {question_text[:60]!r}")
     
     return sanitized
 

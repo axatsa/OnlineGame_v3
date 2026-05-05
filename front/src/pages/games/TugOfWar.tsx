@@ -118,7 +118,7 @@ const TugOfWar = () => {
       const res = await api.post("/generate/quiz", {
         topic: searchTopic,
         language: langLabel,
-        count: 40, // Генерируем много, чтобы разделить на два пула
+        count: 20, // Генерируем вопросы, чтобы разделить на два пула (по 10 на команду)
         difficulty: difficulty,
         class_id: activeClassId
       });
@@ -275,7 +275,7 @@ const TugOfWar = () => {
                   🔀 {t('game_different_questions_info')}
                 </p>
               </div>
-              <Button onClick={startGame} className="w-full h-12 font-semibold font-sans bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={startGame} disabled={status === "loading"} className="w-full h-12 font-semibold font-sans bg-blue-600 hover:bg-blue-700 text-white">
                 {t('game_start_battle')}
               </Button>
             </div>

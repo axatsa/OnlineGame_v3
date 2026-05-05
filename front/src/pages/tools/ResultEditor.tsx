@@ -3,17 +3,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Plus, Trash, GripVertical, Check } from "lucide-react";
+import type { AssignmentData, QuizQuestion, MathProblem } from "@/lib/generatorExport";
+import type { CrosswordGrid } from "@/lib/crossword";
+
+type EditableResult = MathProblem[] | QuizQuestion[] | CrosswordGrid | AssignmentData | null;
 
 interface ResultEditorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   type: "math" | "quiz" | "crossword" | "assignment";
-  data: any;
-  onSave: (newData: any) => void;
+  data: EditableResult;
+  onSave: (newData: EditableResult) => void;
 }
 
 const ResultEditor = ({ open, onOpenChange, type, data, onSave }: ResultEditorProps) => {
-  const [editData, setEditData] = useState<any>(JSON.parse(JSON.stringify(data)));
+  const [editData, setEditData] = useState<EditableResult>(JSON.parse(JSON.stringify(data)));
 
   const handleSave = () => {
     onSave(editData);

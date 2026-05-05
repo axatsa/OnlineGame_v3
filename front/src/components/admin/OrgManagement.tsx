@@ -68,11 +68,17 @@ export const OrgManagement: React.FC<OrgManagementProps> = ({ orgs, isLoading, o
         ) : orgs.length === 0 ? (
           <EmptyState icon={Building2} title={t("adminNoOrgs", "Нет организаций")} description={t("adminNoOrgsDesc", "Список организаций пуст")} />
         ) : (
-          orgs.map((org, i) => (
+          orgs.map((org, i) => {
+            const statusBorder = org.status === "expired"
+              ? "border-l-4 border-l-destructive"
+              : org.status === "expiring"
+              ? "border-l-4 border-l-yellow-400"
+              : "border-l-4 border-l-green-500";
+            return (
             <motion.div
               key={org.id}
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-              className="bg-card border border-border rounded-2xl p-5"
+              className={`bg-card border border-border rounded-2xl p-5 ${statusBorder}`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex-1 min-w-0">
@@ -158,7 +164,8 @@ export const OrgManagement: React.FC<OrgManagementProps> = ({ orgs, isLoading, o
                 </div>
               </div>
             </motion.div>
-          ))
+            );
+          })
         )}
       </div>
 

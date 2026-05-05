@@ -8,7 +8,7 @@ import { AvatarPicker } from "@/components/session/AvatarPicker";
 import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 
-const AVATARS = ["placeholder"];
+const AVATARS = ["smiley", "robot", "cat", "panda", "placeholder"];
 function randomAvatar() {
   return AVATARS[Math.floor(Math.random() * AVATARS.length)];
 }

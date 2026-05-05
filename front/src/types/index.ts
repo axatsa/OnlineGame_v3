@@ -76,4 +76,13 @@ export type {
   OrgContact,
   ResourceCreateRequest,
   ResourceItem,
+  CreateSessionRequest,
+  CreateSessionResponse,
+  JoinSessionRequest,
+  JoinSessionResponse,
+  SessionInfoResponse,
+  SessionLeaderboardEntry,
+  SessionWsMessage,
+  SessionTeacherCommand,
+  SessionStudentCommand,
 } from "./api";

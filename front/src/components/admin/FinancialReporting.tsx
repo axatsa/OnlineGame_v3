@@ -26,19 +26,39 @@ export const FinancialReporting: React.FC<FinancialReportingProps> = ({
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
 
-  const totalMRR = financials.mrr;
-  const totalPaid = financials.total_revenue;
-  const pendingCount = financials.pending_payments;
-  const mrrGrowth = 12; // Static for now
+  const fmtUZS = (n: number) => n.toLocaleString("ru-RU") + " сум";
+
+  // Compute real MRR from paid payments in the last 30 days
+  const now = Date.now();
+  const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+  const recentPaid = payments.filter(p => p.status === "paid" && new Date(p.date).getTime() > thirtyDaysAgo);
+  const realMRR = recentPaid.reduce((s, p) => s + p.amount, 0) || financials.mrr;
+
+  const totalMRR = realMRR;
+  const totalPaid = payments.filter(p => p.status === "paid").reduce((s, p) => s + p.amount, 0) || financials.total_revenue;
+  const pendingCount = payments.filter(p => p.status === "pending").length || financials.pending_payments;
   const arr = totalMRR * 12;
 
-  const mrrData = [
-    { month: "Янв", mrr: totalMRR * 0.8 },
-    { month: "Фев", mrr: totalMRR * 0.85 },
-    { month: "Мар", mrr: totalMRR * 0.9 },
-    { month: "Апр", mrr: totalMRR * 0.95 },
-    { month: "Май", mrr: totalMRR },
-  ];
+  // Real monthly chart from paid payments
+  const monthlyMap: Record<string, number> = {};
+  payments.filter(p => p.status === "paid").forEach(p => {
+    const d = new Date(p.date);
+    const key = d.toLocaleString("ru-RU", { month: "short" });
+    monthlyMap[key] = (monthlyMap[key] || 0) + p.amount;
+  });
+  const months = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+  const mrrData = months
+    .map(m => ({ month: m, mrr: monthlyMap[m] || 0 }))
+    .filter((_, i) => i <= new Date().getMonth())
+    .slice(-5);
+  if (mrrData.length === 0) {
+    const m = new Date().toLocaleString("ru-RU", { month: "short" });
+    mrrData.push({ month: m, mrr: totalMRR });
+  }
+
+  // MRR growth: compare last two months
+  const lastMRR = mrrData.length >= 2 ? mrrData[mrrData.length - 2].mrr : 0;
+  const mrrGrowth = lastMRR > 0 ? Math.round(((totalMRR - lastMRR) / lastMRR) * 100) : 0;
 
   const payStatusData = [
     { label: "Оплачено", value: payments.filter(p => p.status === "paid").length },
@@ -66,8 +86,8 @@ export const FinancialReporting: React.FC<FinancialReportingProps> = ({
 
   const revByPlan = [
     { plan: "FREE", count: teachers.filter(t_ => t_.plan === "FREE").length, mrr: 0 },
-    { plan: "PRO", count: teachers.filter(t_ => t_.plan === "PRO").length, mrr: teachers.filter(t_ => t_.plan === "PRO").length * 5 },
-    { plan: "SCHOOL", count: teachers.filter(t_ => t_.plan === "SCHOOL").length, mrr: teachers.filter(t_ => t_.plan === "SCHOOL").length * 20 },
+    { plan: "PRO", count: teachers.filter(t_ => t_.plan === "PRO").length, mrr: teachers.filter(t_ => t_.plan === "PRO").length * 190000 },
+    { plan: "SCHOOL", count: teachers.filter(t_ => t_.plan === "SCHOOL").length, mrr: teachers.filter(t_ => t_.plan === "SCHOOL").length * 620000 },
   ];
 
   const payStatusMap: Record<string, { label: string; cls: string }> = {
@@ -79,9 +99,9 @@ export const FinancialReporting: React.FC<FinancialReportingProps> = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={TrendingUp} label={t("adminMetricMRR")} value={`$${totalMRR}`} sub={`+${mrrGrowth}% vs ${lang === "ru" ? "дек" : "dek"}`} trend="up" color="bg-success/10 text-success" />
-        <MetricCard icon={BarChart3} label={t("adminMetricARR")} value={`$${arr.toLocaleString()}`} sub={`× 12 ${lang === "ru" ? "от" : "dan"} MRR`} color="bg-primary/10 text-primary" />
-        <MetricCard icon={CreditCard} label={t("adminMetricTotal")} value={`$${totalPaid}`} sub={lang === "ru" ? "за все время" : "barcha vaqt davomida"} color="bg-violet-500/10 text-violet-600" />
+        <MetricCard icon={TrendingUp} label={t("adminMetricMRR")} value={fmtUZS(totalMRR)} sub={mrrGrowth !== 0 ? `${mrrGrowth > 0 ? "+" : ""}${mrrGrowth}% vs пред. месяц` : "текущий месяц"} trend={mrrGrowth > 0 ? "up" : mrrGrowth < 0 ? "down" : undefined} color="bg-success/10 text-success" />
+        <MetricCard icon={BarChart3} label={t("adminMetricARR")} value={fmtUZS(arr)} sub={`× 12 ${lang === "ru" ? "от" : "dan"} MRR`} color="bg-primary/10 text-primary" />
+        <MetricCard icon={CreditCard} label={t("adminMetricTotal")} value={fmtUZS(totalPaid)} sub={lang === "ru" ? "за все время" : "barcha vaqt davomida"} color="bg-violet-500/10 text-violet-600" />
         <MetricCard icon={Receipt} label={t("adminMetricPending")} value={String(pendingCount)} sub={lang === "ru" ? "требуют звонка" : "qo'ng'iroq kutilmoqda"} trend={pendingCount > 0 ? "down" : undefined} color="bg-yellow-500/10 text-yellow-600" />
       </div>
 
@@ -166,8 +186,8 @@ export const FinancialReporting: React.FC<FinancialReportingProps> = ({
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="text-sm font-bold text-foreground font-sans">${p.amount}</span>
-                        <span className="text-xs text-muted-foreground font-sans ml-1">{p.currency}</span>
+                        <span className="text-sm font-bold text-foreground font-sans">{p.amount.toLocaleString("ru-RU")}</span>
+                        <span className="text-xs text-muted-foreground font-sans ml-1">{p.currency || "UZS"}</span>
                       </td>
                       <td className="px-5 py-4 text-sm text-muted-foreground font-sans">
                         {new Date(p.date).toLocaleDateString("ru-RU")}
@@ -190,6 +210,31 @@ export const FinancialReporting: React.FC<FinancialReportingProps> = ({
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Revenue by plan breakdown */}
+      <div className="bg-card border border-border rounded-2xl p-5">
+        <h3 className="font-semibold text-foreground mb-4">Доход по тарифам (расчётный MRR)</h3>
+        <div className="space-y-3">
+          {revByPlan.map(({ plan, count, mrr }) => {
+            const pct = revByPlan.reduce((s, r) => s + r.mrr, 0) > 0
+              ? (mrr / revByPlan.reduce((s, r) => s + r.mrr, 0)) * 100
+              : 0;
+            const color = plan === "FREE" ? "bg-slate-400" : plan === "PRO" ? "bg-blue-500" : "bg-purple-500";
+            return (
+              <div key={plan} className="flex items-center gap-4">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${color}`}>{plan}</span>
+                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                  <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                </div>
+                <div className="text-right min-w-28">
+                  <span className="text-sm font-bold text-foreground">{fmtUZS(mrr)}</span>
+                  <span className="text-xs text-muted-foreground ml-2">({count} чел.)</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

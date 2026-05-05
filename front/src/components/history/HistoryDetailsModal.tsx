@@ -1,11 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink } from "lucide-react";
 import { ResourceQRCode } from "@/components/common/ResourceQRCode";
+import { HistoryItem } from "@/types/api";
 
 interface HistoryDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: any;
+  item: HistoryItem | null;
 }
 
 export const HistoryDetailsModal = ({ isOpen, onClose, item }: HistoryDetailsModalProps) => {

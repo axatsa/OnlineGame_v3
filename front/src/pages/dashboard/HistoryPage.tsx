@@ -219,7 +219,7 @@ const HistoryPage = () => {
               ))}
             </AnimatePresence>
           )}
-          {!isLoading && hasMore && filteredItems.length > 0 && (
+          {!isLoading && hasMore && (
             <div className="flex justify-center pt-2">
               <Button variant="outline" onClick={loadMore} disabled={isLoadingMore} className="gap-2 rounded-xl">
                 {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : null}

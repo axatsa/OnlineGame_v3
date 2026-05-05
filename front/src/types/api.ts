@@ -102,8 +102,10 @@ export interface HistoryItem {
   id: number;
   generator_type: string;
   topic: string;
+  content: string;
   created_at: string;
-  is_favorite: boolean;
+  /** SQLite stores as INTEGER 0/1 — treat as number, not boolean */
+  is_favorite: number;
 }
 
 export interface GenerationTemplate {
@@ -372,3 +374,64 @@ export interface ResourceItem {
   generator_type: string;
   created_at: string;
 }
+
+// ── Sessions (Kahoot-style) ───────────────────────────────────────────────────
+
+export interface CreateSessionRequest {
+  log_id: number;
+  time_per_q?: number;
+}
+
+export interface CreateSessionResponse {
+  code: string;
+  session_id: number;
+}
+
+export interface JoinSessionRequest {
+  nickname: string;
+  avatar_id?: string | null;
+}
+
+export interface JoinSessionResponse {
+  participant_id: number;
+  session_id: number;
+  nickname: string;
+  avatar_id: string | null;
+}
+
+export interface SessionInfoResponse {
+  code: string;
+  topic: string | null;
+  generator_type: string;
+  status: "waiting" | "active" | "finished";
+  participant_count: number;
+  time_per_q: number;
+  question_count: number;
+}
+
+export interface SessionLeaderboardEntry {
+  rank: number;
+  nickname: string;
+  avatar_id: string | null;
+  score: number;
+  delta?: number;
+}
+
+// WS message types — server → client
+export type SessionWsMessage =
+  | { type: "lobby_update"; participants: { id: number; nickname: string; avatar_id?: string }[] }
+  | { type: "question_start"; index: number; question: string; options: string[]; time_limit: number; total_questions: number }
+  | { type: "answer_received"; is_correct: boolean; points_earned: number; correct_answer: string }
+  | { type: "answer_progress"; answered: number; total: number; distribution: number[] }
+  | { type: "question_result"; correct_answer: string; leaderboard: SessionLeaderboardEntry[] }
+  | { type: "game_over"; leaderboard: SessionLeaderboardEntry[] };
+
+// WS message types — client → server
+export type SessionTeacherCommand =
+  | { type: "start_game" }
+  | { type: "show_results" }
+  | { type: "next_question" }
+  | { type: "end_game" };
+
+export type SessionStudentCommand =
+  | { type: "submit_answer"; answer: string; response_time_ms: number };

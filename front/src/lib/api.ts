@@ -66,3 +66,17 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// ─── Session API helpers ────────────────────────────────────────────────────
+
+export const createSession = (log_id: number, time_per_q: number) =>
+  api.post<{ code: string; session_id: number }>("/sessions/create", { log_id, time_per_q });
+
+export const getSessionInfo = (code: string) =>
+  api.get<{ topic: string; generator_type: string; status: string; participant_count: number; time_per_q: number; question_count: number }>(`/sessions/${code}/info`);
+
+export const joinSession = (code: string, nickname: string, avatar_id?: string) =>
+  api.post<{ participant_id: number; session_id: number; nickname: string; avatar_id: string | null }>(`/sessions/${code}/join`, { nickname, avatar_id });
+
+export const getSessionResults = (code: string) =>
+  api.get<{ rank: number; nickname: string; avatar_id: string | null; score: number }[]>(`/sessions/${code}/results`);

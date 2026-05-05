@@ -2,7 +2,7 @@
 import React, { useRef, RefObject, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, ChevronDown, Check, Plus, Save, Brain, Trophy, FileText, BookmarkPlus } from "lucide-react";
+import { ArrowLeft, Printer, Download, Pencil, Loader2, Sparkles, Calculator, LayoutGrid, GraduationCap, ChevronDown, Check, Plus, Save, Brain, Trophy, FileText, BookmarkPlus, Gamepad2 } from "lucide-react";
 import { AIGeneratingOverlay } from "@/components/feedback/AIGeneratingOverlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,7 +89,7 @@ const Generator = () => {
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [batchCount, setBatchCount] = useState("3");
 
-  // Crossword state
+  const [lastLogId, setLastLogId] = useState<number | null>(null);
   const [crosswordData, setCrosswordData] = useState<CrosswordGrid | null>(null);
   const [rawCrosswordWords, setRawCrosswordWords] = useState<any[]>([]);
 
@@ -117,6 +117,7 @@ const Generator = () => {
     setQuizData([]);
     setAssignmentData(null);
     setSavedResourceId(null);
+    setLastLogId(null);
 
     try {
       const langLabel = targetLang;
@@ -167,6 +168,7 @@ const Generator = () => {
         };
         const res = await api.post("/generate/math", payload);
         setGeneratedProblems(res.data.problems);
+        setLastLogId(res.data.log_id);
       } else if (genType === "quiz") {
         const payload = {
           topic: quizTopic,
@@ -177,6 +179,7 @@ const Generator = () => {
         };
         const res = await api.post("/generate/quiz", payload);
         setQuizData(res.data.questions);
+        setLastLogId(res.data.log_id);
       } else if (genType === "assignment") {
         const finalSubject = assignSubject.trim() || "General";
         const payload = {
@@ -189,6 +192,7 @@ const Generator = () => {
         };
         const res = await api.post("/generate/assignment", payload);
         setAssignmentData(res.data.result);
+        setLastLogId(res.data.log_id);
       } else {
         let payload: any;
         if (crosswordMode === "custom") {
@@ -211,6 +215,7 @@ const Generator = () => {
           };
         }
         const res = await api.post("/generate/crossword", payload);
+        setLastLogId(res.data.log_id);
         // Backend returns { words: [{word, clue}, ...] }
         setRawCrosswordWords(res.data.words);
 
@@ -784,6 +789,14 @@ const Generator = () => {
             <>
               {/* Toolbar */}
               <div className="absolute top-6 right-10 flex gap-2 print:hidden z-10">
+                {(genType === "quiz" || genType === "assignment") && lastLogId && (
+                  <Button
+                    onClick={() => navigate(`/games/session/new?log_id=${lastLogId}`)}
+                    className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/20 border-none"
+                  >
+                    <Gamepad2 className="w-4 h-4" /> {t("session_start_btn")}
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={openEdit} className="gap-2 bg-white/80 backdrop-blur">
                   <Pencil className="w-4 h-4" /> Edit
                 </Button>

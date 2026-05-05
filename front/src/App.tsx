@@ -48,6 +48,10 @@ const ShareResource = lazy(() => import("./pages/public/ShareResource"));
 const PaymentSuccess = lazy(() => import("./pages/payment/PaymentSuccess"));
 const PaymentFail = lazy(() => import("./pages/payment/PaymentFail"));
 const OrgAdminDashboard = lazy(() => import("./pages/dashboard/OrgAdminDashboard"));
+const JoinSession = lazy(() => import("./pages/public/JoinSession"));
+const StudentGame = lazy(() => import("./pages/public/StudentGame"));
+const CreateSession = lazy(() => import("./pages/session/CreateSession"));
+const HostView = lazy(() => import("./pages/session/HostView"));
 
 // Suspense loading fallback
 const RouteLoadingFallback = () => (
@@ -154,6 +158,22 @@ const App = () => (
 
                 {/* Public share route — no auth */}
                 <Route path="/share/:logId" element={<ShareResource />} />
+
+                {/* Session Routes — public join + student game */}
+                <Route path="/join" element={<JoinSession />} />
+                <Route path="/play/:code" element={<StudentGame />} />
+
+                {/* Session Routes — teacher (protected) */}
+                <Route path="/games/session/new" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <CreateSession />
+                  </ProtectedRoute>
+                } />
+                <Route path="/games/session/:code/host" element={
+                  <ProtectedRoute allowedRoles={["teacher"]}>
+                    <HostView />
+                  </ProtectedRoute>
+                } />
 
                 {/* Payment Routes */}
                 <Route path="/checkout" element={<Checkout />} />

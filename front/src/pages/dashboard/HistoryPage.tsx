@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { History, Star, Brain, LayoutGrid, FileText, Calculator, Search, Filter, Loader2, Play, Eye, ArrowLeft } from "lucide-react";
+import { History, Star, Brain, LayoutGrid, FileText, Calculator, Search, Filter, Loader2, Play, Eye, ArrowLeft, Gamepad2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -192,8 +192,20 @@ const HistoryPage = () => {
                      >
                        <Star className={`w-4 h-4 ${item.is_favorite === 1 ? "fill-current" : ""}`} />
                      </button>
-                     <Button 
-                        variant="ghost" 
+                     {(item.generator_type === "quiz" || item.generator_type === "assignment") && (
+                       <Button
+                         variant="ghost"
+                         className="rounded-xl px-4 gap-2 hover:bg-violet-500/10 hover:text-violet-500 transition-colors text-foreground font-sans"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           navigate(`/games/session/new?log_id=${item.id}`);
+                         }}
+                       >
+                         <Gamepad2 className="w-4 h-4" /> {t("session_start_btn")}
+                       </Button>
+                     )}
+                     <Button
+                        variant="ghost"
                         className="rounded-xl px-4 gap-2 hover:bg-primary/10 hover:text-primary transition-colors text-foreground font-sans"
                         onClick={(e) => {
                           e.stopPropagation();

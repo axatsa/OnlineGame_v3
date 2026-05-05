@@ -88,6 +88,54 @@ def send_otp_email(email: str, code: str):
         return True
 
 
+def send_expiry_warning_email(email: str, user_name: str, plan: str, expires_at: str, days_left: int):
+    """Notify user that their subscription expires in N days."""
+    import os
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASS")
+    from_email = os.getenv("SMTP_FROM", smtp_user or "noreply@classplay.uz")
+    frontend_url = os.getenv("FRONTEND_URL", "https://classplay.uz")
+
+    plan_names = {"pro": "Pro (190 000 сум/мес)", "school": "School (620 000 сум/мес)"}
+    plan_label = plan_names.get(plan, plan.upper())
+
+    subject = f"⏳ Ваша подписка ClassPlay истекает через {days_left} дн."
+    body = (
+        f"Здравствуйте, {user_name}!\n\n"
+        f"Ваша подписка {plan_label} истекает {expires_at}.\n\n"
+        f"Чтобы продолжить пользоваться ClassPlay без ограничений, продлите подписку:\n"
+        f"{frontend_url}/checkout?plan={plan}\n\n"
+        f"Или через Telegram бот: {os.getenv('TELEGRAM_BOT_URL', '')}\n\n"
+        f"С уважением,\nКоманда ClassPlay"
+    )
+
+    if smtp_host and smtp_user and smtp_pass:
+        import smtplib
+        from email.mime.text import MIMEText
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = email
+        try:
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(from_email, [email], msg.as_string())
+            return True
+        except Exception as e:
+            print(f"SMTP error sending expiry warning: {e}")
+            return False
+    else:
+        print(f"\n{'='*40}")
+        print(f"📧 EXPIRY WARNING EMAIL (stub)")
+        print(f"To: {email} ({user_name})")
+        print(f"Plan: {plan_label}, expires: {expires_at}, days_left: {days_left}")
+        print(f"{'='*40}\n")
+        return True
+
+
 def send_resource_email(email: str, topic: str, content: str):
     """
     Simulates sending an email with the generated material.

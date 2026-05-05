@@ -127,6 +127,25 @@ async def notify_user_payment_rejected(telegram_user_id: int, reason: str):
         )
 
 
+async def notify_user_expiry_warning(telegram_user_id: int, plan: str, days_left: int, expires_at: str):
+    """Notify user that their subscription expires soon."""
+    if not TELEGRAM_BOT_TOKEN or not telegram_user_id:
+        return
+    plan_label = PLAN_NAMES.get(plan, plan.upper())
+    frontend_url = os.getenv("FRONTEND_URL", "https://classplay.uz")
+    text = (
+        f"⏳ <b>Подписка истекает через {days_left} дн.</b>\n\n"
+        f"Ваш план <b>{plan_label}</b> действует до {expires_at}.\n\n"
+        f"Продлите через сайт: {frontend_url}/checkout?plan={plan}\n"
+        f"или прямо тут — отправьте /pay"
+    )
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            f"{BOT_API_URL}/sendMessage",
+            json={"chat_id": telegram_user_id, "text": text, "parse_mode": "HTML"},
+        )
+
+
 async def update_admin_message_approved(message_id: int):
     """Edit admin group message after approval."""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_GROUP_ID or not message_id:

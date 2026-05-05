@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, BigInteger
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, BigInteger, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -51,6 +51,7 @@ class UserSubscription(Base):
     expires_at = Column(DateTime, nullable=True)
     activated_at = Column(DateTime, default=datetime.utcnow)
     payment_id = Column(Integer, ForeignKey("user_payments.id"), nullable=True)
+    expiry_warning_sent = Column(Boolean, default=False, nullable=False)
 
     user = relationship("User", back_populates="subscription", foreign_keys=[user_id])
     payment = relationship("UserPayment", foreign_keys=[payment_id])

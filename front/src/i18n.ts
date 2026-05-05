@@ -989,6 +989,26 @@ i18n
                     lang_ru: "Русский",
                     lang_uz: "Узбекский",
                     lang_en: "Английский",
+
+                    // Student Session
+                    session_join: "Войти в игру",
+                    session_enterCode: "Введите код",
+                    session_nickname: "Ваш никнейм",
+                    session_waitingHost: "Ожидание учителя...",
+                    session_questionCount: "Вопрос {{current}} из {{total}}",
+                    session_correct: "Верно!",
+                    session_wrong: "Неверно",
+                    session_points: "очков",
+                    session_leaderboard: "Лидерборд",
+                    session_gameOver: "Игра окончена!",
+                    session_finalScore: "Ваш счёт: {{score}}",
+                    session_rank: "Место: {{rank}}",
+                    session_waitingParticipants: "Ожидание участников...",
+                    session_status_connected: "подключено",
+                    session_status_connecting: "соединение...",
+                    session_answered: "Ответили",
+                    session_copy_results: "Скопировать итоги",
+                    session_start_btn: "Сессия",
                 }
             },
             uz: {
@@ -1966,6 +1986,26 @@ i18n
                     lang_ru: "Ruscha",
                     lang_uz: "O'zbekcha",
                     lang_en: "Inglizcha",
+
+                    // Student Session
+                    session_join: "O'yinga kirish",
+                    session_enterCode: "Kodni kiriting",
+                    session_nickname: "Ismingiz",
+                    session_waitingHost: "O'qituvchini kutilmoqda...",
+                    session_questionCount: "Savol {{current}} / {{total}}",
+                    session_correct: "To'g'ri!",
+                    session_wrong: "Noto'g'ri",
+                    session_points: "ball",
+                    session_leaderboard: "Reyting",
+                    session_gameOver: "O'yin tugadi!",
+                    session_finalScore: "Sizning balingiz: {{score}}",
+                    session_rank: "O'rin: {{rank}}",
+                    session_waitingParticipants: "Ishtirokchilarni kutilmoqda...",
+                    session_status_connected: "ulangan",
+                    session_status_connecting: "ulanmoqda...",
+                    session_answered: "Javob berishdi",
+                    session_copy_results: "Natijalarni nusxalash",
+                    session_start_btn: "Sessiya",
                 }
             },
             en: {
@@ -2944,6 +2984,26 @@ i18n
                     lang_ru: "Russian",
                     lang_uz: "Uzbek",
                     lang_en: "English",
+
+                    // Student Session
+                    session_join: "Join Game",
+                    session_enterCode: "Enter Code",
+                    session_nickname: "Your Nickname",
+                    session_waitingHost: "Waiting for teacher...",
+                    session_questionCount: "Question {{current}} of {{total}}",
+                    session_correct: "Correct!",
+                    session_wrong: "Wrong",
+                    session_points: "points",
+                    session_leaderboard: "Leaderboard",
+                    session_gameOver: "Game Over!",
+                    session_finalScore: "Final Score: {{score}}",
+                    session_rank: "Rank: {{rank}}",
+                    session_waitingParticipants: "Waiting for participants...",
+                    session_status_connected: "connected",
+                    session_status_connecting: "connecting...",
+                    session_answered: "Answered",
+                    session_copy_results: "Copy results",
+                    session_start_btn: "Session",
                 }
             }
         }

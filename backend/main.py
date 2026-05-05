@@ -18,6 +18,7 @@ from apps.gamification.models import StudentProfile, XPTransaction, CoinTransact
 from apps.library.models import SavedResource, GeneratedBook, UserMaterial
 from apps.admin.models import Organization, Payment, InviteToken, GlobalSetting
 from apps.payments.models import UserPayment, UserSubscription
+from apps.sessions.models import GameSession, SessionParticipant, SessionAnswer
 
 from apps.auth.router import router as auth_router
 from apps.classes.router import router as classes_router
@@ -28,6 +29,7 @@ from apps.library.materials_router import router as materials_router
 from apps.admin.router import router as admin_router
 from apps.payments.router import router as payments_router
 from apps.org_admin.router import router as org_admin_router
+from apps.sessions.router import router as sessions_router
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -46,6 +48,7 @@ def repair_db():
             ("users", "phone", "VARCHAR"),
             ("users", "school", "VARCHAR"),
             ("generation_logs", "is_favorite", "INTEGER DEFAULT 0"),
+            ("user_subscriptions", "expiry_warning_sent", "BOOLEAN DEFAULT FALSE"),
         ]
         for table, col, ctype in new_cols:
             try:
@@ -136,6 +139,13 @@ app.include_router(materials_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(payments_router, prefix="/api/v1")
 app.include_router(org_admin_router, prefix="/api/v1")
+app.include_router(sessions_router, prefix="/api/v1")
+
+
+@app.on_event("startup")
+async def on_startup():
+    from services.scheduler import start_scheduler
+    start_scheduler()
 
 
 @app.get("/")

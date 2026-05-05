@@ -25,7 +25,7 @@ def log_usage(db: Session, user_id: int, feature: str, tokens: int):
     db.add(usage)
     db.commit()
 
-def save_generation(db: Session, user_id: int, gen_type: str, topic: str, content: dict):
+def save_generation(db: Session, user_id: int, gen_type: str, topic: str, content: dict) -> int:
     log = GenerationLog(
         user_id=user_id,
         generator_type=gen_type,
@@ -34,6 +34,8 @@ def save_generation(db: Session, user_id: int, gen_type: str, topic: str, conten
     )
     db.add(log)
     db.commit()
+    db.refresh(log)
+    return log.id
 
 def get_class_context(db: Session, class_id: Optional[int]):
     if not class_id:
@@ -57,12 +59,13 @@ async def gen_math(request: Request, req: MathRequest, db: Session = Depends(get
     if problems is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
 
+    log_id = None
     if tokens > 0:
         log_usage(db, user.id, "math", tokens)
         increment_token_usage(user, tokens, db)
-        save_generation(db, user.id, "math", req.topic, {"problems": problems})
+        log_id = save_generation(db, user.id, "math", req.topic, {"problems": problems})
         
-    return {"problems": problems or []}
+    return {"problems": problems or [], "log_id": log_id}
 
 @router.post("/demo/math")
 @limiter.limit("5/day")
@@ -110,12 +113,13 @@ async def gen_crossword(request: Request, req: CrosswordRequest, db: Session = D
     if words is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
 
+    log_id = None
     if tokens > 0:
         log_usage(db, user.id, "crossword", tokens)
         increment_token_usage(user, tokens, db)
-        save_generation(db, user.id, "crossword", req.topic, {"words": words})
+        log_id = save_generation(db, user.id, "crossword", req.topic, {"words": words})
 
-    return {"words": words or []}
+    return {"words": words or [], "log_id": log_id}
 
 @router.post("/quiz")
 @limiter.limit(_rate_limit)
@@ -129,12 +133,13 @@ async def gen_quiz(request: Request, req: QuizRequest, db: Session = Depends(get
     if questions is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
 
+    log_id = None
     if tokens > 0:
         log_usage(db, user.id, "quiz", tokens)
         increment_token_usage(user, tokens, db)
-        save_generation(db, user.id, "quiz", req.topic, {"questions": questions})
+        log_id = save_generation(db, user.id, "quiz", req.topic, {"questions": questions})
         
-    return {"questions": questions or []}
+    return {"questions": questions or [], "log_id": log_id}
 
 @router.post("/jeopardy")
 @limiter.limit(_rate_limit)
@@ -148,12 +153,13 @@ async def gen_jeopardy(request: Request, req: JeopardyRequest, db: Session = Dep
     if data is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
 
+    log_id = None
     if tokens > 0:
         log_usage(db, user.id, "jeopardy", tokens)
         increment_token_usage(user, tokens, db)
-        save_generation(db, user.id, "jeopardy", req.topic, data)
+        log_id = save_generation(db, user.id, "jeopardy", req.topic, data)
         
-    return data or {"categories": []}
+    return {**(data or {"categories": []}), "log_id": log_id}
 
 @router.post("/assignment")
 @limiter.limit(_rate_limit)
@@ -167,12 +173,13 @@ async def gen_assignment(request: Request, req: AssignmentRequest, db: Session =
     if assignment is None:
         raise HTTPException(status_code=500, detail="AI Generation failed. Please try again.")
 
+    log_id = None
     if tokens > 0:
         log_usage(db, user.id, "assignment", tokens)
         increment_token_usage(user, tokens, db)
-        save_generation(db, user.id, "assignment", req.topic, assignment)
+        log_id = save_generation(db, user.id, "assignment", req.topic, assignment)
         
-    return {"result": assignment}
+    return {"result": assignment, "log_id": log_id}
 
 @router.post("/hangman")
 @limiter.limit(_rate_limit)

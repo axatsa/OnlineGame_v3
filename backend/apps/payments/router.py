@@ -90,6 +90,7 @@ def _activate_subscription(db: Session, user_id: int, plan: str, payment_id: int
         sub.expires_at = expires
         sub.activated_at = datetime.utcnow()
         sub.payment_id = payment_id
+        sub.expiry_warning_sent = False  # reset so next expiry triggers a new warning
     else:
         sub = UserSubscription(
             user_id=user_id, plan=plan,

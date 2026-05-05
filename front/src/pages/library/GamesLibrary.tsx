@@ -40,7 +40,7 @@ const GamesLibrary = () => {
       <header className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/teacher")}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground font-sans transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

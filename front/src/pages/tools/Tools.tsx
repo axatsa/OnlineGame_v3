@@ -215,11 +215,12 @@ interface GeneratedAssignment {
 
 // FIX #2: t и lang передаются как пропсы
 const AssignmentPrintView = ({
-  assignment, t, lang
+  assignment, t, lang, orgName
 }: {
   assignment: GeneratedAssignment;
   t: (key: string) => string;
   lang: string;
+  orgName: string;
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -547,7 +548,7 @@ const AssignmentGenerator = () => {
       {result && !loading && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
           {/* FIX #2: передаём t и lang как пропсы */}
-          <AssignmentPrintView assignment={result} t={t} lang={lang} />
+          <AssignmentPrintView assignment={result} t={t} lang={lang} orgName={orgName} />
         </motion.div>
       )}
 

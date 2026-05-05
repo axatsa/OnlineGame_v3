@@ -283,7 +283,10 @@ async def generate_jeopardy(topic: str, grade: str = "", context: str = "", lang
     {build_class_context_block(grade, context)}
 
     STRICT RULES:
-    1. For math: "q" must be a bare expression (e.g. "1/2 + [FRAC:1:4] = ?"). Use [FRAC:N:D] for fractions.
+    1. TOPIC TYPE RULE — read the topic carefully:
+       - If the topic is a PROGRAMMING language or framework (Python, JavaScript, SQL, etc.): generate questions about syntax, concepts, built-in functions, error types, algorithms — NOT arithmetic or math expressions.
+       - If the topic is explicitly MATHEMATICS (algebra, geometry, fractions, etc.): "q" must be a bare expression (e.g. "1/2 + [FRAC:1:4] = ?"). Use [FRAC:N:D] for fractions.
+       - For all other topics: generate factual knowledge questions relevant to the subject.
     2. Answer "a" MUST be factually correct and directly answer the question "q".
     3. NO introductory text in "q".
     4. CRITICAL: Ensure you do NOT mix up questions and answers. The "a" MUST match the "q" perfectly.

@@ -44,8 +44,8 @@ export const AssignmentPreview = ({
         key="assignment-paper"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
-        style={{ maxHeight: "80vh" }}
+        className="w-full max-w-2xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
+        style={{ maxHeight: "calc(100vh - 140px)" }}
       >
         <div className="p-10 h-full flex flex-col print:p-2 print:h-auto">
           <div className="text-center mb-6 print:mb-4">

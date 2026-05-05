@@ -61,7 +61,7 @@ export const CrosswordPreview = ({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-2xl bg-white rounded-lg shadow-2xl border border-border overflow-y-auto print:shadow-none print:border-0 print:w-full print:max-w-none print:block"
-        style={{ maxHeight: "80vh" }}
+        style={{ maxHeight: "calc(100vh - 140px)" }}
       >
         <div className="p-8 flex flex-col min-h-full print:p-2">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">

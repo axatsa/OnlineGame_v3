@@ -4,9 +4,29 @@ import type { CrosswordGrid } from "@/lib/crossword";
 export function cleanMathForExport(text: string): string {
   if (!text) return "";
   return text
+    // LaTeX display/inline delimiters
+    .replace(/\\\[|\\\]|\\\(|\\\)/g, "")
+    // \frac{a}{b} → a/b
+    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "$1/$2")
+    // \sqrt{x} → √(x)
+    .replace(/\\sqrt\{([^}]*)\}/g, "√($1)")
+    // \log_{n} or \log_n → log
+    .replace(/\\log_\{?[^}\s]*\}?/g, "log")
+    // subscripts _{x} or _x → remove
+    .replace(/_\{[^}]*\}/g, "")
+    .replace(/_([a-zA-Z0-9])/g, "")
+    // superscripts ^{x} or ^x → keep number
+    .replace(/\^\{([^}]*)\}/g, "^$1")
+    // remaining LaTeX commands \word → remove
+    .replace(/\\[a-zA-Z]+\{([^}]*)\}/g, "$1")
+    .replace(/\\[a-zA-Z]+/g, "")
+    // legacy formats
     .replace(/\[FRAC:([^:]+):([^\]]+)\]/g, "$1/$2")
     .replace(/\*/g, "×")
-    .replace(/((?:[a-zA-Z0-9]|\([^)]+\))\^\d+)/g, "$1");
+    // collapse newlines and extra spaces
+    .replace(/\n+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export type GeneratorType = "math" | "crossword" | "quiz" | "assignment";

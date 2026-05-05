@@ -3,8 +3,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { Download, Check, Loader2, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import api from "@/lib/api";
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, BorderStyle, WidthType, AlignmentType } from "docx";
+import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
+import { cleanMathForExport } from "@/lib/generatorExport";
 import { saveAs } from "file-saver";
 
 interface ResourceQRCodeProps {
@@ -49,13 +49,25 @@ export const ResourceQRCode = ({ logId, topic, generatorType, content }: Resourc
     try {
       const parsed = JSON.parse(contentStr);
 
-      if (Array.isArray(parsed)) {
-        parsed.forEach((item: any, i: number) => {
+      // Normalize: handle { problems: [...] }, { questions: [...] }, or top-level array
+      const items: any[] = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed.problems)
+          ? parsed.problems
+          : Array.isArray(parsed.questions)
+            ? parsed.questions
+            : [];
+
+      if (items.length > 0) {
+        items.forEach((item: any, i: number) => {
           // Question/Task
+          const questionText = cleanMathForExport(item.question || item.q || item.task || item.text || "");
           paragraphs.push(
             new Paragraph({
-              text: `${i + 1}. ${item.question || item.task || item.text || ""}`,
-              bold: true,
+              children: [
+                new TextRun({ text: `${i + 1}. `, bold: true }),
+                new TextRun({ text: questionText }),
+              ],
               spacing: { after: 200 },
             })
           );
@@ -65,7 +77,7 @@ export const ResourceQRCode = ({ logId, topic, generatorType, content }: Resourc
             item.options.forEach((opt: string, j: number) => {
               paragraphs.push(
                 new Paragraph({
-                  text: `${String.fromCharCode(65 + j)}. ${opt}`,
+                  text: `${String.fromCharCode(65 + j)}. ${cleanMathForExport(opt)}`,
                   spacing: { after: 100 },
                   indent: { left: 720 },
                 })
@@ -74,12 +86,14 @@ export const ResourceQRCode = ({ logId, topic, generatorType, content }: Resourc
           }
 
           // Answer
-          if (item.answer !== undefined) {
+          const answerText = item.answer ?? item.a;
+          if (answerText !== undefined) {
             paragraphs.push(
               new Paragraph({
-                text: `Ответ: ${item.answer}`,
-                bold: true,
-                color: "27ae60",
+                children: [
+                  new TextRun({ text: "Ответ: ", bold: true, color: "27ae60" }),
+                  new TextRun({ text: cleanMathForExport(String(answerText)), bold: true, color: "27ae60" }),
+                ],
                 spacing: { after: 300 },
                 indent: { left: 720 },
               })

@@ -761,7 +761,7 @@ const Generator = () => {
       </motion.div>
 
       {/* Right Preview */}
-      <div className={`flex-1 bg-muted/50 items-center justify-center p-6 md:p-10 relative print:p-0 print:block print:bg-white inset-0 print:absolute print:z-[9999] pb-16 md:pb-10 ${mobileTab === "form" ? "hidden md:flex" : "flex"}`}>
+      <div className={`flex-1 bg-muted/50 items-start justify-center pt-20 px-6 md:px-10 pb-10 relative print:p-0 print:block print:bg-white inset-0 print:absolute print:z-[9999] ${mobileTab === "form" ? "hidden md:flex" : "flex"}`}>
         <style>{`
           @media print {
             body * { visibility: hidden; }
@@ -814,10 +814,10 @@ const Generator = () => {
               </div>
 
               {/* QR code panel — appears after saving */}
-              {savedResourceId && (
+              {lastLogId && (
                 <div className="absolute top-6 left-6 print:hidden z-10">
                   <ResourceQRCode
-                    logId={savedResourceId}
+                    logId={lastLogId}
                     topic={genType === "math" ? mathTopic : genType === "quiz" ? quizTopic : genType === "assignment" ? assignTopic : crosswordTopic}
                     generatorType={genType}
                     content={

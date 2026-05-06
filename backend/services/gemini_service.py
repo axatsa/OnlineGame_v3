@@ -44,29 +44,22 @@ _model_cache_lock = threading.Lock()
 
 # Fallback order used when discovery is unavailable
 _FALLBACK_TEXT_MODELS = [
-    "gemma-3-27b-it",
-    "gemma-3-12b-it",
-    "gemma-3-4b-it",
-    "gemini-2.5-flash-preview-05-20",
-    "gemini-2.5-pro-preview-05-06",
+    "gemini-2.5-flash",
+    "gemma-4-31b-it",
+    "gemma-4-26b-a4b-it",
     "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
-    "gemini-1.5-flash-8b",
     "gemini-2.0-flash-lite",
 ]
 
 def _model_priority(name: str) -> int:
     """Lower = higher priority."""
-    if name.startswith("gemma-3-27b"): return 0
-    if name.startswith("gemma-3-12b"): return 1
-    if name.startswith("gemma-3"):     return 2
-    if "2.5" in name and "pro" in name: return 3
-    if "2.5" in name:                  return 4
-    if "2.0-flash" in name and "lite" not in name and "exp" not in name: return 5
-    if "1.5-flash" in name and "8b" not in name: return 6
-    if "1.5-pro" in name:              return 7
-    if "1.5-flash-8b" in name:        return 8
+    if name == "gemini-2.5-flash":                                          return 0
+    if name.startswith("gemma-4-31b"):                                      return 1
+    if name.startswith("gemma-4"):                                           return 2
+    if "2.5" in name and "pro" in name and "preview" not in name:           return 3
+    if "2.5" in name and "preview" not in name:                             return 4
+    if "2.0-flash" in name and "lite" not in name and "exp" not in name:    return 5
+    if "2.0-flash-lite" in name:                                            return 6
     return 9
 
 async def _discover_text_models(api_key: str) -> list[str]:

@@ -2,17 +2,16 @@ import os
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from config import PLAN_LABELS, REJECT_REASONS, FRONTEND_URL
 
-_CARD_1 = os.getenv("PAYMENT_CARD_NUMBER", "4916 9903 4677 8100")
-_CARD_2 = os.getenv("PAYMENT_CARD_NUMBER_2", "")
-
 
 def card_keyboard() -> InlineKeyboardMarkup:
-    card1_last4 = _CARD_1.replace(" ", "")[-4:]
+    card1 = os.getenv("PAYMENT_CARD_NUMBER", "4916 9903 4677 8100")
+    card2 = os.getenv("PAYMENT_CARD_NUMBER_2", "")
+    card1_last4 = card1.replace(" ", "")[-4:]
     buttons = [
-        [InlineKeyboardButton(f"🟣 Uzum Bank (Visa) — ···· {card1_last4}", callback_data=f"card_0")],
+        [InlineKeyboardButton(f"🟣 Uzum Bank (Visa) — ···· {card1_last4}", callback_data="card_0")],
     ]
-    if _CARD_2:
-        card2_last4 = _CARD_2.replace(" ", "")[-4:]
+    if card2:
+        card2_last4 = card2.replace(" ", "")[-4:]
         buttons.append(
             [InlineKeyboardButton(f"🟢 UzCard — ···· {card2_last4}", callback_data="card_1")]
         )

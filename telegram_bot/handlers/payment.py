@@ -6,10 +6,11 @@ from utils.api import get_token, initiate_payment, upload_screenshot, verify_pay
 from utils.sessions import get_session
 from keyboards.payment_keyboards import plan_keyboard, card_keyboard, main_menu_keyboard, login_keyboard
 
-_CARDS = [c for c in [
-    os.getenv("PAYMENT_CARD_NUMBER", "4916 9903 4677 8100"),
-    os.getenv("PAYMENT_CARD_NUMBER_2", ""),
-] if c]
+def _get_cards() -> list[str]:
+    return [c for c in [
+        os.getenv("PAYMENT_CARD_NUMBER", "4916 9903 4677 8100"),
+        os.getenv("PAYMENT_CARD_NUMBER_2", ""),
+    ] if c]
 
 
 async def handle_pay_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -63,8 +64,9 @@ async def handle_card_selection(update: Update, context: ContextTypes.DEFAULT_TY
         await query.edit_message_text("Начни заново: /pay")
         return
 
+    cards = _get_cards()
     card_idx = int(query.data.replace("card_", ""))
-    selected_card = _CARDS[card_idx] if card_idx < len(_CARDS) else _CARDS[0]
+    selected_card = cards[card_idx] if card_idx < len(cards) else cards[0]
     session.selected_card = selected_card
 
     await query.edit_message_text("⏳ Создаю платеж...")

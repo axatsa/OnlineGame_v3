@@ -65,6 +65,8 @@ services:
       TELEGRAM_GROUP_ID: ${TELEGRAM_GROUP_ID}
       BACKEND_URL: http://backend:8000
       FRONTEND_URL: ${FRONTEND_URL}
+      PAYMENT_CARD_NUMBER: ${PAYMENT_CARD_NUMBER}
+      PAYMENT_CARD_NUMBER_2: ${PAYMENT_CARD_NUMBER_2}
     depends_on:
       - backend
     networks:

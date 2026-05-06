@@ -49,8 +49,8 @@ def build_class_context_block(grade: str, context: str) -> str:
     if context:
         parts.append(
             f"CLASS PROFILE: {context}. "
-            f"You MUST incorporate this profile — adapt themes, examples, "
-            f"and complexity to match this specific class."
+            f"You MUST adapt the difficulty level and vocabulary complexity to suit this class. "
+            f"Do NOT change the topic — keep all questions strictly about the requested topic."
         )
     return "\n".join(parts)
 

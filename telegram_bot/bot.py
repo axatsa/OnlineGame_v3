@@ -6,7 +6,7 @@ from telegram.ext import (
 )
 from config import BOT_TOKEN
 from handlers.start import handle_start
-from handlers.payment import handle_pay_command, handle_plan_selection, handle_card_selection, handle_screenshot
+from handlers.payment import handle_pay_command, handle_plan_selection, handle_screenshot
 from handlers.status import handle_status
 from handlers.admin import handle_admin_callback, handle_check_command
 from handlers.auth import handle_email_input, handle_otp_input, handle_name_input, handle_logout
@@ -72,9 +72,8 @@ def main():
     app.add_handler(CommandHandler("status", handle_status))
     app.add_handler(CommandHandler("check", handle_check_command))
 
-    # Plan selection + card selection + main menu callbacks
+    # Plan selection + main menu callbacks
     app.add_handler(CallbackQueryHandler(handle_plan_selection, pattern=r"^plan_"))
-    app.add_handler(CallbackQueryHandler(handle_card_selection, pattern=r"^card_\d+$"))
     app.add_handler(CallbackQueryHandler(handle_menu_callback, pattern=r"^(buy|status|help|cancel)$"))
 
     # Admin approve/reject callbacks

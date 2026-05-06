@@ -4,13 +4,7 @@ from telegram.ext import ContextTypes
 from config import PLAN_LABELS
 from utils.api import get_token, initiate_payment, upload_screenshot, verify_payment
 from utils.sessions import get_session
-from keyboards.payment_keyboards import plan_keyboard, card_keyboard, main_menu_keyboard, login_keyboard
-
-def _get_cards() -> list[str]:
-    return [c for c in [
-        os.getenv("PAYMENT_CARD_NUMBER", "4916 9903 4677 8100"),
-        os.getenv("PAYMENT_CARD_NUMBER_2", ""),
-    ] if c]
+from keyboards.payment_keyboards import plan_keyboard, main_menu_keyboard, login_keyboard
 
 
 async def handle_pay_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -29,7 +23,6 @@ async def handle_pay_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def handle_plan_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Step 1: user picked a plan — show card choice."""
     query = update.callback_query
     await query.answer()
     user = query.from_user
@@ -42,36 +35,10 @@ async def handle_plan_selection(update: Update, context: ContextTypes.DEFAULT_TY
 
     session = get_session(user.id)
     session.selected_plan = plan
-    session.step = "waiting_card"
-
-    plan_label = PLAN_LABELS.get(plan, plan.upper())
-    await query.edit_message_text(
-        f"📋 План: <b>{plan_label}</b>\n\n"
-        f"💳 Выбери карту для перевода:",
-        parse_mode="HTML",
-        reply_markup=card_keyboard(),
-    )
-
-
-async def handle_card_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Step 2: user picked a card — initiate payment and show instructions."""
-    query = update.callback_query
-    await query.answer()
-    user = query.from_user
-    session = get_session(user.id)
-
-    if session.step != "waiting_card" or not session.selected_plan:
-        await query.edit_message_text("Начни заново: /pay")
-        return
-
-    cards = _get_cards()
-    card_idx = int(query.data.replace("card_", ""))
-    selected_card = cards[card_idx] if card_idx < len(cards) else cards[0]
-    session.selected_card = selected_card
 
     await query.edit_message_text("⏳ Создаю платеж...")
 
-    data = await initiate_payment(user.id, session.selected_plan, selected_card)
+    data = await initiate_payment(user.id, plan)
     if not data:
         await query.edit_message_text("❌ Ошибка. Попробуй снова или напиши в поддержку.")
         return
@@ -80,16 +47,26 @@ async def handle_card_selection(update: Update, context: ContextTypes.DEFAULT_TY
     session.payment_code = data["payment_code"]
     session.payment_id = data["payment_id"]
 
-    plan_label = PLAN_LABELS.get(session.selected_plan, session.selected_plan.upper())
-    card_label = "🟣 Uzum Bank (Visa)" if card_idx == 0 else "🟢 UzCard"
+    plan_label = PLAN_LABELS.get(plan, plan.upper())
+    card2 = os.getenv("PAYMENT_CARD_NUMBER_2", "")
+    card_holder = data.get("card_holder", "")
+
     text = (
         f"💳 <b>Инструкция по оплате</b>\n\n"
         f"📋 План: <b>{plan_label}</b>\n"
         f"💵 Сумма: <b>{data['amount_uzs']:,} сўм</b>\n\n"
-        f"🏦 Переведи на карту {card_label}:\n"
+        f"🟣 <b>Uzum Bank (Visa):</b>\n"
         f"<code>{data['card_number']}</code>\n"
-        f"Владелец: <b>{data['card_holder']}</b>\n\n"
-        f"⚠️ <b>ВАЖНО!</b> В комментарии к переводу напиши:\n"
+        f"Владелец: <b>{card_holder}</b>\n"
+    )
+    if card2:
+        text += (
+            f"\n🟢 <b>UzCard:</b>\n"
+            f"<code>{card2}</code>\n"
+            f"Владелец: <b>{card_holder}</b>\n"
+        )
+    text += (
+        f"\n⚠️ <b>ВАЖНО!</b> В комментарии к переводу напиши:\n"
         f"<code>{data['payment_code']}</code>\n\n"
         f"⏰ Действителен до: {data['expires_at']}\n\n"
         f"После оплаты <b>пришли сюда скриншот чека</b> 📸"

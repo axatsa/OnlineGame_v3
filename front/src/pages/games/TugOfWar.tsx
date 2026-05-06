@@ -127,7 +127,9 @@ const TugOfWar = () => {
         throw new Error("No questions generated");
       }
 
-      const allQuestions: { q: string; options: string[]; a: string }[] = res.data.questions;
+      const allQuestions: { q: string; options: string[]; a: string }[] = res.data.questions.map(
+        (q: { q: string; options: string[]; a: string }) => ({ ...q, options: shuffleArray(q.options) })
+      );
       // FIX #3: делим вопросы на два независимых пула — каждая команда видит свои вопросы
       const half = Math.floor(allQuestions.length / 2);
       const shuffled = shuffleArray(allQuestions);

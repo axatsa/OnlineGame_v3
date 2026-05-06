@@ -128,4 +128,5 @@ def get_quota_info(user: User, db: Session) -> dict:
         "tokens_limit": user.tokens_limit if user.tokens_limit is not None else DEFAULT_TOKEN_LIMIT,
         "unlimited": user.tokens_limit == -1,
         "reset_at": user.tokens_reset_at.isoformat() if user.tokens_reset_at else None,
+        "plan": get_user_plan(user, db),
     }

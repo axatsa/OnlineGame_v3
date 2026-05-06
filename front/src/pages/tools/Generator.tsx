@@ -44,7 +44,7 @@ const Generator = () => {
   const [showClassPicker, setShowClassPicker] = useState(false);
   const [mobileTab, setMobileTab] = useState<"form" | "preview">("form");
   const [orgName, setOrgName] = useState(() => localStorage.getItem("orgName") || "");
-  const [genType, setGenType] = useState<GeneratorType>("math");
+  const [genType, setGenType] = useState<GeneratorType>("assignment");
   const [targetLang, setTargetLang] = useState(lang === "uz" ? "Uzbek" : lang === "en" ? "English" : "Russian");
 
   // Math fields
@@ -88,6 +88,13 @@ const Generator = () => {
   // Batch states
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [batchCount, setBatchCount] = useState("3");
+  const [userPlan, setUserPlan] = useState<string>("free");
+
+  useEffect(() => {
+    api.get<{ plan: string }>("/generate/quota")
+      .then((r) => setUserPlan(r.data.plan))
+      .catch(() => {});
+  }, []);
 
   const [lastLogId, setLastLogId] = useState<number | null>(null);
   const [crosswordData, setCrosswordData] = useState<CrosswordGrid | null>(null);
@@ -555,7 +562,6 @@ const Generator = () => {
             {/* Type Switcher */}
             <div className="grid grid-cols-2 gap-2">
               {[
-                { id: "math", label: t("genMath"), icon: Calculator },
                 { id: "crossword", label: t("genCrossword"), icon: LayoutGrid },
                 { id: "quiz", label: t("genQuiz"), icon: Brain },
                 { id: "assignment", label: t("genAssignment"), icon: FileText },
@@ -624,23 +630,40 @@ const Generator = () => {
 
           {/* Batch Generation Toggle */}
           {genType !== "crossword" && (
-            <div className="mt-8 pt-6 border-t border-border/50 space-y-4">
+            <div className={`mt-8 pt-6 border-t border-border/50 space-y-4 ${userPlan === "free" ? "opacity-60" : ""}`}>
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">{t("genBatchTitle")}</h3>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{t("genBatchSubtitle")}</p>
+                <div className="flex items-center gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      {t("genBatchTitle")}
+                      {userPlan === "free" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                          🔒 PRO
+                        </span>
+                      )}
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{t("genBatchSubtitle")}</p>
+                  </div>
                 </div>
                 <button
-                  onClick={() => setIsBatchMode(!isBatchMode)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isBatchMode ? 'bg-primary' : 'bg-muted'}`}
+                  onClick={() => {
+                    if (userPlan === "free") {
+                      toast.error("Пакетная генерация доступна на Pro и School планах.", {
+                        action: { label: "Улучшить", onClick: () => window.location.href = "/checkout" }
+                      });
+                      return;
+                    }
+                    setIsBatchMode(!isBatchMode);
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isBatchMode && userPlan !== "free" ? 'bg-primary' : 'bg-muted'} ${userPlan === "free" ? "cursor-not-allowed" : ""}`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isBatchMode ? 'translate-x-6' : 'translate-x-1'}`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isBatchMode && userPlan !== "free" ? 'translate-x-6' : 'translate-x-1'}`}
                   />
                 </button>
               </div>
 
-              {isBatchMode && (
+              {isBatchMode && userPlan !== "free" && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}

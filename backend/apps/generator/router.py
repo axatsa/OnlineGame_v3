@@ -404,6 +404,12 @@ def delete_template(template_id: int, db: Session = Depends(get_db), user: User 
 @router.post("/batch")
 @limiter.limit(_rate_limit)
 async def gen_batch(request: Request, req: BatchRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from apps.generator.services import get_user_plan
+    if get_user_plan(user, db) == "free":
+        raise HTTPException(status_code=403, detail={
+            "error": "plan_required",
+            "message": "Пакетная генерация доступна только на Pro и School планах.",
+        })
     check_token_quota(user, db)
     grade, context = get_class_context(db, req.class_id)
     

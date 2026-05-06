@@ -26,16 +26,24 @@ async def verify_receipt(image_path: str, expected_amount_uzs: int, card_number:
     mime = "image/png" if ext == ".png" else "image/jpeg"
 
     prompt = (
-        f"You are verifying a bank payment receipt screenshot for ClassPlay subscription service.\n"
-        f"Check ALL of the following:\n"
-        f"1. Transfer amount is exactly {expected_amount_uzs:,} UZS (сум / сўм)\n"
-        f"2. Recipient card ends with {card_last4}\n"
-        f"3. Transaction status is successful (Успешно / Muvaffaqiyatli / Success or similar)\n"
-        f"4. This is a genuine unedited bank app screenshot\n\n"
+        f"You are verifying a bank payment receipt screenshot for ClassPlay subscription service.\n\n"
+        f"This screenshot may come from ANY Uzbek bank app. Supported formats:\n"
+        f"- Uzum Bank / HamkorBank (Visa): shows 'Перевод на карту', 'Получатель', 'Успешно'\n"
+        f"- UzCard / Humo apps: shows card numbers with dashes/spaces, 'Muvaffaqiyatli' or 'Успешно'\n"
+        f"- Any other Uzbek bank (UZCARD, Kapital Bank, Ipoteka, TBC, etc.)\n\n"
+        f"Check ALL of the following strictly:\n"
+        f"1. AMOUNT: Transfer amount must be exactly {expected_amount_uzs:,} UZS (сум / сўм / so'm). "
+        f"   Look for labels like 'Сумма', 'Summa', 'Amount', 'Перевод'. Ignore commission.\n"
+        f"2. RECIPIENT CARD: The RECIPIENT (Получатель / Qabul qiluvchi / To) card must end with {card_last4}. "
+        f"   Do NOT confuse sender card with recipient card.\n"
+        f"3. STATUS: Transaction must be successful — 'Успешно', 'Muvaffaqiyatli', 'O'tkazildi', "
+        f"   'Success', green checkmark, or similar confirmation.\n"
+        f"4. AUTHENTICITY: Screenshot must look like a real unedited bank app UI "
+        f"   (not a photo editor, not a fake template).\n\n"
         f"Reply ONLY with valid JSON, no extra text:\n"
-        f'{{ "verified": true, "confidence": 0.95, "reason": "All checks passed" }}'
-        f"\nor\n"
-        f'{{ "verified": false, "confidence": 0.9, "reason": "Amount is 100000, expected {expected_amount_uzs:,}" }}'
+        f'{{ "verified": true, "confidence": 0.95, "reason": "Amount 190000, card ends 3810, status Успешно" }}\n'
+        f"or\n"
+        f'{{ "verified": false, "confidence": 0.85, "reason": "Recipient card ends 1234, expected {card_last4}" }}'
     )
 
     payload = {

@@ -14,14 +14,17 @@ def get_token(telegram_user_id: int) -> str | None:
     return _user_tokens.get(telegram_user_id)
 
 
-async def initiate_payment(telegram_user_id: int, plan: str) -> dict | None:
+async def initiate_payment(telegram_user_id: int, plan: str, selected_card: str | None = None) -> dict | None:
     token = get_token(telegram_user_id)
     if not token:
         return None
+    payload = {"plan": plan}
+    if selected_card:
+        payload["selected_card"] = selected_card
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             f"{BACKEND_URL}/api/v1/payments/telegram/initiate",
-            json={"plan": plan},
+            json=payload,
             headers={"Authorization": f"Bearer {token}"},
             timeout=10,
         )

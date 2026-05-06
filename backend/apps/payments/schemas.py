@@ -89,6 +89,7 @@ class ClickBaseResponse(BaseModel):
 
 class TelegramPaymentInitiateRequest(BaseModel):
     plan: str  # "pro" | "school"
+    selected_card: Optional[str] = None  # card number chosen by user
 
 
 class TelegramPaymentInitiateResponse(BaseModel):

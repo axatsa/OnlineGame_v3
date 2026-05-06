@@ -182,7 +182,7 @@ export default function Checkout() {
                         )}
                         <div>
                             <label className="text-xs font-semibold text-muted-foreground ml-1 mb-1.5 block">Email</label>
-                            <input type="email" placeholder="example@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+                            <input type="email" placeholder="example@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
                         </div>
                         <div>
                             <label className="text-xs font-semibold text-muted-foreground ml-1 mb-1.5 block">{t("checkoutPassword")}</label>

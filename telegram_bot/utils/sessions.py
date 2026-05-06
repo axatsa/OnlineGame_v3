@@ -12,6 +12,7 @@ class UserSession:
     otp_attempts: int = 0
     # payment state
     selected_plan: Optional[str] = None
+    selected_card: Optional[str] = None
     payment_code: Optional[str] = None
     payment_id: Optional[int] = None
 

@@ -252,7 +252,7 @@ def telegram_initiate_payment(
     amount_tiyin = amount_uzs * 100
     payment_code = _generate_payment_code(body.plan, current_user.id)
     expires_at = datetime.utcnow() + timedelta(hours=24)
-    assigned_card = _pick_card()
+    assigned_card = body.selected_card if body.selected_card in _CARDS else _pick_card()
 
     payment = UserPayment(
         user_id=current_user.id,

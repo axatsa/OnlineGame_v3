@@ -165,12 +165,18 @@ def delete_teacher(user_id: int, db: Session = Depends(get_db), admin: User = De
     from apps.payments.models import UserSubscription, UserPayment
     
     try:
+        from apps.auth.models import PasswordResetToken
+        from apps.library.models import SavedResource, GeneratedBook, UserMaterial
+
+        db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete()
         db.query(TokenUsage).filter(TokenUsage.user_id == user_id).delete()
         db.query(GenerationLog).filter(GenerationLog.user_id == user_id).delete()
         db.query(UserSubscription).filter(UserSubscription.user_id == user_id).delete()
         db.query(UserPayment).filter(UserPayment.user_id == user_id).delete()
-        
-        # Finally delete the user
+        db.query(SavedResource).filter(SavedResource.user_id == user_id).delete()
+        db.query(GeneratedBook).filter(GeneratedBook.user_id == user_id).delete()
+        db.query(UserMaterial).filter(UserMaterial.user_id == user_id).delete()
+
         db.delete(user)
         db.commit()
     except Exception as e:

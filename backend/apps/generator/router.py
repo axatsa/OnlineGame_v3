@@ -378,7 +378,7 @@ def create_template(req: TemplateCreate, db: Session = Depends(get_db), user: Us
         name=req.name,
         description=req.description,
         params=req.params,
-        is_system=req.is_system if user.is_admin else False # Only admin can create system templates
+        is_system=req.is_system if user.role == "super_admin" else False
     )
     db.add(template)
     db.commit()
@@ -391,7 +391,7 @@ def delete_template(template_id: int, db: Session = Depends(get_db), user: User 
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
     
-    if template.is_system and not user.is_admin:
+    if template.is_system and user.role != "super_admin":
         raise HTTPException(status_code=403, detail="Cannot delete system templates")
         
     if not template.is_system and template.user_id != user.id:

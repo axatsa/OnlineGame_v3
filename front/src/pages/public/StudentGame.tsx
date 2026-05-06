@@ -121,7 +121,7 @@ const StudentGame = () => {
   if (!state) return null;
 
   const myRank = finalLb.find(e => e.nickname === state.nickname);
-  const myScore = finalLb.find(e => e.nickname === state.nickname)?.score ?? 0;
+  const myScore = myRank?.score ?? 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-between p-4 pb-8 max-w-lg mx-auto">

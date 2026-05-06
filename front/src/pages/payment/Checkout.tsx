@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Loader2, Rocket, Copy, Check } from "lucide-react";
@@ -135,10 +135,11 @@ export default function Checkout() {
         setTimeout(() => setCodeCopied(false), 2000);
     };
 
-    if (plan.free && user) {
-        navigate("/teacher");
-        return null;
-    }
+    useEffect(() => {
+        if (plan.free && user) navigate("/teacher");
+    }, [plan.free, user, navigate]);
+
+    if (plan.free && user) return null;
 
     const inputClass = "w-full bg-background border border-border rounded-2xl px-5 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition";
 

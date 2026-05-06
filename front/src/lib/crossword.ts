@@ -14,23 +14,6 @@ export interface CrosswordGrid {
     words: CrosswordWord[];
 }
 
-
-export interface CrosswordWord {
-    word: string;
-    clue: string;
-    row: number; // 0-indexed
-    col: number; // 0-indexed
-    isAcross: boolean;
-    number: number;
-}
-
-export interface CrosswordGrid {
-    width: number;
-    height: number;
-    grid: string[][]; // 2D array, empty string for black, char for white
-    words: CrosswordWord[];
-}
-
 // Helper to check if a word fits
 function canPlace(grid: string[][], word: string, r: number, c: number, direction: 'across' | 'down'): boolean {
     const height = grid.length;

@@ -1,13 +1,9 @@
-import * as docx from "docx";
-import { saveAs } from "file-saver";
 import { TFunction } from "react-i18next";
 import { toast } from "sonner";
 import { Teacher, Org, Payment, AuditLog } from "@/types/admin";
 
-const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = docx;
-
 export const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
-  const bom = "\uFEFF"; 
+  const bom = "﻿";
   const csvContent = bom + [headers, ...rows]
     .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
     .join("\n");
@@ -25,15 +21,9 @@ export const exportTeachersCSV = (teachers: Teacher[], t: TFunction) => {
     `classplay_teachers_${new Date().toISOString().slice(0, 10)}.csv`,
     [t("exp_name"), t("exp_login"), t("exp_school"), t("exp_status"), t("exp_last_login"), t("exp_plan"), "Истекает", t("exp_tokens"), t("exp_ip")],
     teachers.map(t_ => [
-      t_.name,
-      t_.login,
-      t_.school,
-      t_.status,
-      t_.lastLogin,
-      t_.plan,
+      t_.name, t_.login, t_.school, t_.status, t_.lastLogin, t_.plan,
       t_.expires_at ? new Date(t_.expires_at).toLocaleDateString("ru-RU") : "—",
-      String(t_.tokenUsage),
-      t_.ip
+      String(t_.tokenUsage), t_.ip,
     ])
   );
 };
@@ -70,6 +60,8 @@ export const exportPaymentsCSV = (payments: Payment[], t: TFunction) => {
 
 export const exportTeachersDOCX = async (teachers: Teacher[], t: TFunction) => {
   try {
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = await import("docx");
+    const { saveAs } = await import("file-saver");
     const doc = new Document({
       sections: [{
         children: [
@@ -80,18 +72,14 @@ export const exportTeachersDOCX = async (teachers: Teacher[], t: TFunction) => {
               new TableRow({
                 children: [t("exp_teacher_login"), t("exp_school"), t("exp_last_login"), t("exp_tokens"), t("exp_status"), t("exp_plan"), "Истекает"].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
-                  shading: { fill: "f3f4f6" }
+                  shading: { fill: "f3f4f6" },
                 }))
               }),
               ...teachers.map(t_ => new TableRow({
                 children: [
-                  `${t_.name} (@${t_.login})`,
-                  t_.school,
-                  t_.lastLogin,
-                  t_.tokenUsage.toLocaleString(),
-                  t_.status,
-                  t_.plan,
-                  t_.expires_at ? new Date(t_.expires_at).toLocaleDateString("ru-RU") : "—"
+                  `${t_.name} (@${t_.login})`, t_.school, t_.lastLogin,
+                  t_.tokenUsage.toLocaleString(), t_.status, t_.plan,
+                  t_.expires_at ? new Date(t_.expires_at).toLocaleDateString("ru-RU") : "—",
                 ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
               }))
             ]
@@ -99,7 +87,6 @@ export const exportTeachersDOCX = async (teachers: Teacher[], t: TFunction) => {
         ]
       }]
     });
-
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `teachers_report_${new Date().toISOString().slice(0, 10)}.docx`);
     toast.success("Teachers report DOCX downloaded!");
@@ -108,6 +95,8 @@ export const exportTeachersDOCX = async (teachers: Teacher[], t: TFunction) => {
 
 export const exportOrgsDOCX = async (orgs: Org[], t: TFunction) => {
   try {
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = await import("docx");
+    const { saveAs } = await import("file-saver");
     const doc = new Document({
       sections: [{
         children: [
@@ -118,7 +107,7 @@ export const exportOrgsDOCX = async (orgs: Org[], t: TFunction) => {
               new TableRow({
                 children: [t("exp_org_name"), t("exp_contact"), "План", t("exp_seats_total"), "Загрузка", t("exp_expires"), t("exp_status")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
-                  shading: { fill: "f3f4f6" }
+                  shading: { fill: "f3f4f6" },
                 }))
               }),
               ...orgs.map(o => {
@@ -126,7 +115,8 @@ export const exportOrgsDOCX = async (orgs: Org[], t: TFunction) => {
                 const pct = o.seats > 0 ? Math.round((o.used / o.seats) * 100) : 0;
                 return new TableRow({
                   children: [
-                    o.name, o.contact, plan, `${o.used}/${o.seats}`, `${pct}%`, new Date(o.expires).toLocaleDateString("ru-RU"), o.status
+                    o.name, o.contact, plan, `${o.used}/${o.seats}`, `${pct}%`,
+                    new Date(o.expires).toLocaleDateString("ru-RU"), o.status,
                   ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
                 });
               })
@@ -138,11 +128,13 @@ export const exportOrgsDOCX = async (orgs: Org[], t: TFunction) => {
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `organizations_report_${new Date().toISOString().slice(0, 10)}.docx`);
     toast.success("Orgs report DOCX downloaded!");
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error(e); toast.error("DOCX failed"); }
 };
 
 export const exportAiUsageDOCX = async (teachers: Teacher[], t: TFunction) => {
   try {
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = await import("docx");
+    const { saveAs } = await import("file-saver");
     const sorted = [...teachers].sort((a, b) => b.tokenUsage - a.tokenUsage);
     const doc = new Document({
       sections: [{
@@ -154,12 +146,12 @@ export const exportAiUsageDOCX = async (teachers: Teacher[], t: TFunction) => {
               new TableRow({
                 children: ["#", t("exp_teacher"), t("exp_school"), t("exp_ip"), t("exp_tokens"), t("exp_status")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
-                  shading: { fill: "f3f4f6" }
+                  shading: { fill: "f3f4f6" },
                 }))
               }),
               ...sorted.map((t_, i) => new TableRow({
                 children: [
-                  String(i + 1), t_.name, t_.school, t_.ip, t_.tokenUsage.toLocaleString(), t_.status
+                  String(i + 1), t_.name, t_.school, t_.ip, t_.tokenUsage.toLocaleString(), t_.status,
                 ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
               }))
             ]
@@ -170,11 +162,13 @@ export const exportAiUsageDOCX = async (teachers: Teacher[], t: TFunction) => {
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `ai_usage_report_${new Date().toISOString().slice(0, 10)}.docx`);
     toast.success("AI Usage report DOCX downloaded!");
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error(e); toast.error("DOCX failed"); }
 };
 
 export const exportPaymentsDOCX = async (payments: Payment[], t: TFunction) => {
   try {
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = await import("docx");
+    const { saveAs } = await import("file-saver");
     const doc = new Document({
       sections: [{
         children: [
@@ -185,12 +179,12 @@ export const exportPaymentsDOCX = async (payments: Payment[], t: TFunction) => {
               new TableRow({
                 children: [t("exp_org_name"), t("exp_amount"), t("exp_date"), t("exp_method"), t("exp_status"), t("exp_period")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
-                  shading: { fill: "f3f4f6" }
+                  shading: { fill: "f3f4f6" },
                 }))
               }),
               ...payments.map(p => new TableRow({
                 children: [
-                  p.org, `$${p.amount}`, new Date(p.date).toLocaleDateString("ru-RU"), p.method, p.status, p.period
+                  p.org, `$${p.amount}`, new Date(p.date).toLocaleDateString("ru-RU"), p.method, p.status, p.period,
                 ].map(v => new TableCell({ children: [new Paragraph({ text: v })] }))
               }))
             ]
@@ -201,11 +195,13 @@ export const exportPaymentsDOCX = async (payments: Payment[], t: TFunction) => {
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `payments_report_${new Date().toISOString().slice(0, 10)}.docx`);
     toast.success("Payments report DOCX downloaded!");
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error(e); toast.error("DOCX failed"); }
 };
 
 export const exportAuditLogDOCX = async (logs: AuditLog[], t: TFunction) => {
   try {
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } = await import("docx");
+    const { saveAs } = await import("file-saver");
     const doc = new Document({
       sections: [{
         children: [
@@ -216,7 +212,7 @@ export const exportAuditLogDOCX = async (logs: AuditLog[], t: TFunction) => {
               new TableRow({
                 children: [t("exp_action"), t("exp_target"), t("exp_time")].map(h => new TableCell({
                   children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
-                  shading: { fill: "f3f4f6" }
+                  shading: { fill: "f3f4f6" },
                 }))
               }),
               ...logs.map(l => new TableRow({
@@ -230,5 +226,5 @@ export const exportAuditLogDOCX = async (logs: AuditLog[], t: TFunction) => {
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `audit_log_${new Date().toISOString().slice(0, 10)}.docx`);
     toast.success("Audit Log DOCX downloaded!");
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error(e); toast.error("DOCX failed"); }
 };

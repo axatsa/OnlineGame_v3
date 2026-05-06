@@ -38,10 +38,6 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("html2canvas") || id.includes("jspdf") || id.includes("docx") || id.includes("file-saver")) {
             return "chunk-docexport";
           }
-          // Charts — admin panel only
-          if (id.includes("recharts")) {
-            return "chunk-charts";
-          }
           // KaTeX math renderer — games + generator only
           if (id.includes("katex")) {
             return "chunk-katex";

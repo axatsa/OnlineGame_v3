@@ -195,7 +195,7 @@ def get_my_subscription(
         "plan": plan,
         "expires_at": expires_at,
         "is_active": is_active,
-        "tokens_used": tokens_used,
+        "tokens_used_this_month": tokens_used,
         "tokens_limit": tokens_limit,
         "tokens_remaining": max(0, tokens_limit - tokens_used),
         "reset_at": current_user.tokens_reset_at.isoformat() if current_user.tokens_reset_at else None,

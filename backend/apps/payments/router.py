@@ -35,8 +35,15 @@ CLICK_SERVICE_ID = os.getenv("CLICK_SERVICE_ID", "")
 CLICK_MERCHANT_ID = os.getenv("CLICK_MERCHANT_ID", "")
 CLICK_SECRET_KEY = os.getenv("CLICK_SECRET_KEY", "")
 
-PAYMENT_CARD_NUMBER = os.getenv("PAYMENT_CARD_NUMBER", "4916 9903 4677 8100")
 PAYMENT_CARD_HOLDER = os.getenv("PAYMENT_HOLDER", "Salamov A.")
+_CARDS = [c for c in [
+    os.getenv("PAYMENT_CARD_NUMBER", "4916 9903 4677 8100"),
+    os.getenv("PAYMENT_CARD_NUMBER_2", ""),
+] if c]
+
+def _pick_card() -> str:
+    import random
+    return random.choice(_CARDS)
 UPLOADS_DIR = os.getenv("UPLOADS_DIR", "uploads/payments")
 
 # Plan prices in UZS for Telegram payments
@@ -245,6 +252,7 @@ def telegram_initiate_payment(
     amount_tiyin = amount_uzs * 100
     payment_code = _generate_payment_code(body.plan, current_user.id)
     expires_at = datetime.utcnow() + timedelta(hours=24)
+    assigned_card = _pick_card()
 
     payment = UserPayment(
         user_id=current_user.id,
@@ -254,6 +262,7 @@ def telegram_initiate_payment(
         status="pending_admin_verification",
         payment_code=payment_code,
         code_expires_at=expires_at,
+        admin_notes=f"card:{assigned_card}",
     )
     db.add(payment)
     db.commit()
@@ -263,7 +272,7 @@ def telegram_initiate_payment(
         payment_id=payment.id,
         payment_code=payment_code,
         amount_uzs=amount_uzs,
-        card_number=PAYMENT_CARD_NUMBER,
+        card_number=assigned_card,
         card_holder=PAYMENT_CARD_HOLDER,
         expires_at=expires_at.strftime("%d.%m.%Y %H:%M UTC"),
     )
@@ -308,7 +317,9 @@ async def telegram_verify_payment(
     from urllib.parse import urlparse
     image_filename = os.path.basename(urlparse(body.screenshot_url).path)
     image_path = os.path.join(UPLOADS_DIR, image_filename)
-    card_number = os.getenv("PAYMENT_CARD_NUMBER", "")
+    # Use the card that was assigned to this specific payment
+    notes = payment.admin_notes or ""
+    card_number = notes.replace("card:", "").strip() if notes.startswith("card:") else os.getenv("PAYMENT_CARD_NUMBER", "")
     vision = await verify_receipt(image_path, payment.amount_tiyin // 100, card_number)
 
     if vision["auto_approve"]:

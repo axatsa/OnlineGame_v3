@@ -117,6 +117,18 @@ async def register_bot_user(email: str, full_name: str) -> dict | None:
     return None
 
 
+async def get_pending_payments(admin_token: str) -> list | None:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{BACKEND_URL}/api/v1/payments/telegram/pending",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            return resp.json()
+    return None
+
+
 async def admin_approve(payment_id: int, admin_token: str) -> bool:
     async with httpx.AsyncClient() as client:
         resp = await client.post(

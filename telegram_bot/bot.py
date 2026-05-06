@@ -8,7 +8,7 @@ from config import BOT_TOKEN
 from handlers.start import handle_start
 from handlers.payment import handle_pay_command, handle_plan_selection, handle_screenshot
 from handlers.status import handle_status
-from handlers.admin import handle_admin_callback
+from handlers.admin import handle_admin_callback, handle_check_command
 from handlers.auth import handle_email_input, handle_otp_input, handle_name_input, handle_logout
 from utils.api import get_token
 from utils.sessions import get_session
@@ -50,7 +50,7 @@ async def handle_menu_callback(update: Update, context):
             "❓ <b>Помощь</b>\n\n"
             "/pay — купить подписку\n"
             "/status — проверить подписку\n\n"
-            "По вопросам: напиши администратору.",
+            "По вопросам: напиши администратору @ClassPlayEdu ",
             parse_mode="HTML",
         )
     elif data == "cancel":
@@ -70,6 +70,7 @@ def main():
     app.add_handler(CommandHandler("logout", handle_logout))
     app.add_handler(CommandHandler("pay", handle_pay_command))
     app.add_handler(CommandHandler("status", handle_status))
+    app.add_handler(CommandHandler("check", handle_check_command))
 
     # Plan selection + main menu callbacks
     app.add_handler(CallbackQueryHandler(handle_plan_selection, pattern=r"^plan_"))

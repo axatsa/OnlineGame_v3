@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import { Button } from "@/components/ui/button";
+import { usePWA } from "@/hooks/usePWA";
 import api from "@/lib/api";
 
 const TeacherDashboard = () => {
@@ -21,6 +22,7 @@ const TeacherDashboard = () => {
   const { t, i18n } = useTranslation();
   const { isDark, toggle: toggleTheme } = useTheme();
   const lang = i18n.language;
+  const { canInstall, install } = usePWA();
 
   const [showClassPicker, setShowClassPicker] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -126,7 +128,12 @@ const TeacherDashboard = () => {
             <button onClick={toggleTheme} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
               {isDark ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
             </button>
-            <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center hover:scale-110 transition-transform shadow-sm">
+            {canInstall && (
+              <Button onClick={install} variant="default" size="sm" className="hidden md:flex h-8 rounded-full px-4 ml-1 gap-1.5 text-xs">
+                {t("installApp", "Установить App")}
+              </Button>
+            )}
+            <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center hover:scale-110 transition-transform shadow-sm ml-1">
               <User className="w-4 h-4 text-white" />
             </button>
           </div>

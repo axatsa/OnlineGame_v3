@@ -176,3 +176,22 @@
   vertical-align: super;
   margin-left: 0.05em;
 }
+
+/* Touch Optimizations */
+.touch-game {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+  /* Ensure min target size on mobile for interactive elements */
+  button:not(.w-4):not(.h-4):not(.w-8):not(.h-8) {
+    min-height: 44px;
+  }
+}
+

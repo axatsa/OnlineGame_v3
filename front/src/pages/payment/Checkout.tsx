@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Loader2, Rocket, Copy, Check } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Copy, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { paymentService, Plan, PaymentMethod, TelegramPaymentInfo } from "@/api/paymentService";
 import { toast } from "sonner";
@@ -161,8 +161,8 @@ export default function Checkout() {
                     className="bg-card border border-border rounded-3xl p-10 max-w-md w-full text-center shadow-xl"
                 >
                     <div className="flex justify-center mb-6">
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${plan.accent} flex items-center justify-center shadow-lg`}>
-                            <Rocket size={28} className="text-white" />
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${plan.accent} flex items-center justify-center shadow-lg p-2.5`}>
+                            <img src="/logo_sticker.webp" alt="ClassPlay Logo" className="w-full h-full object-contain filter drop-shadow-sm" />
                         </div>
                     </div>
 

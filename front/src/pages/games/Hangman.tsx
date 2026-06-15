@@ -284,7 +284,7 @@ function HangmanGame({ words, lang, onBack }: { words: WordEntry[]; lang: string
               key={l}
               onClick={() => guess(l)}
               disabled={guessed.has(l) || phase !== "playing"}
-              className={`w-9 h-9 rounded-lg text-sm font-bold transition-all ${
+              className={`w-11 h-11 sm:w-10 sm:h-10 rounded-lg text-base sm:text-sm font-bold transition-all touch-manipulation ${
                 isRight ? "bg-green-500 text-white" :
                 isWrong ? "bg-red-200 text-red-400 line-through" :
                 "bg-gray-100 hover:bg-primary hover:text-white active:scale-95"

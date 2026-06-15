@@ -305,6 +305,10 @@ function PuzzleGame({ puzzles, type, onBack, onRestart }: {
       streakAt: newStreak,
     };
 
+    if (wasCorrect && typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
     setStreak(newStreak);
     if (wasCorrect) setScore((s) => s + roundScore);
     setResults((prev) => [...prev, round]);

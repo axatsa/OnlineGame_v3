@@ -259,7 +259,19 @@ const WordSearch = () => {
                   onPointerLeave={endSelect}
                   onPointerUp={endSelect}
                 >
-                  <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)` }}>
+                  <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)` }}
+                    onPointerMove={(e) => {
+                      if (!dragging.current) return;
+                      const el = document.elementFromPoint(e.clientX, e.clientY);
+                      if (el) {
+                        const r = el.getAttribute("data-r");
+                        const c = el.getAttribute("data-c");
+                        if (r != null && c != null) {
+                          moveSelect(Number(r), Number(c));
+                        }
+                      }
+                    }}
+                  >
                     {grid.map((row, r) =>
                       row.map((letter, c) => {
                         const sel = isSelecting(r, c);
@@ -267,10 +279,12 @@ const WordSearch = () => {
                         return (
                           <div
                             key={`${r}-${c}`}
+                            data-r={r}
+                            data-c={c}
                             onPointerDown={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); startSelect(r, c); }}
                             onPointerEnter={() => moveSelect(r, c)}
                             onPointerUp={endSelect}
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold font-mono cursor-pointer select-none transition-colors ${hiClass ? `${hiClass} text-white shadow-sm` :
+                            className={`w-9 h-9 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center text-sm font-bold font-mono cursor-pointer select-none transition-colors touch-manipulation ${hiClass ? `${hiClass} text-white shadow-sm` :
                               sel ? "bg-yellow-300 text-yellow-900 shadow-sm" :
                                 "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-200"
                               }`}

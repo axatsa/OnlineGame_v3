@@ -141,7 +141,7 @@ const MemoryMatrix = () => {
                   <motion.button
                     key={card.id}
                     onClick={() => flip(card.id)}
-                    className="relative aspect-square"
+                    className="relative aspect-square touch-manipulation"
                     style={{ width: Math.min(80, Math.floor(720 / cols)) }}
                     whileHover={{ scale: card.flipped || card.matched ? 1 : 1.05 }}
                     whileTap={{ scale: 0.95 }}
